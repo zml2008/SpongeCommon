@@ -58,6 +58,7 @@ import org.spongepowered.api.event.cause.entity.damage.source.IndirectEntityDama
 import org.spongepowered.api.extra.fluid.FluidStack;
 import org.spongepowered.api.extra.fluid.FluidStackSnapshot;
 import org.spongepowered.api.extra.fluid.FluidType;
+import org.spongepowered.api.item.CreativeTab;
 import org.spongepowered.api.item.Enchantment;
 import org.spongepowered.api.item.FireworkEffect;
 import org.spongepowered.api.item.FireworkShape;
@@ -261,6 +262,7 @@ public final class CommonModuleRegistry {
             .registerModule(CoalType.class, new CoalTypeRegistryModule())
             .registerModule(ComparatorType.class, new ComparatorTypeRegistryModule())
             .registerModule(CookedFish.class, new CookedFishRegistryModule())
+            .registerModule(CreativeTab.class, new CreativeTabRegistryModule())
             .registerModule(Criterion.class, new CriteriaRegistryModule())
             .registerModule(DamageModifierType.class, new DamageModifierTypeRegistryModule())
             .registerModule(new DamageSourceRegistryModule())
