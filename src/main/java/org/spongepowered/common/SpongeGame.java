@@ -90,7 +90,8 @@ public abstract class SpongeGame implements Game {
         return this.platform;
     }
 
-    @Override public boolean isServerAvailable() {
+    @Override
+    public boolean isServerAvailable() {
         return MinecraftServer.getServer() != null;
     }
 
@@ -141,6 +142,9 @@ public abstract class SpongeGame implements Game {
 
     @Override
     public Server getServer() {
+        if (!isServerAvailable()) {
+            throw new IllegalStateException("The server is not available at this time!");
+        }
         return (Server) MinecraftServer.getServer();
     }
 
@@ -151,7 +155,7 @@ public abstract class SpongeGame implements Game {
 
     @Override
     public Client getClient() {
-        throw new IllegalStateException("The client is not available on this implementation");
+        throw new IllegalStateException("The client is not available at this time!");
     }
 
     @Override
