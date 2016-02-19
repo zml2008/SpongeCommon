@@ -30,6 +30,7 @@ import com.google.common.base.Objects;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.api.Client;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
 import org.spongepowered.api.GameState;
@@ -89,6 +90,10 @@ public abstract class SpongeGame implements Game {
         return this.platform;
     }
 
+    @Override public boolean isServerAvailable() {
+        return MinecraftServer.getServer() != null;
+    }
+
     @Override
     public PluginManager getPluginManager() {
         return this.pluginManager;
@@ -137,6 +142,16 @@ public abstract class SpongeGame implements Game {
     @Override
     public Server getServer() {
         return (Server) MinecraftServer.getServer();
+    }
+
+    @Override
+    public boolean isClientAvailable() {
+        return false;
+    }
+
+    @Override
+    public Client getClient() {
+        throw new IllegalStateException("The client is not available on this implementation");
     }
 
     @Override

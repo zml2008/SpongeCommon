@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.item;
 
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -33,6 +34,7 @@ import org.spongepowered.api.data.Property;
 import org.spongepowered.api.data.manipulator.DataManipulator;
 import org.spongepowered.api.data.manipulator.mutable.DisplayNameData;
 import org.spongepowered.api.data.manipulator.mutable.item.EnchantmentData;
+import org.spongepowered.api.item.CreativeTab;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,10 +50,14 @@ import org.spongepowered.common.text.translation.SpongeTranslation;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 @Mixin(Item.class)
 public abstract class MixinItem implements ItemType, IMixinItem, SpongeGameDictionaryEntry {
 
     public Optional<BlockType> blockType = Optional.empty();
+    @Shadow @Nullable private CreativeTabs tabToDisplayOn;
+    @Shadow abstract Item setCreativeTab(@Nullable CreativeTabs tab);
 
     @Shadow
     public abstract int getItemStackLimit();
@@ -95,6 +101,16 @@ public abstract class MixinItem implements ItemType, IMixinItem, SpongeGameDicti
     @Override
     public Optional<BlockType> getBlock() {
         return this.blockType;
+    }
+
+    @Override
+    public Optional<CreativeTab> getCreativeTab() {
+        return Optional.ofNullable((CreativeTab) tabToDisplayOn);
+    }
+
+    @Override
+    public ItemType setCreativeTab(@Nullable CreativeTab tab) {
+        return (ItemType) setCreativeTab((CreativeTabs) tab);
     }
 
     @Override

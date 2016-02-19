@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ResourceLocation;
@@ -42,6 +43,7 @@ import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.block.TickBlockEvent;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.item.CreativeTab;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
@@ -65,20 +67,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+import javax.annotation.Nullable;
+
 @NonnullByDefault
 @Mixin(value = Block.class, priority = 999)
 public abstract class MixinBlock implements BlockType, IMixinBlock {
 
     @Shadow private boolean needsRandomTick;
-
     @Shadow public abstract boolean isBlockNormalCube();
     @Shadow public abstract boolean getEnableStats();
     @Shadow public abstract int getLightValue();
     @Shadow public abstract String getUnlocalizedName();
     @Shadow public abstract IBlockState getStateFromMeta(int meta);
     @Shadow public abstract Material getMaterial();
-    @Shadow(prefix = "shadow$")
-    public abstract IBlockState shadow$getDefaultState();
+    @Shadow @Nullable private CreativeTabs displayOnCreativeTab;
+    @Shadow(prefix = "shadow$") abstract IBlockState shadow$getDefaultState();
+    @Shadow abstract Block setCreativeTab(@Nullable CreativeTabs tab);
 
     @Inject(method = "registerBlock", at = @At("RETURN"))
     private static void onRegisterBlock(int id, ResourceLocation location, Block block, CallbackInfo ci) {
@@ -103,6 +107,16 @@ public abstract class MixinBlock implements BlockType, IMixinBlock {
     @Override
     public Optional<ItemType> getItem() {
         return Optional.ofNullable((ItemType) Item.getItemFromBlock((Block) (Object) this));
+    }
+
+    @Override
+    public Optional<CreativeTab> getCreativeTab() {
+        return Optional.ofNullable((CreativeTab) displayOnCreativeTab);
+    }
+
+    @Override
+    public BlockType setCreativeTab(@Nullable CreativeTab tab) {
+        return (BlockType) setCreativeTab((CreativeTabs) tab);
     }
 
     @Override
