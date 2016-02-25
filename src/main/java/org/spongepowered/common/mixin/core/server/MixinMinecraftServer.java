@@ -136,6 +136,7 @@ public abstract class MixinMinecraftServer implements Server, ConsoleSource, IMi
     @Shadow private String motd;
     @Shadow private ServerConfigurationManager serverConfigManager;
     @Shadow public WorldServer[] worldServers;
+    @Shadow private boolean isGamemodeForced;
 
     @Shadow public abstract void setDifficultyForAllWorlds(EnumDifficulty difficulty);
     @Shadow public abstract void addChatMessage(IChatComponent message);
@@ -440,7 +441,7 @@ public abstract class MixinMinecraftServer implements Server, ConsoleSource, IMi
             worldServer.addWorldAccess(new WorldManager((MinecraftServer) (Object) this, worldServer));
 
             // This code changes from Mojang's to account for per-world API-set GameModes.
-            if (!this.isSinglePlayer() && worldServer.getWorldInfo().getGameType().equals(WorldSettings.GameType.NOT_SET)) {
+            if (!this.isSinglePlayer() && (isGamemodeForced || worldServer.getWorldInfo().getGameType().equals(WorldSettings.GameType.NOT_SET))) {
                 worldServer.getWorldInfo().setGameType(this.getGameType());
             }
 
