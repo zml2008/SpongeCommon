@@ -41,8 +41,6 @@ import org.spongepowered.api.command.args.CommandArgs;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.CommandElement;
 import org.spongepowered.api.command.spec.CommandSpec;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,15 +50,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
 public class SpongeCallbackHolder {
     public static final String CALLBACK_COMMAND = "callback";
     public static final String CALLBACK_COMMAND_QUALIFIED = "/sponge:" + CALLBACK_COMMAND;
     private static final SpongeCallbackHolder INSTANCE = new SpongeCallbackHolder();
 
-    private static final ConcurrentMap<UUID, Consumer<CommandSource>> reverseMap = new ConcurrentHashMap<>();
-    private static final LoadingCache<Consumer<CommandSource>, UUID> callbackCache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES)
+    private final ConcurrentMap<UUID, Consumer<CommandSource>> reverseMap = new ConcurrentHashMap<>();
+    private final LoadingCache<Consumer<CommandSource>, UUID> callbackCache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES)
             .removalListener(new RemovalListener<Consumer<CommandSource>, UUID>() {
                 @Override
                 public void onRemoval(RemovalNotification<Consumer<CommandSource>, UUID> notification) {
@@ -90,25 +86,25 @@ public class SpongeCallbackHolder {
         return Optional.of(reverseMap.get(id));
     }
 
+    private final CommandElement.Value<Consumer<CommandSource>> CALLBACK = new CallbackCommandElement(t("callback"));
     public CommandSpec createCommand() {
         return CommandSpec.builder()
                 .description(t("Execute a callback registered as part of a Text object. Primarily for internal use"))
-                .arguments(new CallbackCommandElement(t("callback")))
+                .arguments(CALLBACK)
                 .executor((src, args) -> {
-                    args.<Consumer<CommandSource>>getOne("callback").get().accept(src);
+                    args.get(CALLBACK).accept(src);
                     return CommandResult.success();
                 }).build();
     }
 
-    private class CallbackCommandElement extends CommandElement {
+    private class CallbackCommandElement extends CommandElement.Value<Consumer<CommandSource>> {
 
-        protected CallbackCommandElement(@Nullable Text key) {
+        protected CallbackCommandElement(Text key) {
             super(key);
         }
 
-        @Nullable
         @Override
-        protected Object parseValue(CommandSource source, CommandArgs args) throws ArgumentParseException {
+        protected Consumer<CommandSource> parseValue(CommandSource source, CommandArgs args) throws ArgumentParseException {
             final String next = args.next();
             try {
                 UUID id = UUID.fromString(next);

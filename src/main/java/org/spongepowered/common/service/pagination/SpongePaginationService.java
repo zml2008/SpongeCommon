@@ -30,7 +30,6 @@ import static org.spongepowered.common.util.SpongeCommonTranslationHelper.t;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
-import net.minecraft.entity.player.EntityPlayerMP;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
@@ -54,8 +53,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.annotation.Nullable;
 
 public class SpongePaginationService implements PaginationService {
 
@@ -85,28 +82,32 @@ public class SpongePaginationService implements PaginationService {
     final ConcurrentMap<MessageReceiver, SourcePaginations> activePaginations = new MapMaker().weakKeys().makeMap();
     private final AtomicBoolean commandRegistered = new AtomicBoolean();
 
+
+    private final CommandElement.Value<ActivePagination> PAGINATION_ID = new ActivePaginationCommandElement(t("pagination-id"));
+    private static final CommandElement.Value<Integer> PAGE = integer(t("page"));
+
     void registerCommandOnce() {
         if (this.commandRegistered.compareAndSet(false, true)) {
             SpongeImpl.getGame().getCommandManager().register(SpongeImpl.getPlugin(), CommandSpec.builder()
                 .description(t("Helper command for paginations occurring"))
-                .arguments(new ActivePaginationCommandElement(t("pagination-id")))
+                .arguments(PAGINATION_ID)
                 .child(CommandSpec.builder()
                            .description(t("Go to the next page"))
                            .executor((src, args) -> {
-                               args.<ActivePagination>getOne("pagination-id").get().nextPage();
+                               args.get(PAGINATION_ID).nextPage();
                                return CommandResult.success();
                            }).build(), "next", "n")
                 .child(CommandSpec.builder()
                            .description(t("Go to the previous page"))
                            .executor((src, args) -> {
-                               args.<ActivePagination>getOne("pagination-id").get().previousPage();
+                               args.get(PAGINATION_ID).previousPage();
                                return CommandResult.success();
                            }).build(), "previous", "prev", "p")
                 .child(CommandSpec.builder()
                            .description(t("Go to a specific page"))
-                           .arguments(integer(t("page")))
+                           .arguments(PAGE)
                            .executor((src, args) -> {
-                               args.<ActivePagination>getOne("pagination-id").get().specificPage(args.<Integer>getOne("page").get());
+                               args.get(PAGINATION_ID).specificPage(args.get(PAGE));
                                return CommandResult.success();
                            }).build(), "page")
                 .build(), "pagination", "page");
@@ -131,15 +132,14 @@ public class SpongePaginationService implements PaginationService {
         return ret;
     }
 
-    private class ActivePaginationCommandElement extends CommandElement {
+    private class ActivePaginationCommandElement extends CommandElement.Value<ActivePagination> {
 
-        protected ActivePaginationCommandElement(@Nullable Text key) {
+        protected ActivePaginationCommandElement(Text key) {
             super(key);
         }
 
-        @Nullable
         @Override
-        protected Object parseValue(CommandSource source, CommandArgs args) throws ArgumentParseException {
+        protected ActivePagination parseValue(CommandSource source, CommandArgs args) throws ArgumentParseException {
             UUID id;
             SourcePaginations paginations = getPaginationState(source, false);
             if (paginations == null) {

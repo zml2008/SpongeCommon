@@ -24,7 +24,7 @@
  */
 package org.spongepowered.common.command;
 
-import static org.spongepowered.api.command.args.GenericArguments.dimension;
+import static org.spongepowered.api.command.args.GenericArguments.catalogedElement;
 import static org.spongepowered.api.command.args.GenericArguments.firstParsing;
 import static org.spongepowered.api.command.args.GenericArguments.flags;
 import static org.spongepowered.api.command.args.GenericArguments.literal;
@@ -32,17 +32,22 @@ import static org.spongepowered.api.command.args.GenericArguments.optional;
 import static org.spongepowered.api.command.args.GenericArguments.seq;
 import static org.spongepowered.api.command.args.GenericArguments.string;
 import static org.spongepowered.api.command.args.GenericArguments.world;
+import static org.spongepowered.common.util.SpongeCommonTranslationHelper.t;
 
 import co.aikar.timings.SpongeTimingsFactory;
 import co.aikar.timings.Timings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldServer;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.command.args.ChildCommandElementExecutor;
+import org.spongepowered.api.command.args.ChildCommand;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.CommandElement;
+import org.spongepowered.api.command.args.CommandFlags;
 import org.spongepowered.api.command.args.PatternMatchingCommandElement;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
@@ -70,10 +75,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
 
 @NonnullByDefault
 public class SpongeCommand {
@@ -84,25 +89,36 @@ public class SpongeCommand {
     private static final Text NEWLINE_TEXT = Text.NEW_LINE;
     private static final Text SEPARATOR_TEXT = Text.of(", ");
 
+    private static final CommandFlags.Element<Boolean> GLOBAL_FLAG = CommandFlags.flag("-global", "g");
+    private static final CommandFlags.Element<Collection<? extends WorldProperties>> WORLDS = CommandFlags.valueFlag(world(t("world")), "-world", "w");
+    private static final CommandFlags.Element<Collection<? extends DimensionType>> DIMENSIONS = CommandFlags.valueFlag(catalogedElement(t("world"),
+            DimensionType.class), "-dimension", "d");
+
+    private static List<String> args(String... args) {
+        return ImmutableList.copyOf(args);
+    }
+
     /**
      * Create a new instance of the Sponge command structure.
      *
      * @return The newly created command
      */
     public static CommandSpec getCommand() {
-        final ChildCommandElementExecutor flagChildren = new ChildCommandElementExecutor(null);
-        final ChildCommandElementExecutor nonFlagChildren = new ChildCommandElementExecutor(flagChildren);
-        nonFlagChildren.register(getVersionCommand(), "version");
-        nonFlagChildren.register(getAuditCommand(), "audit");
-        nonFlagChildren.register(getHeapCommand(), "heap");
-        nonFlagChildren.register(getPluginsCommand(), "plugins");
-        nonFlagChildren.register(getTimingsCommand(), "timings");
-        flagChildren.register(getChunksCommand(), "chunks");
-        flagChildren.register(getConfigCommand(), "config");
-        flagChildren.register(getReloadCommand(), "reload"); // TODO: Should these two be subcommands of config, and what is now config be set?
-        flagChildren.register(getSaveCommand(), "save");
+        final Map.Entry<CommandElement.Value<ChildCommand>, CommandExecutor> flagChildren = ChildCommand.forChildren(
+                ImmutableMap.of(args("version"), getVersionCommand(),
+                        args("audit"), getAuditCommand(),
+                        args("heap"), getHeapCommand(),
+                        args("plugins"), getPluginsCommand(),
+                        args("timings"), getTimingsCommand())
+        );
+        final Map.Entry<CommandElement.Value<Optional<ChildCommand>>, CommandExecutor> nonFlagChildren = ChildCommand.forChildrenWithFallback(
+                ImmutableMap.of(args("chunks"), getChunksCommand(),
+                    args("config"), getConfigCommand(),
+                    args("reload"), getReloadCommand(),
+                    args("save"), getSaveCommand()), flagChildren.getValue());
+
         return CommandSpec.builder()
-                .description(Text.of("Text description"))
+                .description(t("A command to control and get information about Sponge"))
                 .extendedDescription(Text.of("commands:\n", // TODO: Automatically generate from child executors (wait for help system on this)
                         INDENT, title("chunks"), LONG_INDENT, "Prints chunk data for a specific dimension or world(s)\n",
                         INDENT, title("conf"), LONG_INDENT, "Configure sponge settings\n",
@@ -112,12 +128,10 @@ public class SpongeCommand {
                         INDENT, title("version"), LONG_INDENT, "Prints current Sponge version\n",
                         INDENT, title("audit"), LONG_INDENT, "Audit mixin classes for implementation",
                         INDENT, title("plugins"), LONG_INDENT, "List currently installed plugins"))
-                .arguments(firstParsing(nonFlagChildren, flags()
-                        .flag("-global", "g")
-                        .valueFlag(world(Text.of("world")), "-world", "w")
-                        .valueFlag(dimension(Text.of("dimension")), "-dimension", "d")
-                        .buildWith(flagChildren)))
-                .executor(nonFlagChildren)
+                .arguments(firstParsing(nonFlagChildren.getKey(), flags()
+                        .flag(GLOBAL_FLAG, WORLDS, DIMENSIONS)
+                        .buildWith(flagChildren.getKey())))
+                .executor(nonFlagChildren.getValue())
                 .build();
     }
 
@@ -127,20 +141,20 @@ public class SpongeCommand {
         @Override
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             int successes = 0;
-            if (args.hasAny("global")) {
+            if (args.get(GLOBAL_FLAG).orElse(false)) {
                 src.sendMessage(Text.of("Global: ", processGlobal(SpongeImpl.getGlobalConfig(), src, args)));
                 ++successes;
             }
-            if (args.hasAny("dimension")) {
-                for (DimensionType dimension : args.<DimensionType>getAll("dimension")) {
+            if (args.get(DIMENSIONS).isPresent()) {
+                for (DimensionType dimension : args.get(DIMENSIONS).get()) {
                     WorldProvider provider = DimensionManager.getWorldFromDimId(((SpongeDimensionType) dimension).getDimensionTypeId()).provider;
                     src.sendMessage(Text.of("Dimension ", dimension.getName(), ": ", processDimension(((IMixinWorldProvider) provider)
                                     .getDimensionConfig(), dimension, src, args)));
                     ++successes;
                 }
             }
-            if (args.hasAny("world")) {
-                for (WorldProperties properties : args.<WorldProperties>getAll("world")) {
+            if (args.get(WORLDS).isPresent()) {
+                for (WorldProperties properties : args.get(WORLDS).get()) {
                     Optional<World> world = SpongeImpl.getGame().getServer().getWorld(properties.getUniqueId());
                     if (!world.isPresent()) {
                         throw new CommandException(Text.of("World ", properties.getWorldName(), " is not loaded, cannot work with it"));
@@ -181,7 +195,7 @@ public class SpongeCommand {
     private static CommandSpec getChunksCommand() {
         return CommandSpec.builder()
                 .description(Text.of("Print chunk information, optionally dump"))
-                .arguments(optional(seq(literal(Text.of("dump"), "dump"), optional(literal(Text.of("dump-all"), "all")))))
+                .arguments(optional(seq(literal(t("dump"), "dump"), optional(literal(t("dump-all"), "all")))))
                 .permission("sponge.command.chunks")
                 .executor(new ConfigUsingExecutor() {
                     @Override
@@ -214,7 +228,7 @@ public class SpongeCommand {
                         SpongeImpl.getGame().getServer().getWorlds().stream().filter(world -> world.getDimension().getType().equals(dim))
                             .forEach(world -> source.sendMessage(Text.of("World ", Text.of(TextStyles.BOLD, world.getName()),
                                                                       getChunksInfo(((WorldServer) world)))));
-                        return Text.of("Printed chunk info for all worlds in dimension ", dim.getName());
+                        return t("Printed chunk info for all worlds in dimension %s", dim.getName());
                     }
 
                     @Override
@@ -245,29 +259,32 @@ public class SpongeCommand {
                 .build();
     }
 
+    private static final CommandElement.Value<String> KEY = string(t("key"));
+    private static final CommandElement.Value<Optional<String>> VALUE = optional(string(t("value")));
+
     private static CommandSpec getConfigCommand() {
         return CommandSpec.builder()
-                .description(Text.of("Inspect the Sponge config"))
-                .arguments(seq(string(Text.of("key")), optional(string(Text.of("value")))))
+                .description(t("Inspect the Sponge config"))
+                .arguments(KEY, VALUE)
                 .permission("sponge.command.config")
                 .executor(new ConfigUsingExecutor() {
                     @Override
                     protected Text process(SpongeConfig<?> config, CommandSource source, CommandContext args) throws CommandException {
-                        final Optional<String> key = args.getOne("key");
-                        final Optional<String> value = args.getOne("value");
-                        if (config.getSetting(key.get()) == null || config.getSetting(key.get()).isVirtual()) {
-                            throw new CommandException(Text.of("Key ", Text.builder(key.get()).color(TextColors.GREEN).build(), " is not "
+                        final String key = args.get(KEY);
+                        final Optional<String> value = args.get(VALUE);
+                        if (config.getSetting(key) == null || config.getSetting(key).isVirtual()) {
+                            throw new CommandException(Text.of("Key ", Text.builder(key).color(TextColors.GREEN).build(), " is not "
                                     + "valid"));
                         }
 
                         if (value.isPresent()) { // Set
-                            config.updateSetting(key.get(), value.get());
+                            config.updateSetting(key, value.get());
 
                             return Text.builder().append(Text.of(TextColors.GOLD, key), Text.of(" set to "),
                                     title(value.get())).build();
                         } else {
                             return Text.builder().append(Text.of(TextColors.GOLD, key), Text.of(" is "),
-                                    title(String.valueOf(config.getSetting(key.get()).getValue()))).build();
+                                    title(String.valueOf(config.getSetting(key).getValue()))).build();
                         }
                     }
                 })
@@ -351,9 +368,9 @@ public class SpongeCommand {
                 .build();
     }
 
-    private static class PluginsCommandElement extends PatternMatchingCommandElement {
+    private static class PluginsCommandElement extends PatternMatchingCommandElement<PluginContainer> {
 
-        protected PluginsCommandElement(@Nullable Text key) {
+        protected PluginsCommandElement(Text key) {
             super(key);
         }
 
@@ -363,7 +380,7 @@ public class SpongeCommand {
         }
 
         @Override
-        protected Object getValue(String choice) throws IllegalArgumentException {
+        protected PluginContainer getValue(String choice) throws IllegalArgumentException {
             Optional<PluginContainer> plugin = Sponge.getPluginManager().getPlugin(choice);
             return plugin.orElseThrow(() -> new IllegalArgumentException("Plugin " + choice + " was not found"));
         }
@@ -373,14 +390,18 @@ public class SpongeCommand {
         return Text.of(TextColors.GREEN, title);
     }
 
+    private static final CommandElement.Value<Optional<Collection<? extends PluginContainer>>> PLUGINS =
+            optional(new PluginsCommandElement(t("plugin")));
+
     private static CommandSpec getPluginsCommand() {
         return CommandSpec.builder()
                 .description(Text.of("List currently installed plugins"))
                 .permission("sponge.command.plugins")
-                .arguments(optional(new PluginsCommandElement(Text.of("plugin"))))
+                .arguments(PLUGINS)
                 .executor((src, args) -> {
-                    if (args.hasAny("plugin")) {
-                        for (PluginContainer container : args.<PluginContainer>getAll("plugin")) {
+                    final Optional<Collection<? extends PluginContainer>> containers = args.get(PLUGINS);
+                    if (containers.isPresent()) {
+                        for (PluginContainer container : containers.get()) {
                             Text.Builder builder = Text.builder().append(title(container.getName()));
                             container.getVersion().ifPresent(version -> builder.append(Text.of((" v" + version))));
 
@@ -432,7 +453,7 @@ public class SpongeCommand {
     }
 
 
-    private static CommandCallable getTimingsCommand() {
+    private static CommandSpec getTimingsCommand() {
         return CommandSpec.builder()
                 .permission("sponge.command.timings")
                 .description(Text.of("Manages Sponge Timings data to see performance of the server."))

@@ -26,9 +26,11 @@ package org.spongepowered.common.command;
 
 import static org.spongepowered.api.command.args.GenericArguments.optional;
 import static org.spongepowered.api.command.args.GenericArguments.string;
+import static org.spongepowered.common.util.SpongeCommonTranslationHelper.t;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import org.spongepowered.api.command.args.CommandElement;
 import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.service.pagination.PaginationService;
 import org.spongepowered.api.text.Text;
@@ -49,18 +51,20 @@ import java.util.TreeSet;
 
 public class SpongeHelpCommand {
 
+    private static final CommandElement.Value<Optional<String>> COMMAND = optional(string(t("command")));
+
     private static final Comparator<CommandMapping> COMMAND_COMPARATOR = (o1, o2) -> o1.getPrimaryAlias().compareTo(o2.getPrimaryAlias());
 
     public static CommandSpec create() {
         return CommandSpec
             .builder()
-            .arguments(optional(string(Text.of("command"))))
+            .arguments(COMMAND)
             .description(Text.of("View a list of all commands."))
             .extendedDescription(
                 Text.of("View a list of all commands. Hover over\n" + " a command to view its description. Click\n"
                          + " a command to insert it into your chat bar."))
             .executor((src, args) -> {
-                Optional<String> command = args.getOne("command");
+                Optional<String> command = args.get(COMMAND);
                 if (command.isPresent()) {
                     Optional<? extends CommandMapping> mapping = SpongeImpl.getGame().getCommandManager().get(command.get(), src);
                     if (mapping.isPresent()) {
