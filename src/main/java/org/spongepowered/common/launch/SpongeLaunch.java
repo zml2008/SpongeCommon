@@ -26,8 +26,10 @@ package org.spongepowered.common.launch;
 
 import static org.spongepowered.common.SpongeImpl.ECOSYSTEM_ID;
 
+import com.google.common.collect.Sets;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.Mixins;
+import org.spongepowered.common.launch.transformer.SpongeMethodWarningRegistry;
 import org.spongepowered.common.launch.transformer.SpongeSuperclassRegistry;
 
 import java.nio.file.Path;
@@ -39,6 +41,7 @@ public class SpongeLaunch {
     }
 
     public static final String SUPERCLASS_TRANSFORMER = "org.spongepowered.common.launch.transformer.SpongeSuperclassTransformer";
+    public static final String METHOD_WARNING_TRANSFORMER = "org.spongepowered.common.launch.transformer.SpongeMethodWarningTranformer";
 
     private static final Path gameDir = Paths.get("");
     private static final Path pluginsDir = gameDir.resolve("mods");
@@ -78,7 +81,7 @@ public class SpongeLaunch {
         Mixins.addConfiguration("mixins.common.realtime.json");
     }
 
-    public static void setupSuperClassTransformer() {
+    public static void setupTransformers() {
         SpongeSuperclassRegistry.registerSuperclassModification("org.spongepowered.api.entity.ai.task.AbstractAITask",
                 "org.spongepowered.common.entity.ai.SpongeEntityAICommonSuperclass");
         SpongeSuperclassRegistry.registerSuperclassModification("org.spongepowered.api.event.cause.entity.damage.source.common.AbstractDamageSource",
@@ -89,6 +92,9 @@ public class SpongeLaunch {
         SpongeSuperclassRegistry.registerSuperclassModification(
                 "org.spongepowered.api.event.cause.entity.damage.source.common.AbstractIndirectEntityDamageSource",
                 "org.spongepowered.common.event.damage.SpongeCommonIndirectEntityDamageSource");
+
+        SpongeMethodWarningRegistry.registerMethodWarning(Sets.newHashSet("org/spongepowered/common/data/processor/multi/entity/HealthDataProcessor"), "net/minecraft/entity/EntityLivingBase.onDeath(Lnet/minecraft/util/DamageSource;)V", "Don't do that!");
+        SpongeMethodWarningRegistry.registerMethodWarning(Sets.newHashSet("org/spongepowered/common/data/processor/multi/entity/HealthDataProcessor"), "net/minecraft/entity/EntityLivingBase.func_70645_a(Lnet/minecraft/util/DamageSource;)V", "Don't do that!");
     }
 
 }
