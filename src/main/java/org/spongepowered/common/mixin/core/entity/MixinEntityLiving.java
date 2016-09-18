@@ -28,6 +28,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.GameRules;
@@ -51,6 +52,8 @@ import org.spongepowered.api.event.entity.LeashEntityEvent;
 import org.spongepowered.api.event.entity.UnleashEntityEvent;
 import org.spongepowered.api.event.entity.ai.AITaskEvent;
 import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -67,9 +70,17 @@ import org.spongepowered.common.data.value.mutable.SpongeValue;
 import org.spongepowered.common.interfaces.ai.IMixinEntityAIBase;
 import org.spongepowered.common.interfaces.ai.IMixinEntityAITasks;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
+import org.spongepowered.common.interfaces.entity.IMixinEntityLiving;
 import org.spongepowered.common.interfaces.entity.IMixinGriefer;
 import org.spongepowered.common.interfaces.world.IMixinWorld;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
+import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
+import org.spongepowered.common.item.inventory.lens.Fabric;
+import org.spongepowered.common.item.inventory.lens.Lens;
+import org.spongepowered.common.item.inventory.lens.SlotProvider;
+import org.spongepowered.common.item.inventory.lens.impl.EntityLivingFabric;
+import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
+import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -78,7 +89,8 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 @Mixin(EntityLiving.class)
-public abstract class MixinEntityLiving extends MixinEntityLivingBase implements Agent {
+@Implements(@Interface(iface = MinecraftInventoryAdapter.class, prefix = "inventory$"))
+public abstract class MixinEntityLiving extends MixinEntityLivingBase implements Agent, IMixinEntityLiving {
 
     private static final String GET_CLOSEST_PLAYER =
             "Lnet/minecraft/world/World;getClosestPlayerToEntity(Lnet/minecraft/entity/Entity;D)Lnet/minecraft/entity/player/EntityPlayer;";
@@ -93,8 +105,19 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
     @Shadow public abstract void setLeashedToEntity(net.minecraft.entity.Entity entityIn, boolean sendAttachNotification);
     @Shadow protected abstract void initEntityAI();
     @Shadow protected abstract boolean canDespawn();
+    @Shadow @Final private ItemStack[] inventoryHands = new ItemStack[2];
+    @Shadow @Final private ItemStack[] inventoryArmor = new ItemStack[4];
 
     boolean initAI = false;
+
+    private Fabric<ItemStack[]> fabric;
+    private SlotCollection slots;
+    private Lens<ItemStack[], ItemStack> lens;
+
+    @Inject(method = "<init>", at = @At("HEAD"))
+    public void onConstructed(World worldIn, CallbackInfo ci) {
+        this.constructInventory();
+    }
 
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;initEntityAI()V"))
     public void onInitAi(EntityLiving this$0) {
@@ -269,4 +292,22 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
         manipulators.add(getAgentData());
     }
 
+    @Override
+    public void constructInventory() {
+                this.fabric = new EntityLivingFabric((EntityLiving) (Object) this, this.inventoryHands, this.inventoryArmor);
+                this.slots = new SlotCollection.Builder().add(8).build();
+                this.lens = new OrderedInventoryLensImpl(0, 8, 1, this.slots);
+    }
+
+    public SlotProvider<IInventory, ItemStack> inventory$getSlotProvider() {
+        return this.slots;
+    }
+
+    public Lens<IInventory, ItemStack> inventory$getRootLens() {
+        return this.lens;
+    }
+
+    public Fabric<IInventory> inventory$getInventory() {
+        return this.fabric;
+    }
 }

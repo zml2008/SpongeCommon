@@ -24,12 +24,16 @@
  */
 package org.spongepowered.common.mixin.core.item.inventory;
 
-import net.minecraft.entity.passive.EntityVillager;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityMinecartChest;
+import net.minecraft.entity.item.EntityMinecartHopper;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryEnderChest;
 import net.minecraft.inventory.InventoryLargeChest;
+import net.minecraft.tileentity.TileEntityBeacon;
+import net.minecraft.tileentity.TileEntityBrewingStand;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.tileentity.TileEntityHopper;
@@ -49,15 +53,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin({
-        net.minecraft.inventory.Slot.class,
+        Container.class,
+        EntityLiving.class,
+        EntityMinecartChest.class,
+        EntityMinecartHopper.class,
+        InventoryEnderChest.class,
+        InventoryLargeChest.class,
         InventoryPlayer.class,
+        net.minecraft.inventory.Slot.class,
         TileEntityChest.class,
         TileEntityFurnace.class,
         TileEntityHopper.class,
-        EntityVillager.class,
-        Container.class,
-        InventoryLargeChest.class,
-        InventoryEnderChest.class,
+        TileEntityBeacon.class,
+        TileEntityBrewingStand.class,
 })
 @Implements(@Interface(iface = Inventory.class, prefix = "inventory$"))
 public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter {

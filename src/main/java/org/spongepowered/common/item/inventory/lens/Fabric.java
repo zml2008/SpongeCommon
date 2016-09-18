@@ -42,28 +42,28 @@ public interface Fabric<TInventory> {
      * Return all inventories which compose this fabric, order is not guaranteed
      * or enforced.
      */
-    public abstract Collection<TInventory> allInventories();
+    Collection<TInventory> allInventories();
 
     /**
      * Return the inventory at the specified index in the fabric.
      *
-     * @param index
-     * @return
+     * @param index the index
+     * @return the indexed container
      */
-    public abstract TInventory get(int index);
+    TInventory get(int index);
 
-    public abstract ItemStack getStack(int index);
+    ItemStack getStack(int index);
 
-    public abstract void setStack(int index, ItemStack stack);
+    void setStack(int index, ItemStack stack);
 
-    public abstract int getMaxStackSize();
+    int getMaxStackSize();
 
-    public abstract Translation getDisplayName();
+    Translation getDisplayName();
 
-    public abstract int getSize();
+    int getSize();
 
-    public abstract void clear();
+    void clear();
 
-    public abstract void markDirty();
+    void markDirty();
 
 }

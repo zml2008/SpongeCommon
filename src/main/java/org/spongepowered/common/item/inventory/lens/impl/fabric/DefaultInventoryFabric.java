@@ -24,6 +24,8 @@
  */
 package org.spongepowered.common.item.inventory.lens.impl.fabric;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -38,6 +40,7 @@ public class DefaultInventoryFabric extends MinecraftFabric {
     private final IInventory inventory;
 
     public DefaultInventoryFabric(IInventory inventory) {
+        checkNotNull(inventory);
         this.inventory = inventory;
     }
     
