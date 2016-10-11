@@ -684,14 +684,14 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
     /**
      * @author blood - August 30th, 2016
      *
-     * @reason Always allow entity cleanup to occur. This prevents issues such as a plugin 
+     * @reason Always allow entity cleanup to occur. This prevents issues such as a plugin
      *         generating chunks with no players causing entities not getting cleaned up.
      */
     @Override
     @Overwrite
     public void updateEntities() {
         // Sponge start
-        /* 
+        /*
         if (this.playerEntities.isEmpty()) {
             if (this.updateEntityTick++ >= 300) {
                 return;
@@ -825,7 +825,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
     public void addBlockEvent(BlockPos pos, Block blockIn, int eventID, int eventParam, CallbackInfo ci) {
         // We fire a Pre event to make sure our captures do not get stuck in a loop.
         // This is very common with pistons as they add block events while blocks are being notified.
-        if (SpongeCommonEventFactory.handleChangeBlockEventPre(this, pos)) {
+        if (SpongeCommonEventFactory.handleChangeBlockEventPreFromPhase(this, pos)) {
             ci.cancel();
         }
     }

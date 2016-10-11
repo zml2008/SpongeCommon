@@ -164,7 +164,7 @@ public final class GeneralPhase extends TrackingPhase {
         // We create the post event and of course post it in the method, regardless whether any transactions are invalidated or not
         final ChangeBlockEvent.Post
                 postEvent =
-                TrackingUtil.throwMultiEventsAndCreatePost(transactionArrays, blockEvents, mainEvents, builder, world);
+                TrackingUtil.throwMultiEventsAndCreatePost(transactionArrays, blockEvents, mainEvents, builder, world, true);
 
         if (postEvent == null) { // Means that we have had no actual block changes apparently?
             return;

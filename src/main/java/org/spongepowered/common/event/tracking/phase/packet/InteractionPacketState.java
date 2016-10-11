@@ -43,6 +43,11 @@ final class InteractionPacketState extends BasicPacketState {
     }
 
     @Override
+    public boolean fireModBlockEvents() {
+        return false;
+    }
+
+    @Override
     public void populateContext(EntityPlayerMP playerMP, Packet<?> packet, PhaseContext context) {
         final ItemStack stack = ItemStackUtil.cloneDefensive(playerMP.getHeldItemMainhand());
         if (stack != null) {

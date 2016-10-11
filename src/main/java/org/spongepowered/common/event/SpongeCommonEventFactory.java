@@ -83,6 +83,7 @@ import org.spongepowered.api.world.World;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.tracking.CauseTracker;
+import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseData;
 import org.spongepowered.common.interfaces.IMixinChunk;
@@ -199,7 +200,7 @@ public class SpongeCommonEventFactory {
         return event;
     }
 
-    public static boolean handleChangeBlockEventPre(IMixinWorldServer worldIn, BlockPos pos) {
+    public static boolean handleChangeBlockEventPreFromPhase(IMixinWorldServer worldIn, BlockPos pos) {
         final CauseTracker causeTracker = worldIn.getCauseTracker();
         PhaseData data = causeTracker.getCurrentPhaseData();
         Optional<BlockSnapshot> block = data.context.getSource(BlockSnapshot.class);
@@ -216,7 +217,27 @@ public class SpongeCommonEventFactory {
         notifier.ifPresent(user -> builder.named(NamedCause.NOTIFIER, user));
         ChangeBlockEvent.Pre event = SpongeEventFactory.createChangeBlockEventPre(builder.build(), ImmutableList.of(location),
                 (World) worldIn);
-        SpongeImpl.postEvent(event);
+        SpongeImpl.postEvent(event, false);
+        return event.isCancelled();
+    }
+
+
+    public static boolean firePreEventForPos(WorldServer worldServer, EntityPlayerMP player, BlockPos pos, boolean fireModEvents) {
+        final CauseTracker causeTracker = ((IMixinWorldServer) worldServer).getCauseTracker();
+        final PhaseData peek = causeTracker.getCurrentPhaseData();
+        final IPhaseState phaseState = peek.state;
+        final Cause.Builder builder = Cause.source(player);
+        peek.context.getOwner().ifPresent(builder::owner);
+
+        if (!(phaseState.getPhase().appendPreBlockProtectedCheck(builder, phaseState, peek.context, causeTracker))) {
+            peek.context.getNotifier().ifPresent(builder::notifier);
+        }
+
+        Location<World>
+                location = new Location<>((World) worldServer, pos.getX(), pos.getY(), pos.getZ());
+        ChangeBlockEvent.Pre event = SpongeEventFactory
+                .createChangeBlockEventPre(builder.build(), ImmutableList.of(location), (World) worldServer);
+        SpongeImpl.postEvent(event, fireModEvents);
         return event.isCancelled();
     }
 

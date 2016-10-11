@@ -448,6 +448,8 @@ public final class TrackingUtil {
         }
         ImmutableList<Transaction<BlockSnapshot>>[] transactionArrays = new ImmutableList[EVENT_COUNT];
         ImmutableList.Builder<Transaction<BlockSnapshot>>[] transactionBuilders = new ImmutableList.Builder[EVENT_COUNT];
+        boolean fireModEvents = state.fireModBlockEvents();
+
         for (int i = 0; i < EVENT_COUNT; i++) {
             transactionBuilders[i] = new ImmutableList.Builder<>();
         }
@@ -480,9 +482,9 @@ public final class TrackingUtil {
         }
         final org.spongepowered.api.world.World world = causeTracker.getWorld();
         // Creates the block events accordingly to the transaction arrays
-        iterateChangeBlockEvents(transactionArrays, blockEvents, mainEvents, builder, world); // Needs to throw events
+        iterateChangeBlockEvents(transactionArrays, blockEvents, mainEvents, builder, world, fireModEvents); // Needs to throw events
         // We create the post event and of course post it in the method, regardless whether any transactions are invalidated or not
-        final ChangeBlockEvent.Post postEvent = throwMultiEventsAndCreatePost(transactionArrays, blockEvents, mainEvents, builder, world);
+        final ChangeBlockEvent.Post postEvent = throwMultiEventsAndCreatePost(transactionArrays, blockEvents, mainEvents, builder, world, fireModEvents);
 
         if (postEvent == null) { // Means that we have had no actual block changes apparently?
             return false;
@@ -552,6 +554,11 @@ public final class TrackingUtil {
 
     public static void iterateChangeBlockEvents(ImmutableList<Transaction<BlockSnapshot>>[] transactionArrays, List<ChangeBlockEvent> blockEvents,
             ChangeBlockEvent[] mainEvents, Cause.Builder builder, org.spongepowered.api.world.World world) {
+        iterateChangeBlockEvents(transactionArrays, blockEvents, mainEvents, builder, world, true);
+    }
+
+    public static void iterateChangeBlockEvents(ImmutableList<Transaction<BlockSnapshot>>[] transactionArrays, List<ChangeBlockEvent> blockEvents,
+            ChangeBlockEvent[] mainEvents, Cause.Builder builder, org.spongepowered.api.world.World world, boolean fireModEvents) {
         for (BlockChange blockChange : BlockChange.values()) {
             if (blockChange == BlockChange.DECAY) { // Decay takes place after.
                 continue;
@@ -560,7 +567,7 @@ public final class TrackingUtil {
                 final ChangeBlockEvent event = blockChange.createEvent(builder.build(), world, transactionArrays[blockChange.ordinal()]);
                 mainEvents[blockChange.ordinal()] = event;
                 if (event != null) {
-                    SpongeImpl.postEvent(event);
+                    SpongeImpl.postEvent(event, fireModEvents);
                     blockEvents.add(event);
                 }
             }
@@ -569,7 +576,7 @@ public final class TrackingUtil {
             final ChangeBlockEvent event = BlockChange.DECAY.createEvent(builder.build(), world, transactionArrays[BlockChange.DECAY.ordinal()]);
             mainEvents[BlockChange.DECAY.ordinal()] = event;
             if (event != null) {
-                SpongeImpl.postEvent(event);
+                SpongeImpl.postEvent(event, fireModEvents);
                 blockEvents.add(event);
             }
         }
@@ -728,7 +735,7 @@ public final class TrackingUtil {
     }
 
     public static ChangeBlockEvent.Post throwMultiEventsAndCreatePost(ImmutableList<Transaction<BlockSnapshot>>[] transactionArrays, List<ChangeBlockEvent> blockEvents,
-            ChangeBlockEvent[] mainEvents, Cause.Builder builder, org.spongepowered.api.world.World world) {
+            ChangeBlockEvent[] mainEvents, Cause.Builder builder, org.spongepowered.api.world.World world, boolean fireModEvents) {
         if (!blockEvents.isEmpty()) {
             for (BlockChange blockChange : BlockChange.values()) {
                 final ChangeBlockEvent mainEvent = mainEvents[blockChange.ordinal()];
@@ -738,7 +745,7 @@ public final class TrackingUtil {
             }
             final ImmutableList<Transaction<BlockSnapshot>> transactions = transactionArrays[MULTI_CHANGE_INDEX];
             final ChangeBlockEvent.Post post = SpongeEventFactory.createChangeBlockEventPost(builder.build(), world, transactions);
-            SpongeImpl.postEvent(post);
+            SpongeImpl.postEvent(post, fireModEvents);
             return post;
         }
         return null;

@@ -140,6 +140,10 @@ public final class SpongeImpl {
         return getGame().getEventManager().post(event);
     }
 
+    public static boolean postEvent(Event event, boolean fireModEvents) {
+        return ((SpongeEventManager) getGame().getEventManager()).post(event, false, fireModEvents);
+    }
+
     public static Logger getLogger() {
         return logger;
     }

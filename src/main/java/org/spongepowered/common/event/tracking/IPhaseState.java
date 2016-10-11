@@ -108,6 +108,7 @@ public interface IPhaseState {
     default void postTrackBlock(BlockSnapshot snapshot, CauseTracker tracker, PhaseContext context) {
 
     }
-
-
+    default boolean fireModBlockEvents() {
+        return true;
+    }
 }
