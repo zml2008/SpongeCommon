@@ -44,6 +44,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.interfaces.entity.player.IMixinInventoryPlayer;
 import org.spongepowered.common.item.inventory.adapter.impl.comp.EquipmentInventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.comp.GridInventoryAdapter;
@@ -60,6 +61,9 @@ import org.spongepowered.common.item.inventory.lens.impl.minecraft.PlayerInvento
 import org.spongepowered.common.item.inventory.observer.InventoryEventArgs;
 
 import java.util.Optional;
+import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
 
 @Mixin(InventoryPlayer.class)
 public abstract class MixinInventoryPlayer implements IMixinInventoryPlayer, PlayerInventory {
@@ -72,6 +76,8 @@ public abstract class MixinInventoryPlayer implements IMixinInventoryPlayer, Pla
     @Shadow @Final private ItemStack[][] allInventories;
 
     @Shadow public abstract int getInventoryStackLimit();
+
+    private Optional<Predicate<EntityPlayer>> isUsableByPlayer = Optional.empty();
 
     protected SlotCollection slots;
     protected Fabric<IInventory> inventory;
@@ -206,5 +212,17 @@ public abstract class MixinInventoryPlayer implements IMixinInventoryPlayer, Pla
         }
 
         return -1;
+    }
+
+    @Override
+    public void setIsUseableByPlayer(@Nullable Predicate<EntityPlayer> predicate) {
+        this.isUsableByPlayer = Optional.ofNullable(predicate);
+    }
+
+    @Inject(method = "isUseableByPlayer", at = @At(value = "HEAD"), cancellable = true)
+    public void onIsUseableByPlayer(EntityPlayer playerIn, CallbackInfoReturnable<Boolean> cir) {
+        if (this.isUsableByPlayer.isPresent()) {
+            cir.setReturnValue(this.isUsableByPlayer.get().test(playerIn));
+        }
     }
 }

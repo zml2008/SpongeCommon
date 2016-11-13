@@ -607,6 +607,10 @@ public class SpongeCommonEventFactory {
                     container = player.openContainer;
                     break;
             }
+        } else if (inventory instanceof InventoryPlayer) {
+            player.displayGUIChest(((InventoryPlayer) inventory));
+            ((IMixinInventoryPlayer) inventory).setIsUseableByPlayer(p -> !((InventoryPlayer) inventory).player.isDead); // Allow interaction when not dead
+            container = player.openContainer;
         } else if (inventory instanceof IInventory) {
             player.displayGUIChest(((IInventory) inventory));
             container = player.openContainer;

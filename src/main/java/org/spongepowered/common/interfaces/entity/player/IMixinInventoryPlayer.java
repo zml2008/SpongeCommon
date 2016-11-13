@@ -24,8 +24,13 @@
  */
 package org.spongepowered.common.interfaces.entity.player;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
+
+import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
 
 public interface IMixinInventoryPlayer extends MinecraftInventoryAdapter {
     
@@ -36,7 +41,7 @@ public interface IMixinInventoryPlayer extends MinecraftInventoryAdapter {
      * @param notify True to send an update packet to the client if this is a
      *      server
      */
-    public abstract void setSelectedItem(int itemIndex, boolean notify);
+    void setSelectedItem(int itemIndex, boolean notify);
 
     /**
      * Gets the first available slot id for itemstack.
@@ -46,4 +51,5 @@ public interface IMixinInventoryPlayer extends MinecraftInventoryAdapter {
      */
     int getFirstAvailableSlot(ItemStack itemstack);
 
+    void setIsUseableByPlayer(@Nullable Predicate<EntityPlayer> predicate);
 }
