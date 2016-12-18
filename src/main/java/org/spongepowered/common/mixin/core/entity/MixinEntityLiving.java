@@ -28,7 +28,6 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
@@ -82,6 +81,7 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
 
     private static final String GET_CLOSEST_PLAYER =
             "Lnet/minecraft/world/World;getClosestPlayerToEntity(Lnet/minecraft/entity/Entity;D)Lnet/minecraft/entity/player/EntityPlayer;";
+
     @Shadow @Final private EntityAITasks tasks;
     @Shadow @Final private EntityAITasks targetTasks;
     @Shadow @Nullable private EntityLivingBase attackTarget;

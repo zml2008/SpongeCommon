@@ -30,10 +30,10 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.entity.living.human.EntityHuman;
-import org.spongepowered.common.mixin.core.entity.MixinEntityCreature;
+import org.spongepowered.common.mixin.core.entity.MixinEntityLivingBase;
 
 @Mixin(value = EntityHuman.class, remap = false)
-public abstract class MixinEntityHuman extends MixinEntityCreature implements Human {
+public abstract class MixinEntityHuman extends MixinEntityLivingBase implements Human {
 
     @Shadow private GameProfile fakeProfile;
     private Inventory openInventory;

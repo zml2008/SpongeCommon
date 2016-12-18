@@ -31,11 +31,11 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.item.EntityMinecart;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import net.minecraft.world.chunk.storage.RegionFileCache;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.Transform;
 import org.spongepowered.api.event.SpongeEventFactory;
@@ -56,7 +56,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.data.util.NbtDataUtil;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.interfaces.IMixinChunk;
@@ -157,22 +156,22 @@ public abstract class MixinAnvilChunkLoader implements IMixinAnvilChunkLoader {
      * @param world
      * @return
      */
-    @Redirect(method = "readChunkFromNBT(Lnet/minecraft/world/World;Lnet/minecraft/nbt/NBTTagCompound;)Lnet/minecraft/world/chunk/Chunk;",
-            at = @At(value = "INVOKE", target = ENTITY_LIST_CREATE_FROM_NBT), require = 0, expect = 0)
-    private Entity onReadEntity(NBTTagCompound compound, World world) {
-        if ("Minecart".equals(compound.getString(NbtDataUtil.ENTITY_TYPE_ID))) {
+    @Redirect(method = "createEntityFromNBT(Lnet/minecraft/nbt/NBTTagCompound;Lnet/minecraft/world/World;)"
+            + "Lnet/minecraft/entity/Entity;", at = @At(value = "INVOKE", target = ENTITY_LIST_CREATE_FROM_NBT),
+            require = 0, expect = 0)
+    private static Entity onReadEntity(NBTTagCompound compound, World world) {
+        String entityId = compound.getString(NbtDataUtil.ENTITY_TYPE_ID);
+        if ("Minecart".equals(entityId)) {
             compound.setString(NbtDataUtil.ENTITY_TYPE_ID,
                     EntityMinecart.Type.values()[compound.getInteger(NbtDataUtil.MINECART_TYPE)].getName());
             compound.removeTag(NbtDataUtil.MINECART_TYPE);
         }
-        Class<? extends Entity> entityClass = SpongeImplHooks.getEntityClass(new ResourceLocation(compound.getString(NbtDataUtil.ENTITY_TYPE_ID)));
-        if (entityClass == null) {
-            return null;
-        }
-        EntityType type = EntityTypeRegistryModule.getInstance().getForClass(entityClass);
+
+        EntityType type = EntityTypeRegistryModule.getInstance().getById(entityId).orElse(null);
         if (type == null) {
             return null;
         }
+
         NBTTagList positionList = compound.getTagList(NbtDataUtil.ENTITY_POSITION, NbtDataUtil.TAG_DOUBLE);
         NBTTagList rotationList = compound.getTagList(NbtDataUtil.ENTITY_ROTATION, NbtDataUtil.TAG_FLOAT);
         Vector3d position = new Vector3d(positionList.getDoubleAt(0), positionList.getDoubleAt(1), positionList.getDoubleAt(2));
@@ -180,9 +179,10 @@ public abstract class MixinAnvilChunkLoader implements IMixinAnvilChunkLoader {
         Transform<org.spongepowered.api.world.World> transform = new Transform<>((org.spongepowered.api.world.World) world, position, rotation);
         SpawnCause cause = SpawnCause.builder().type(SpawnTypes.CHUNK_LOAD).build();
         ConstructEntityEvent.Pre event = SpongeEventFactory.createConstructEntityEventPre(Cause.of(NamedCause.source(cause)), type, transform);
-        if (event.isCancelled()) {
+        if (Sponge.getEventManager().post(event)) {
             return null;
         }
+
         return EntityList.createEntityFromNBT(compound, world);
     }
 

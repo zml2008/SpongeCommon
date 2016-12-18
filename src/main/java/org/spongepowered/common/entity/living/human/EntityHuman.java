@@ -32,7 +32,6 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IRangedAttackMob;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -42,6 +41,7 @@ import net.minecraft.entity.projectile.EntityTippedArrow;
 import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.Packet;
@@ -51,6 +51,7 @@ import net.minecraft.network.play.server.SPacketSpawnPlayer;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameType;
@@ -65,6 +66,7 @@ import org.spongepowered.common.data.value.immutable.ImmutableSpongeValue;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -80,7 +82,7 @@ import javax.annotation.Nullable;
  *
  * Hostile mobs don't attack the human, should this be default behaviour?
  */
-public class EntityHuman extends EntityCreature implements TeamMember, IRangedAttackMob {
+public class EntityHuman extends EntityLivingBase implements TeamMember, IRangedAttackMob {
 
     // According to http://wiki.vg/Mojang_API#UUID_-.3E_Profile_.2B_Skin.2FCape
     // you can access this data once per minute, lets cache for 2 minutes
@@ -99,13 +101,11 @@ public class EntityHuman extends EntityCreature implements TeamMember, IRangedAt
 
     private GameProfile fakeProfile;
     @Nullable private UUID skinUuid;
-    private boolean aiDisabled = false;
 
     public EntityHuman(World worldIn) {
         super(worldIn);
         this.fakeProfile = new GameProfile(this.entityUniqueID, "");
         this.setSize(0.6F, 1.8F);
-        this.setCanPickUpLoot(true);
     }
 
     @Override
@@ -116,25 +116,11 @@ public class EntityHuman extends EntityCreature implements TeamMember, IRangedAt
 
     @Override
     protected void entityInit() {
-        this.dataManager.register(EntityLivingBase.HAND_STATES, Byte.valueOf((byte)0));
-        this.dataManager.register(EntityLivingBase.POTION_EFFECTS, Integer.valueOf(0));
-        this.dataManager.register(EntityLivingBase.HIDE_PARTICLES, Boolean.valueOf(false));
-        this.dataManager.register(EntityLivingBase.ARROW_COUNT_IN_ENTITY, Integer.valueOf(0));
-        this.dataManager.register(EntityLivingBase.HEALTH, Float.valueOf(1.0F));
+        super.entityInit();
         this.dataManager.register(EntityPlayer.ABSORPTION, 0.0F);
         this.dataManager.register(EntityPlayer.PLAYER_SCORE, 0);
         this.dataManager.register(EntityPlayer.MAIN_HAND, (byte) 1);
         this.dataManager.register(EntityPlayer.PLAYER_MODEL_FLAG, (byte) 0xFF);
-    }
-
-    @Override
-    public boolean isLeftHanded() {
-        return this.dataManager.get(EntityPlayer.MAIN_HAND) == 0;
-    }
-
-    @Override
-    public boolean isAIDisabled() {
-        return this.aiDisabled;
     }
 
     @Override
@@ -247,6 +233,21 @@ public class EntityHuman extends EntityCreature implements TeamMember, IRangedAt
     protected SoundEvent getFallSound(int p_184588_1_) {
         return p_184588_1_ > 4 ? SoundEvents.ENTITY_PLAYER_BIG_FALL : SoundEvents.ENTITY_PLAYER_SMALL_FALL;
     }
+
+    @Override
+    public Iterable<ItemStack> getArmorInventoryList() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public ItemStack getItemStackFromSlot(EntityEquipmentSlot slotIn) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItemStackToSlot(EntityEquipmentSlot slotIn, ItemStack stack) {
+    }
+
     @Override
     public float getEyeHeight() {
         return 1.62f;
@@ -263,6 +264,11 @@ public class EntityHuman extends EntityCreature implements TeamMember, IRangedAt
             amount = 0.0F;
         }
         this.getDataManager().set(EntityPlayer.ABSORPTION, amount);
+    }
+
+    @Override
+    public EnumHandSide getPrimaryHand() {
+        return EnumHandSide.RIGHT;
     }
 
     @Override
