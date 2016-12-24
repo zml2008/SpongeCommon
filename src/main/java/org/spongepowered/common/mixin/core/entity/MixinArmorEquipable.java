@@ -58,6 +58,7 @@ public abstract class MixinArmorEquipable extends MixinEntityLivingBase {
 
     public void equipable$setHelmet(ItemStack helmet) {
         if (helmet == null || helmet.getItem() == ItemTypes.NONE) {
+            System.out.println("Setting helmet : " + helmet);
             this.setItemStackToSlot(EntityEquipmentSlot.HEAD, net.minecraft.item.ItemStack.EMPTY);
         } else {
             this.setItemStackToSlot(EntityEquipmentSlot.HEAD, (net.minecraft.item.ItemStack) helmet.copy());

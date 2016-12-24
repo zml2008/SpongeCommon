@@ -36,6 +36,7 @@ import org.spongepowered.common.mixin.core.entity.MixinEntityLivingBase;
 public abstract class MixinEntityHuman extends MixinEntityLivingBase implements Human {
 
     @Shadow private GameProfile fakeProfile;
+
     private Inventory openInventory;
 
     @Override

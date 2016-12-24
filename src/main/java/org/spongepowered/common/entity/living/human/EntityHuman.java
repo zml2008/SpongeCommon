@@ -46,16 +46,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketDestroyEntities;
+import net.minecraft.network.play.server.SPacketEntityEquipment;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.network.play.server.SPacketSpawnPlayer;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
@@ -66,7 +69,6 @@ import org.spongepowered.common.data.value.immutable.ImmutableSpongeValue;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -101,6 +103,9 @@ public class EntityHuman extends EntityLivingBase implements TeamMember, IRanged
 
     private GameProfile fakeProfile;
     @Nullable private UUID skinUuid;
+
+    private final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> hands = NonNullList.withSize(2, ItemStack.EMPTY);
 
     public EntityHuman(World worldIn) {
         super(worldIn);
@@ -236,16 +241,28 @@ public class EntityHuman extends EntityLivingBase implements TeamMember, IRanged
 
     @Override
     public Iterable<ItemStack> getArmorInventoryList() {
-        return Collections.emptyList();
+        return this.armor;
     }
 
     @Override
     public ItemStack getItemStackFromSlot(EntityEquipmentSlot slotIn) {
+        if (slotIn.getSlotType() == EntityEquipmentSlot.Type.ARMOR) {
+            return this.armor.get(slotIn.getIndex());
+        } else if (slotIn.getSlotType() == EntityEquipmentSlot.Type.HAND) {
+            return this.hands.get(slotIn.getIndex());
+        }
         return ItemStack.EMPTY;
     }
 
     @Override
     public void setItemStackToSlot(EntityEquipmentSlot slotIn, ItemStack stack) {
+        if (slotIn.getSlotType() == EntityEquipmentSlot.Type.ARMOR) {
+            this.armor.set(slotIn.getIndex(), stack);
+        } else if (slotIn.getSlotType() == EntityEquipmentSlot.Type.HAND) {
+            this.hands.set(slotIn.getIndex(), stack);
+        }
+        ((WorldServer) this.world).getEntityTracker().sendToTracking(this,
+            new SPacketEntityEquipment(getEntityId(), EntityEquipmentSlot.HEAD, new ItemStack(Items.DIAMOND_HELMET)));
     }
 
     @Override
@@ -520,4 +537,5 @@ public class EntityHuman extends EntityLivingBase implements TeamMember, IRanged
         this.playSound(SoundEvents.ENTITY_ARROW_SHOOT, 1.0F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.8F));
         this.world.spawnEntity(entitytippedarrow);
     }
+
 }

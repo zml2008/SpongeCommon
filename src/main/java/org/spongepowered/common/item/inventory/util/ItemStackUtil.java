@@ -60,6 +60,14 @@ public abstract class ItemStackUtil {
         throw new NativeStackException("The supplied native item stack was not compatible with the target environment");
     }
 
+    public static Optional<ItemStack> fromNativeOptional(net.minecraft.item.ItemStack stack) {
+        return stack != net.minecraft.item.ItemStack.EMPTY ? Optional.of(fromNative(stack)) : Optional.empty();
+    }
+
+    public static net.minecraft.item.ItemStack toNativeNullable(@Nullable ItemStack stack) {
+        return stack != null ? toNative(stack) : net.minecraft.item.ItemStack.EMPTY;
+    }
+
     public static net.minecraft.item.ItemStack cloneDefensiveNative(net.minecraft.item.ItemStack stack) {
         return stack.copy();
     }
@@ -133,4 +141,5 @@ public abstract class ItemStackUtil {
     public static ItemStack fromSnapshot(@Nullable ItemStackSnapshot snapshot) {
         return snapshot == null ? null : snapshot == ItemStackSnapshot.NONE ? null : snapshot.createStack();
     }
+
 }

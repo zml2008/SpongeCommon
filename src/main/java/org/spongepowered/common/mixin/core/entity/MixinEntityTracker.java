@@ -26,16 +26,17 @@ package org.spongepowered.common.mixin.core.entity;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityTracker;
+import net.minecraft.entity.EntityTrackerEntry;
+import net.minecraft.network.Packet;
+import net.minecraft.util.IntHashMap;
 import net.minecraft.world.WorldServer;
-import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.entity.living.Human;
 import org.spongepowered.api.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeImpl;
@@ -48,6 +49,8 @@ public abstract class MixinEntityTracker {
 
     @Shadow @Final private WorldServer world;
 
+    @Shadow @Final private IntHashMap<EntityTrackerEntry> trackedEntityHashTable;
+
     @Shadow
     public abstract void track(Entity entityIn, int trackingRange, int updateFrequency);
 
@@ -59,6 +62,17 @@ public abstract class MixinEntityTracker {
         }
     }
 
+    @Inject(method = "sendToTracking", at = @At("HEAD"))
+    private void onSendToTracking(Entity entity, Packet<?> packet, CallbackInfo ci) {
+        if (entity instanceof Human) {
+            EntityTrackerEntry entry = this.trackedEntityHashTable.lookup(entity.getEntityId());
+            System.out.println("Tracking Entry : " + entry);
+            if (entry != null)
+                System.out.println("Players : " + entry.trackingPlayers);
+            System.out.println(packet);
+            System.out.println();
+        }
+    }
 
     @Redirect(method = "track(Lnet/minecraft/entity/Entity;IIZ)V", at = @At(value = "NEW", args = "class=java/lang/IllegalStateException"))
     private IllegalStateException reportEntityAlreadyTrackedWithWorld(String string, Entity entityIn, int trackingRange, final int updateFrequency, boolean sendVelocityUpdates) {
