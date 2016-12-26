@@ -99,9 +99,12 @@ public class LegacySchematicTranslator implements DataTranslator<Schematic> {
         } else if (!"Alpha".equalsIgnoreCase(materials)) {
             throw new InvalidDataException(String.format("Schematic specifies unknown materials %s", materials));
         }
-        int width = view.getShort(DataQueries.Schematic.WIDTH).get();
-        int height = view.getShort(DataQueries.Schematic.HEIGHT).get();
-        int length = view.getShort(DataQueries.Schematic.LENGTH).get();
+        int width = view.getShort(DataQueries.Schematic.WIDTH)
+                .orElseThrow(() -> new InvalidDataException("Schematic width not found."));
+        int height = view.getShort(DataQueries.Schematic.HEIGHT)
+                .orElseThrow(() -> new InvalidDataException("Schematic height not found."));
+        int length = view.getShort(DataQueries.Schematic.LENGTH)
+                .orElseThrow(() -> new InvalidDataException("Schematic length not found."));
         if (width > MAX_SIZE || height > MAX_SIZE || length > MAX_SIZE) {
             throw new InvalidDataException(String.format(
                     "Schematic is larger than maximum allowable size (found: (%d, %d, %d) max: (%d, %<d, %<d)", width, height, length, MAX_SIZE));
@@ -112,8 +115,10 @@ public class LegacySchematicTranslator implements DataTranslator<Schematic> {
         BlockPalette palette = GlobalPalette.instance;
         ArrayMutableBlockBuffer buffer = new ArrayMutableBlockBuffer(palette, new Vector3i(-offsetX, -offsetY, -offsetZ),
                 new Vector3i(width, height, length), BackingDataType.CHAR);
-        byte[] block_ids = (byte[]) view.get(DataQueries.Schematic.LEGACY_BLOCKS).get();
-        byte[] block_data = (byte[]) view.get(DataQueries.Schematic.LEGACY_BLOCK_DATA).get();
+        byte[] block_ids = (byte[]) view.get(DataQueries.Schematic.LEGACY_BLOCKS)
+                .orElseThrow(() -> new InvalidDataException("Schematic blocks not found."));
+        byte[] block_data = (byte[]) view.get(DataQueries.Schematic.LEGACY_BLOCK_DATA)
+                .orElseThrow(() -> new InvalidDataException("Schematic block data not found."));
         byte[] add_block = (byte[]) view.get(DataQueries.Schematic.LEGACY_ADD_BLOCKS).orElse(null);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {

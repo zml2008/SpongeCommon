@@ -100,9 +100,12 @@ public class SchematicTranslator implements DataTranslator<Schematic> {
         DataView metadata = view.getView(DataQueries.Schematic.METADATA).orElse(null);
 
         // TODO error handling for these optionals
-        int width = view.getShort(DataQueries.Schematic.WIDTH).get();
-        int height = view.getShort(DataQueries.Schematic.HEIGHT).get();
-        int length = view.getShort(DataQueries.Schematic.LENGTH).get();
+        int width = view.getShort(DataQueries.Schematic.WIDTH)
+                .orElseThrow(() -> new InvalidDataException("Schematic width not found."));
+        int height = view.getShort(DataQueries.Schematic.HEIGHT)
+                .orElseThrow(() -> new InvalidDataException("Schematic height not found."));
+        int length = view.getShort(DataQueries.Schematic.LENGTH)
+                .orElseThrow(() -> new InvalidDataException("Schematic length not found."));
         if (width > MAX_SIZE || height > MAX_SIZE || length > MAX_SIZE) {
             throw new InvalidDataException(String.format("Schematic is larger than maximum allowable size (found: (%d, %d, %d) max: (%d, %<d, %<d)",
                     width, height, length, MAX_SIZE));
@@ -143,7 +146,8 @@ public class SchematicTranslator implements DataTranslator<Schematic> {
         MutableBlockVolume buffer =
                 new ArrayMutableBlockBuffer(palette, new Vector3i(-offset[0], -offset[1], -offset[2]), new Vector3i(width, height, length), dataType);
 
-        byte[] blockdata = (byte[]) view.get(DataQueries.Schematic.BLOCK_DATA).get();
+        byte[] blockdata = (byte[]) view.get(DataQueries.Schematic.BLOCK_DATA)
+                .orElseThrow(() -> new InvalidDataException("Schematic blocks not found."));
         int index = 0;
         int i = 0;
         int value = 0;

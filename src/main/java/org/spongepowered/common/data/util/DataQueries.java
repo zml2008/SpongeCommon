@@ -242,6 +242,14 @@ public final class DataQueries {
 
         public static final DataQuery LEGACY_TILEDATA = of("TileEntities");
         
+        public static final DataQuery STRUCTURE_SIZE = of("size");
+        public static final DataQuery STRUCTURE_AUTHOR = of("author");
+        public static final DataQuery STRUCTURE_PALETTE = of("palette");
+        public static final DataQuery STRUCTURE_BLOCKS = of("blocks");
+        public static final DataQuery STRUCTURE_BLOCK_STATE = of("state");
+        public static final DataQuery STRUCTURE_BLOCK_NBT = of("nbt");
+        public static final DataQuery STRUCTURE_ENTITIES = of("entities");
+        
         private Schematic() {
         }
     }
