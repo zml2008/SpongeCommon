@@ -116,12 +116,15 @@ import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.SpongeEntityArchetypeBuilder;
 import org.spongepowered.common.entity.SpongeEntitySnapshotBuilder;
 import org.spongepowered.common.entity.SpongeEntityType;
+import org.spongepowered.common.event.InternalNamedCauses;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.damage.DamageEventHandler;
 import org.spongepowered.common.event.damage.MinecraftBlockDamageSource;
 import org.spongepowered.common.event.tracking.CauseTracker;
+import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseData;
+import org.spongepowered.common.event.tracking.phase.entity.EntityPhase;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
 import org.spongepowered.common.interfaces.data.IMixinCustomDataHolder;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
@@ -314,8 +317,18 @@ public abstract class MixinEntity implements IMixinEntity {
     public void onSetDead(CallbackInfo ci) {
         net.minecraft.entity.Entity mcEntity = (net.minecraft.entity.Entity) (Object) this;
         if (!this.world.isRemote && (!(mcEntity instanceof EntityLivingBase) || (mcEntity instanceof EntityArmorStand))) {
-            IMixinWorldServer spongeWorld = (IMixinWorldServer) this.world;
-            final CauseTracker causeTracker = spongeWorld.getCauseTracker();
+            final CauseTracker causeTracker = ((IMixinWorldServer) this.getWorld()).getCauseTracker();
+            final boolean enterDeathPhase = CauseTracker.ENABLED && !causeTracker.getCurrentState().tracksEntityDeaths();
+            if (enterDeathPhase) {
+                final PhaseContext context = PhaseContext.start()
+                        .add(NamedCause.source(this));
+                this.getCreatorUser().ifPresent(context::owner);
+                this.getNotifierUser().ifPresent(context::notifier);
+                causeTracker.switchToPhase(EntityPhase.State.DESTRUCT, context
+                        .addCaptures()
+                        .addEntityDropCaptures()
+                        .complete());
+            }
 
             PhaseData phaseData = causeTracker.getCurrentPhaseData();
 
@@ -333,6 +346,11 @@ public abstract class MixinEntity implements IMixinEntity {
 
             phaseData.context.getOwner().ifPresent(owner -> causeBuilder.named(NamedCause.owner(owner)));
 
+            System.out.println(phaseData.context);
+
+            if (enterDeathPhase) {
+                causeTracker.completePhase();
+            }
             this.destructCause = causeBuilder.build();
         }
     }

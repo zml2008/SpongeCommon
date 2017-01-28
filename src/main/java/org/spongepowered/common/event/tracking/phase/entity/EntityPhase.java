@@ -37,6 +37,7 @@ import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 public final class EntityPhase extends TrackingPhase {
 
     public static final class State {
+        public static final IPhaseState DESTRUCT = new DestructPhase();
         public static final IPhaseState DEATH = new DeathPhase();
         public static final IPhaseState DEATH_UPDATE = new DeathUpdateState();
         public static final IPhaseState CHANGING_TO_DIMENSION = new ChangingToDimensionState();
