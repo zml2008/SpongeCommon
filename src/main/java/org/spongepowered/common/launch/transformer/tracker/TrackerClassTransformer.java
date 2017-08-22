@@ -44,6 +44,7 @@ import org.spongepowered.asm.lib.ClassVisitor;
 import org.spongepowered.asm.lib.ClassWriter;
 import org.spongepowered.asm.lib.Label;
 import org.spongepowered.asm.lib.MethodVisitor;
+import org.spongepowered.asm.lib.Opcodes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class TrackerClassTransformer implements IClassTransformer {
 
         private final Map<String, TrackerMethodEntry> addedMethods = new HashMap<>();
         private String name;
+        private boolean valid;
 
         TrackerClassVisitor(ClassVisitor cv) {
             super(ASM5, cv);
@@ -78,16 +80,26 @@ public class TrackerClassTransformer implements IClassTransformer {
         @Override
         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
             super.visit(version, access, name, signature, superName, interfaces);
+            this.valid = version >= Opcodes.V1_6;
             this.name = name;
         }
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            return new TrackerMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions), this);
+            MethodVisitor visitor = super.visitMethod(access, name, desc, signature, exceptions);
+            if (!this.valid) {
+                return visitor;
+            }
+            return new TrackerMethodVisitor(visitor, this);
         }
 
         @Override
         public void visitEnd() {
+            if (!this.valid) {
+                super.visitEnd();
+                return;
+            }
+
             for (TrackerMethodEntry e : this.addedMethods.values()) {
                 final MethodVisitor m = super.visitMethod(ACC_PRIVATE | ACC_STATIC, e.nName, e.nDesc, null, null);
                 m.visitCode();
@@ -155,7 +167,7 @@ public class TrackerClassTransformer implements IClassTransformer {
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             MethodEntry entry;
             if ((opcode != INVOKEVIRTUAL && opcode != INVOKEINTERFACE) ||
-                    (entry = TrackerRegistry.methodLists.get(owner + ';' + name + ';' + desc)) == null) {
+                    (entry = TrackerRegistry.methodLists.get(name + ';' + desc)) == null) {
                 super.visitMethodInsn(opcode, owner, name, desc, itf);
                 return;
             }

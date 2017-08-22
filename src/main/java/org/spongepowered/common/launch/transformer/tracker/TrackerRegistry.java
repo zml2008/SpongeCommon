@@ -147,7 +147,7 @@ public final class TrackerRegistry {
             final String oldDesc = '(' + entry.desc.substring(end + 1);
 
             // Store the method
-            final String id = targetType + ';' + entry.name + ';' + oldDesc;
+            final String id = entry.name + ';' + oldDesc;
 
 
             final MethodEntry methodEntry = methodLists.computeIfAbsent(id, id1 -> new MethodEntry(
