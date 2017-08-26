@@ -816,6 +816,7 @@ public class SpongeCommonEventFactory {
         } else if (inventory instanceof IInventory) {
             player.displayGUIChest(((IInventory) inventory));
         } else {
+            // TODO inventory instanceOf Container?
             return null;
         }
 

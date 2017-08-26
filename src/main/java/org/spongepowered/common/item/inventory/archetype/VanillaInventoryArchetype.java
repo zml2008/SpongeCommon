@@ -24,34 +24,34 @@
  */
 package org.spongepowered.common.item.inventory.archetype;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.world.IInteractionObject;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryProperty;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-public class CompositeInventoryArchetype implements InventoryArchetype {
+public class VanillaInventoryArchetype<I extends IInteractionObject & IInventory> implements InventoryArchetype {
 
     private final String id;
     private final String name;
-    private final List<InventoryArchetype> types;
-    private final Map<String, InventoryProperty<String, ?>> properties;
-    @Nullable private ContainerProvider containerProvider;
+    private final Map<String, InventoryProperty<String, ?>> properties = new HashMap<>();
 
-    public CompositeInventoryArchetype(String id, String name, List<InventoryArchetype> types, Map<String, InventoryProperty<String, ?>> properties, @Nullable ContainerProvider containerProvider) {
+    private Supplier<I> supplier;
+
+    public VanillaInventoryArchetype(String id, String name, Supplier<I> supplier) {
         this.id = id;
         this.name = name;
-        this.types = ImmutableList.copyOf(types);
-        this.properties = ImmutableMap.copyOf(properties);
-        this.containerProvider = containerProvider;
+        this.supplier = supplier;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class CompositeInventoryArchetype implements InventoryArchetype {
 
     @Override
     public List<InventoryArchetype> getChildArchetypes() {
-        return this.types;
+        return Collections.emptyList();
     }
 
     @Override
@@ -95,7 +95,11 @@ public class CompositeInventoryArchetype implements InventoryArchetype {
 
     @Nullable
     public ContainerProvider getContainerProvider() {
-        return this.containerProvider;
+        return null;
+    }
+
+    public I build() {
+        return this.supplier.get();
     }
 
     /**
