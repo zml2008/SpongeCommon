@@ -43,6 +43,7 @@ import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.crafting.CraftingInventory;
 import org.spongepowered.api.item.inventory.property.GuiIdProperty;
 import org.spongepowered.api.item.inventory.property.GuiIds;
 import org.spongepowered.api.item.inventory.property.InventoryDimension;
@@ -55,6 +56,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.util.Iterator;
 import java.util.Optional;
 
 /**
@@ -148,8 +150,11 @@ public class CustomInventoryTest {
         if (loc.getBlockType() == BlockTypes.CRAFTING_TABLE) {
             Inventory inventory = Inventory.builder().of(InventoryArchetypes.WORKBENCH)
                     .property(InventoryTitle.PROPERTY_NAME, InventoryTitle.of(Text.of("Custom Workbench")))
+                    .withCarrier(player)
                     .build(this);
-            for (Inventory slot : inventory.slots()) {
+            Iterator<Inventory> iterator = inventory.iterator();
+            iterator.next();
+            for (Inventory slot : iterator.next().slots()) {
                 slot.set(ItemStack.of(ItemTypes.IRON_NUGGET, 1));
             }
             player.openInventory(inventory, Cause.source(player).build());

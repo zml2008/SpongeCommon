@@ -93,7 +93,7 @@ public class SpongeInventoryBuilder implements Inventory.Builder {
         }
         if (this.archetype instanceof VanillaContainerArchetype) {
             // TODO find another way to attach a player
-            return (Inventory) ((VanillaContainerArchetype) this.archetype).build(carrier, pluginContainer);
+            return (Inventory) ((VanillaContainerArchetype) this.archetype).build(this.carrier, pluginContainer);
         }
 
         return (Inventory) new CustomInventory(this.archetype, this.properties, this.carrier, this.listeners, pluginContainer);

@@ -277,4 +277,6 @@ public class CustomInventory implements IInventory, IInteractionObject {
     public Carrier getCarrier() {
         return this.carrier;
     }
+
+
 }

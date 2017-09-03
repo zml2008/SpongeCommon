@@ -57,6 +57,7 @@ import net.minecraft.network.play.server.SPacketChat;
 import net.minecraft.network.play.server.SPacketCombatEvent;
 import net.minecraft.network.play.server.SPacketCustomSound;
 import net.minecraft.network.play.server.SPacketEntityProperties;
+import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketResourcePackSend;
 import net.minecraft.network.play.server.SPacketSetSlot;
 import net.minecraft.network.play.server.SPacketSoundEffect;
@@ -112,6 +113,7 @@ import org.spongepowered.api.item.inventory.Container;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.entity.Hotbar;
+import org.spongepowered.api.item.inventory.property.GuiId;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
@@ -142,6 +144,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.data.manipulator.mutable.entity.SpongeGameModeData;
 import org.spongepowered.common.data.manipulator.mutable.entity.SpongeJoinData;
+import org.spongepowered.common.data.type.SpongeGuiId;
 import org.spongepowered.common.data.util.DataConstants;
 import org.spongepowered.common.data.util.NbtDataUtil;
 import org.spongepowered.common.data.value.mutable.SpongeValue;
@@ -1123,5 +1126,18 @@ public abstract class MixinEntityPlayerMP extends MixinEntityPlayer implements P
     @Override
     public void updateDataManagerForScaledHealth() {
         this.dataManager.set(EntityLivingBase.HEALTH, getInternalScaledHealth());
+    }
+
+    @Override
+    public void openContainer(net.minecraft.inventory.Container container) {
+        this.getNextWindowId();
+        GuiId guiId = ((IMixinContainer) container).getGuiId().get();
+        this.connection.sendPacket(new SPacketOpenWindow(this.currentWindowId,
+                guiId instanceof SpongeGuiId ? ((SpongeGuiId) guiId).getInternalId() : guiId.getId(),
+                container.getSlot(0).inventory.getDisplayName()));
+        this.openContainer = container;
+        // TODO windowId for each player
+        this.openContainer.windowId = this.currentWindowId;
+        this.openContainer.addListener(((EntityPlayerMP) (Object) this));
     }
 }

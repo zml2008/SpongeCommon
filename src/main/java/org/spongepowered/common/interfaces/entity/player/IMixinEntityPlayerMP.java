@@ -27,6 +27,7 @@ package org.spongepowered.common.interfaces.entity.player;
 import com.flowpowered.math.vector.Vector3d;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
+import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -82,4 +83,6 @@ public interface IMixinEntityPlayerMP extends IMixinEntityPlayer {
     void injectScaledHealth(Collection<IAttributeInstance> set, boolean b);
 
     void updateDataManagerForScaledHealth();
+
+    void openContainer(Container container);
 }

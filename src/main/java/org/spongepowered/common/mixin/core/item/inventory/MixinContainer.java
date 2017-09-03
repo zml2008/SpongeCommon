@@ -35,6 +35,7 @@ import net.minecraft.util.NonNullList;
 import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.property.GuiId;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -77,6 +78,7 @@ public abstract class MixinContainer implements org.spongepowered.api.item.inven
     @Shadow public int windowId;
     @Shadow protected List<IContainerListener> listeners;
     private boolean spectatorChest;
+    private GuiId guiId;
 
     @Shadow
     public abstract NonNullList<ItemStack> getInventory();
@@ -289,5 +291,15 @@ public abstract class MixinContainer implements org.spongepowered.api.item.inven
     @Override
     public void setPlugin(PluginContainer plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public void setGuiId(GuiId guiId) {
+        this.guiId = guiId;
+    }
+
+    @Override
+    public Optional<GuiId> getGuiId() {
+        return Optional.ofNullable(this.guiId);
     }
 }

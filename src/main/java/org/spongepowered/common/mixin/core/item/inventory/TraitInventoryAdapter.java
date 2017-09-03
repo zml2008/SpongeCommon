@@ -27,7 +27,6 @@ package org.spongepowered.common.mixin.core.item.inventory;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.tileentity.TileEntityLockable;
@@ -43,15 +42,14 @@ import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.common.entity.player.SpongeUserInventory;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.entity.player.SpongeUser;
+import org.spongepowered.common.entity.player.SpongeUserInventory;
 import org.spongepowered.common.interfaces.inventory.IMixinInventory;
 import org.spongepowered.common.item.inventory.EmptyInventoryImpl;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.custom.CustomInventory;
-import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 
 import java.util.ArrayList;
@@ -75,7 +73,6 @@ public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter
     protected EmptyInventory empty;
     protected Inventory parent;
     protected Inventory next;
-    protected SlotCollection slots;
     protected List<Inventory> children = new ArrayList<Inventory>();
     protected Iterable<Slot> slotIterator;
 
@@ -96,11 +93,6 @@ public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter
     @Override
     public <T extends Inventory> T next() {
         return (T) this.emptyInventory(); // TODO implement me
-    }
-
-    @Override
-    public SlotProvider<IInventory, net.minecraft.item.ItemStack> getSlotProvider() {
-        return this.slots;
     }
 
     @Override
@@ -132,7 +124,7 @@ public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter
     @Override
     public <T extends Inventory> Iterable<T> slots() {
         if (this.slotIterator == null) {
-            this.slotIterator = this.slots.getIterator(this);
+            this.slotIterator = ((SlotCollection) this.getSlotProvider()).getIterator(this);
         }
         return (Iterable<T>) this.slotIterator;
     }
@@ -153,6 +145,9 @@ public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter
                 final Optional<?> carrier = ((CarriedInventory<?>) base).getCarrier();
                 if (carrier.isPresent()) {
                     base = carrier.get();
+                    if (this != base && base instanceof Inventory) {
+                        return ((Inventory) base).getPlugin();
+                    }
                 }
             }
 

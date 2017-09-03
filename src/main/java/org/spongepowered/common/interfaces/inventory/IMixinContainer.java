@@ -25,11 +25,13 @@
 package org.spongepowered.common.interfaces.inventory;
 
 import net.minecraft.entity.player.EntityPlayer;
+import org.spongepowered.api.item.inventory.property.GuiId;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.common.item.inventory.adapter.impl.slots.SlotAdapter;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
@@ -49,4 +51,8 @@ public interface IMixinContainer extends IMixinInventory {
     void setSpectatorChest(boolean spectatorChest);
 
     SlotAdapter getSlotAdapter(int slot);
+
+    void setGuiId(GuiId guiid);
+
+    Optional<GuiId> getGuiId();
 }

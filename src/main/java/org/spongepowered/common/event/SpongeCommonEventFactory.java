@@ -815,8 +815,11 @@ public class SpongeCommonEventFactory {
             }
         } else if (inventory instanceof IInventory) {
             player.displayGUIChest(((IInventory) inventory));
+        } else if (inventory instanceof IMixinContainer && ((IMixinContainer) inventory).getGuiId().isPresent()) {
+            if (player instanceof IMixinEntityPlayerMP) {
+                ((IMixinEntityPlayerMP) player).openContainer(((Container) inventory));
+            }
         } else {
-            // TODO inventory instanceOf Container?
             return null;
         }
 

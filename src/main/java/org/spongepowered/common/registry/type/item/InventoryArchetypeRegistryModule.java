@@ -51,7 +51,6 @@ import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.tileentity.TileEntityHopper;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
-import org.spongepowered.api.item.inventory.property.AcceptsItems;
 import org.spongepowered.api.item.inventory.property.GuiIdProperty;
 import org.spongepowered.api.item.inventory.property.GuiIds;
 import org.spongepowered.api.item.inventory.property.InventoryDimension;
@@ -251,7 +250,7 @@ public class InventoryArchetypeRegistryModule implements AlternateCatalogRegistr
 
         DISPENSER = new VanillaInventoryArchetype<>("minecraft:dispenser", "Dispenser", TileEntityDispenser::new);
 
-        WORKBENCH = new VanillaContainerArchetype("minecraft:workbench", "Workbench",
+        WORKBENCH = new VanillaContainerArchetype("minecraft:workbench", "Workbench", GuiIds.CRAFTING_TABLE,
                 (i, p) -> new ContainerWorkbench(p.inventory, p.getEntityWorld(), p.getPosition()));
 
         BREWING_STAND = new VanillaInventoryArchetype<>("minecraft:brewing_stand", "BrewingStand", TileEntityBrewingStand::new);
@@ -260,10 +259,10 @@ public class InventoryArchetypeRegistryModule implements AlternateCatalogRegistr
 
         BEACON = new VanillaInventoryArchetype<>("minecraft:beacon", "Beacon", TileEntityBeacon::new);
 
-        ENCHANTING_TABLE = new VanillaContainerArchetype("minecraft:enchanting_table", "EnchantingTable",
+        ENCHANTING_TABLE = new VanillaContainerArchetype("minecraft:enchanting_table", "EnchantingTable", GuiIds.ENCHANTING_TABLE,
                 (i, p) -> new ContainerEnchantment(p.inventory, p.getEntityWorld(), p.getPosition()));
 
-        ANVIL = new VanillaContainerArchetype("minecraft:anvil", "Anvil",
+        ANVIL = new VanillaContainerArchetype("minecraft:anvil", "Anvil", GuiIds.ANVIL,
                 (i, p) -> new ContainerRepair(p.inventory, p.getEntityWorld(), p.getPosition(), p));
 
         // TODO handle villagers? InventoryMerchant -> ContainerMerchant

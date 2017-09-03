@@ -31,6 +31,7 @@ import net.minecraft.inventory.IInventory;
 import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryProperty;
+import org.spongepowered.api.item.inventory.property.GuiId;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.common.interfaces.inventory.IMixinContainer;
 
@@ -47,11 +48,13 @@ public class VanillaContainerArchetype implements InventoryArchetype {
     private final String id;
     private final String name;
     private final Map<String, InventoryProperty<String, ?>> properties = new HashMap<>();
+    private GuiId guiId;
     private final ContainerProvider provider;
 
-    public VanillaContainerArchetype(String id, String name, ContainerProvider provider) {
+    public VanillaContainerArchetype(String id, String name, GuiId guiId, ContainerProvider provider) {
         this.id = id;
         this.name = name;
+        this.guiId = guiId;
         this.provider = provider;
     }
 
@@ -100,8 +103,10 @@ public class VanillaContainerArchetype implements InventoryArchetype {
     }
 
     public Container build(Carrier carrier, PluginContainer pluginContainer) {
-        Container container = this.provider.provide(null, ((EntityPlayer) Preconditions.checkNotNull(carrier)));
+        Preconditions.checkArgument(carrier instanceof EntityPlayer, "Carrier must be the player opening the Container");
+        Container container = this.provider.provide(null, ((EntityPlayer) carrier));
         ((IMixinContainer) container).setPlugin(pluginContainer);
+        ((IMixinContainer) container).setGuiId(this.guiId);
         return container;
     }
 
