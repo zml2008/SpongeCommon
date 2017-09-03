@@ -30,6 +30,8 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.world.IInteractionObject;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryProperty;
+import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.common.interfaces.inventory.IMixinInventory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -98,8 +100,12 @@ public class VanillaInventoryArchetype<I extends IInteractionObject & IInventory
         return null;
     }
 
-    public I build() {
-        return this.supplier.get();
+    public I build(PluginContainer container) {
+        I inventory = this.supplier.get();
+        if (inventory instanceof IMixinInventory) {
+            ((IMixinInventory) inventory).setPlugin(container);
+        }
+        return inventory;
     }
 
     /**

@@ -33,6 +33,7 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.InventoryProperty;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.common.item.inventory.archetype.VanillaContainerArchetype;
 import org.spongepowered.common.item.inventory.archetype.VanillaInventoryArchetype;
 import org.spongepowered.common.item.inventory.custom.CustomInventory;
@@ -84,16 +85,18 @@ public class SpongeInventoryBuilder implements Inventory.Builder {
 
     @Override
     public Inventory build(Object plugin) {
+
+        PluginContainer pluginContainer = Sponge.getPluginManager().fromInstance(plugin).orElseThrow(() -> new IllegalArgumentException(plugin + " is not a plugin"));
+
         if (this.archetype instanceof VanillaInventoryArchetype) {
-            return ((Inventory) ((VanillaInventoryArchetype) this.archetype).build());
+            return ((Inventory) ((VanillaInventoryArchetype) this.archetype).build(pluginContainer));
         }
         if (this.archetype instanceof VanillaContainerArchetype) {
             // TODO find another way to attach a player
-            return (Inventory) ((VanillaContainerArchetype) this.archetype).build(carrier);
+            return (Inventory) ((VanillaContainerArchetype) this.archetype).build(carrier, pluginContainer);
         }
 
-        return (Inventory) new CustomInventory(this.archetype, this.properties, this.carrier, this.listeners,
-                Sponge.getPluginManager().fromInstance(plugin).orElseThrow(() -> new IllegalArgumentException(plugin + " is not a plugin")));
+        return (Inventory) new CustomInventory(this.archetype, this.properties, this.carrier, this.listeners, pluginContainer);
     }
 
     @Override

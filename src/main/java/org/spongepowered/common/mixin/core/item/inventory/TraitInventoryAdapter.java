@@ -47,10 +47,9 @@ import org.spongepowered.common.entity.player.SpongeUserInventory;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.entity.player.SpongeUser;
-import org.spongepowered.common.interfaces.IMixinContainer;
+import org.spongepowered.common.interfaces.inventory.IMixinInventory;
 import org.spongepowered.common.item.inventory.EmptyInventoryImpl;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
-import org.spongepowered.common.item.inventory.custom.CustomContainer;
 import org.spongepowered.common.item.inventory.custom.CustomInventory;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
@@ -71,7 +70,7 @@ import java.util.Optional;
         SpongeUserInventory.class
 }, priority = 999)
 @Implements(@Interface(iface = Inventory.class, prefix = "inventory$"))
-public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter {
+public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter, IMixinInventory {
 
     protected EmptyInventory empty;
     protected Inventory parent;
@@ -181,5 +180,10 @@ public abstract class TraitInventoryAdapter implements MinecraftInventoryAdapter
         }
 
         return this.plugin;
+    }
+
+    @Override
+    public void setPlugin(PluginContainer plugin) {
+        this.plugin = plugin;
     }
 }

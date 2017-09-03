@@ -34,7 +34,7 @@ import org.spongepowered.api.item.inventory.Container;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.common.event.tracking.PhaseContext;
-import org.spongepowered.common.interfaces.IMixinContainer;
+import org.spongepowered.common.interfaces.inventory.IMixinContainer;
 
 import java.util.List;
 

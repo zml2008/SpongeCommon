@@ -28,18 +28,17 @@ import com.google.common.base.Preconditions;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.world.IInteractionObject;
 import org.spongepowered.api.item.inventory.Carrier;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryProperty;
+import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.common.interfaces.inventory.IMixinContainer;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -100,8 +99,10 @@ public class VanillaContainerArchetype implements InventoryArchetype {
         return null;
     }
 
-    public Container build(Carrier carrier) {
-        return this.provider.provide(null, ((EntityPlayer) Preconditions.checkNotNull(carrier)));
+    public Container build(Carrier carrier, PluginContainer pluginContainer) {
+        Container container = this.provider.provide(null, ((EntityPlayer) Preconditions.checkNotNull(carrier)));
+        ((IMixinContainer) container).setPlugin(pluginContainer);
+        return container;
     }
 
     /**

@@ -127,11 +127,14 @@ public class CustomInventoryTest {
             event.setCancelled(true);
         }
         if (event.getTargetEntity() instanceof Slime) {
+            BasicCarrier carrier = new BasicCarrier();
             Inventory inventory = Inventory.builder().of(InventoryArchetypes.MENU_GRID)
                     .property(InventoryDimension.PROPERTY_NAME, InventoryDimension.of(1, 9))
                     .property(InventoryTitle.PROPERTY_NAME, InventoryTitle.of(Text.of("Slime Content")))
                     .property("guiidproperty", new GuiIdProperty(GuiIds.DISPENSER))
+                    .withCarrier(carrier)
                     .build(this);
+            carrier.init(inventory);
             ItemStack flard = ItemStack.of(ItemTypes.SLIME, 1);
             flard.offer(Keys.DISPLAY_NAME, Text.of("Flard?"));
             for (Inventory slot : inventory.slots()) {
