@@ -481,9 +481,9 @@ public final class WorldManager {
 
             // We only check config if base game wants to unload world. If mods/plugins say unload, we unload
             if (checkConfig) {
-                if (((WorldProperties) worldServer.getWorldInfo()).doesKeepSpawnLoaded()) {
-                    return false;
-                }
+//                if (((WorldProperties) worldServer.getWorldInfo()).doesKeepSpawnLoaded()) {
+//                    return false;
+//                }
             }
         }
         try (PhaseContext<?> context = GeneralPhase.State.WORLD_UNLOAD.createPhaseContext()

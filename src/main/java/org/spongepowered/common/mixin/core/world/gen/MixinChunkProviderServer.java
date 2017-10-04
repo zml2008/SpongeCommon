@@ -27,6 +27,7 @@ package org.spongepowered.common.mixin.core.world.gen;
 import com.flowpowered.math.vector.Vector3i;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -50,6 +51,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.config.SpongeConfig;
+import org.spongepowered.common.config.category.WorldCategory;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.phase.TrackingPhases;
@@ -133,14 +135,36 @@ public abstract class MixinChunkProviderServer implements WorldStorage, IMixinCh
 
     /**
      * @author blood - October 25th, 2016
+     * @author Zidane - October 3rd, 2017
      * @reason Removes usage of droppedChunksSet in favor of unloaded flag.
-     *
+     * @reason Have SpongeVanilla unload spawn chunks if config demands it
      * @param chunkIn The chunk to queue
      */
     @Overwrite
     public void queueUnload(Chunk chunkIn)
     {
-        if (!((IMixinChunk) chunkIn).isPersistedChunk() && this.world.provider.canDropChunk(chunkIn.x, chunkIn.z))
+        final SpongeConfig<?> config = ((IMixinWorldServer) this.world).getActiveConfig();
+
+        boolean canUnloadSpawnChunks = true;
+        boolean configChecked = false;
+        if (config.getConfig().isConfigEnabled()) {
+            final WorldCategory worldCategory = config.getConfig().getWorld();
+
+            if (worldCategory.isWorldEnabled()) {
+                // In Vanilla, canDropChunk on the providers only checks spawn chunks. If that is false, we know its a spawn chunk
+                if (!this.world.provider.canDropChunk(chunkIn.x, chunkIn.z) && worldCategory.getKeepSpawnLoaded()) {
+                    canUnloadSpawnChunks = false;
+                }
+
+                configChecked = true;
+            }
+        }
+
+        if (!configChecked) {
+            canUnloadSpawnChunks = this.world.provider.canDropChunk(chunkIn.x, chunkIn.z);
+        }
+
+        if (!((IMixinChunk) chunkIn).isPersistedChunk() && canUnloadSpawnChunks)
         {
             // Sponge - we avoid using the queue and simply check the unloaded flag during unloads
             //this.droppedChunksSet.add(Long.valueOf(ChunkPos.asLong(chunkIn.x, chunkIn.z)));

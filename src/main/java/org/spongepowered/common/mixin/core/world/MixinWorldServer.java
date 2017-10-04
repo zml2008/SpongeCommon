@@ -71,6 +71,7 @@ import net.minecraft.world.NextTickListEntry;
 import net.minecraft.world.Teleporter;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
+import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
@@ -147,6 +148,7 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.config.SpongeConfig;
+import org.spongepowered.common.config.category.WorldCategory;
 import org.spongepowered.common.config.type.WorldConfig;
 import org.spongepowered.common.data.util.DataQueries;
 import org.spongepowered.common.effect.particle.SpongeParticleEffect;
@@ -908,7 +910,40 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
 
         for (net.minecraft.world.chunk.Chunk chunk : chunkProviderServer.getLoadedChunks()) {
             IMixinChunk spongeChunk = (IMixinChunk) chunk;
-            if (chunk.unloadQueued || spongeChunk.isPersistedChunk() || !this.provider.canDropChunk(chunk.x, chunk.z)) {
+
+            boolean canUnloadChunks = true;
+            boolean configChecked = false;
+
+            if (this.activeConfig.getConfig().isConfigEnabled()) {
+                final WorldCategory worldCategory = this.activeConfig.getConfig().getWorld();
+
+                if (worldCategory.isWorldEnabled()) {
+
+                    if (!this.provider.getClass().equals(WorldProviderSurface.class)) {
+
+                        // If we're not the surface provider and this is a spawn chunk and our provider says "No you can't drop" then honor the mod's
+                        // stance
+                        if (this.isSpawnChunk(chunk.x, chunk.z)) {
+                            if (this.provider.canDropChunk(chunk.x, chunk.z)) {
+                                canUnloadChunks = !worldCategory.getKeepSpawnLoaded();
+                            }
+                        }
+                    } else {
+                        // If we're the surface provider, canDropChunk is a forwarder for !this.isSpawnChunk(x, z)
+                        if (!this.provider.canDropChunk(chunk.x, chunk.z)) {
+                            canUnloadChunks = !worldCategory.getKeepSpawnLoaded();
+                        }
+                    }
+
+                    configChecked = true;
+                }
+            }
+
+            if (!configChecked) {
+                canUnloadChunks = this.provider.canDropChunk(chunk.x, chunk.z);
+            }
+
+            if (chunk.unloadQueued || spongeChunk.isPersistedChunk() || !canUnloadChunks) {
                 continue;
             }
 

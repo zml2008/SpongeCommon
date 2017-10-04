@@ -285,6 +285,8 @@ public abstract class MixinWorld implements World, IMixinWorld {
 
     // @formatter:on
 
+    @Shadow public abstract boolean isSpawnChunk(int x, int z);
+
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;"
             + "createWorldBorder()Lnet/minecraft/world/border/WorldBorder;"))
     private net.minecraft.world.border.WorldBorder onCreateWorldBorder(WorldProvider provider) {
