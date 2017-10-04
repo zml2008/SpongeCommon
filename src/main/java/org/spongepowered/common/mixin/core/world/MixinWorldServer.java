@@ -926,6 +926,8 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
                         if (this.isSpawnChunk(chunk.x, chunk.z)) {
                             if (this.provider.canDropChunk(chunk.x, chunk.z)) {
                                 canUnloadChunks = !worldCategory.getKeepSpawnLoaded();
+                            } else {
+                                canUnloadChunks = false;
                             }
                         }
                     } else {

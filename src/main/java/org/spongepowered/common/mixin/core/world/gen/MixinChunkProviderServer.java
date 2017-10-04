@@ -137,7 +137,8 @@ public abstract class MixinChunkProviderServer implements WorldStorage, IMixinCh
      * @author blood - October 25th, 2016
      * @author Zidane - October 3rd, 2017
      * @reason Removes usage of droppedChunksSet in favor of unloaded flag.
-     * @reason Have SpongeVanilla unload spawn chunks if config demands it
+     * @reason Unload chunks if keep-spawn-loaded is false and we're dealing with spawn chunks and if we're not surface provider and a mod says it is
+     * okay to do so
      * @param chunkIn The chunk to queue
      */
     @Overwrite
@@ -145,15 +146,30 @@ public abstract class MixinChunkProviderServer implements WorldStorage, IMixinCh
     {
         final SpongeConfig<?> config = ((IMixinWorldServer) this.world).getActiveConfig();
 
-        boolean canUnloadSpawnChunks = true;
+        boolean canUnloadChunks = true;
         boolean configChecked = false;
+
         if (config.getConfig().isConfigEnabled()) {
             final WorldCategory worldCategory = config.getConfig().getWorld();
 
             if (worldCategory.isWorldEnabled()) {
-                // In Vanilla, canDropChunk on the providers only checks spawn chunks. If that is false, we know its a spawn chunk
-                if (!this.world.provider.canDropChunk(chunkIn.x, chunkIn.z) && worldCategory.getKeepSpawnLoaded()) {
-                    canUnloadSpawnChunks = false;
+
+                if (!this.world.provider.getClass().equals(WorldProviderSurface.class)) {
+
+                    // If we're not the surface provider and this is a spawn chunk and our provider says "No you can't drop" then honor the mod's
+                    // stance
+                    if (this.world.isSpawnChunk(chunkIn.x, chunkIn.z)) {
+                        if (this.world.provider.canDropChunk(chunkIn.x, chunkIn.z)) {
+                            canUnloadChunks = !worldCategory.getKeepSpawnLoaded();
+                        } else {
+                            canUnloadChunks = false;
+                        }
+                    }
+                } else {
+                    // If we're the surface provider, canDropChunk is a forwarder for !this.isSpawnChunk(x, z)
+                    if (!this.world.provider.canDropChunk(chunkIn.x, chunkIn.z)) {
+                        canUnloadChunks = !worldCategory.getKeepSpawnLoaded();
+                    }
                 }
 
                 configChecked = true;
@@ -161,10 +177,10 @@ public abstract class MixinChunkProviderServer implements WorldStorage, IMixinCh
         }
 
         if (!configChecked) {
-            canUnloadSpawnChunks = this.world.provider.canDropChunk(chunkIn.x, chunkIn.z);
+            canUnloadChunks = this.world.provider.canDropChunk(chunkIn.x, chunkIn.z);
         }
 
-        if (!((IMixinChunk) chunkIn).isPersistedChunk() && canUnloadSpawnChunks)
+        if (!((IMixinChunk) chunkIn).isPersistedChunk() && canUnloadChunks)
         {
             // Sponge - we avoid using the queue and simply check the unloaded flag during unloads
             //this.droppedChunksSet.add(Long.valueOf(ChunkPos.asLong(chunkIn.x, chunkIn.z)));
