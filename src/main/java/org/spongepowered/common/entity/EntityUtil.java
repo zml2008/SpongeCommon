@@ -84,6 +84,7 @@ import org.spongepowered.api.event.cause.entity.teleport.TeleportTypes;
 import org.spongepowered.api.event.entity.ConstructEntityEvent;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
+import org.spongepowered.api.event.world.ConstructPortalEvent;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.api.world.Dimension;
@@ -394,6 +395,20 @@ public final class EntityUtil {
             final Transform<World> portalExitTransform = mixinEntity.getTransform().setExtent((World) toWorld);
             // Use setLocationAndAngles to avoid firing MoveEntityEvent to plugins
             mixinEntity.setLocationAndAngles(fromTransform);
+
+            if (!context.getCapturedBlocks().isEmpty()) {
+                ConstructPortalEvent constructPortalEvent = SpongeEventFactory.createConstructPortalEvent(Sponge.getCauseStackManager()
+                        .getCurrentCause(), portalExitTransform.getLocation());
+                SpongeImpl.postEvent(constructPortalEvent);
+                if (constructPortalEvent.isCancelled()) {
+                    for (BlockSnapshot original : Lists.reverse(context.getCapturedBlocks())) {
+                        original.restore(true, BlockChangeFlag.NONE);
+                    }
+                    context.getCapturedBlocks().clear();
+                    return null;
+                }
+            }
+
             final MoveEntityEvent.Teleport.Portal event = SpongeEventFactory.createMoveEntityEventTeleportPortal(Sponge.getCauseStackManager().getCurrentCause(), fromTransform, portalExitTransform, (PortalAgent) teleporter, mixinEntity, true);
             SpongeImpl.postEvent(event);
             final Vector3i chunkPosition = mixinEntity.getLocation().getChunkPosition();
