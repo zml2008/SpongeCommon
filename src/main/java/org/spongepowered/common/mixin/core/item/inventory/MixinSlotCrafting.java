@@ -33,6 +33,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.network.play.server.SPacketSetSlot;
 import org.spongepowered.api.event.item.inventory.CraftItemEvent;
 import org.spongepowered.api.item.inventory.Inventory;
@@ -47,15 +48,18 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.interfaces.IMixinContainer;
+import org.spongepowered.common.interfaces.IMixinInventoryCrafting;
 import org.spongepowered.common.interfaces.world.IMixinWorld;
 import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -87,6 +91,17 @@ public abstract class MixinSlotCrafting extends Slot {
             ((IMixinContainer) thePlayer.openContainer).detectAndSendChanges(true);
             ((IMixinContainer) thePlayer.openContainer).setShiftCrafting(false);
         }
+    }
+
+    @Redirect(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/InventoryCrafting;decrStackSize(II)Lnet/minecraft/item/ItemStack;"))
+    private ItemStack onDecrStackSize(InventoryCrafting grid, int index, int count) {
+        Map<Integer, Ingredient> map = ((IMixinInventoryCrafting) grid).matchedIngredients();
+        Ingredient ingredient = map.get(index);
+        if (ingredient != null) {
+            // TODO ingredient consume
+            return grid.decrStackSize(index, count);
+        }
+        return grid.decrStackSize(index, count);
     }
 
     /**

@@ -27,6 +27,7 @@ package org.spongepowered.common.mixin.core.inventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.NonNullList;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
@@ -35,6 +36,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.common.interfaces.IMixinInventoryCrafting;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
@@ -46,9 +48,12 @@ import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollect
 import org.spongepowered.common.item.inventory.lens.impl.comp.CraftingGridInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Mixin(InventoryCrafting.class)
 @Implements(value = @Interface(iface = MinecraftInventoryAdapter.class, prefix = "inventory$"))
-public abstract class MixinInventoryCrafting implements IInventory, LensProvider<IInventory, ItemStack> {
+public abstract class MixinInventoryCrafting implements IInventory, LensProvider<IInventory, ItemStack>, IMixinInventoryCrafting {
 
     @Shadow private NonNullList<ItemStack> stackList;
 
@@ -86,4 +91,20 @@ public abstract class MixinInventoryCrafting implements IInventory, LensProvider
         return this.fabric;
     }
 
+    private Map<Integer, Ingredient> ingredientMap = new HashMap<>();
+
+    @Override
+    public void matchedIngredient(int x, int y, Ingredient ingredient) {
+        this.ingredientMap.put(y * this.inventoryWidth + x, ingredient);
+    }
+
+    @Override
+    public Map<Integer, Ingredient> matchedIngredients() {
+        return this.ingredientMap;
+    }
+
+    @Override
+    public void resetIngredients() {
+        this.ingredientMap.clear();
+    }
 }
