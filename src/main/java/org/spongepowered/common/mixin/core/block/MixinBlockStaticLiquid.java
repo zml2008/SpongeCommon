@@ -36,6 +36,7 @@ import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.common.SpongeImpl;
@@ -47,7 +48,18 @@ import org.spongepowered.common.util.VecHelper;
 import java.util.Collections;
 
 @Mixin(BlockStaticLiquid.class)
-public class MixinBlockStaticLiquid {
+public abstract class MixinBlockStaticLiquid {
+
+    @Shadow abstract void updateLiquid(World worldIn, BlockPos pos, IBlockState state);
+
+    @Redirect(method = "neighborChanged", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockStaticLiquid;updateLiquid(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)V"))
+    private void redirectUpdateLiquidIfNotTerrainGen(BlockStaticLiquid blockStaticLiquid, World worldIn, BlockPos pos, IBlockState state) {
+        final PhaseTracker phaseTracker = PhaseTracker.getInstance();
+
+        if (!phaseTracker.getCurrentState().isWorldGeneration()) {
+            this.updateLiquid(worldIn, pos, state);
+        }
+    }
 
     @Redirect(method = "updateTick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Z"))
@@ -68,6 +80,5 @@ public class MixinBlockStaticLiquid {
             }
             return false;
         }
-
     }
 }

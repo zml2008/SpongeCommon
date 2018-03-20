@@ -31,6 +31,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
@@ -39,10 +40,12 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.block.BlockUtil;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
+import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 
 import java.util.Random;
@@ -51,7 +54,7 @@ import java.util.Random;
 public abstract class MixinBlockDynamicLiquid {
 
     @Inject(method = "canFlowInto", at = @At("HEAD"), cancellable = true)
-    public void onCanFlowInto(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, CallbackInfoReturnable<Boolean> cir) {
+    private void onCanFlowInto(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, CallbackInfoReturnable<Boolean> cir) {
         // TODO LIQUID_FLOW flag
         if (!worldIn.isRemote && SpongeCommonEventFactory.callChangeBlockEventPre((IMixinWorldServer) worldIn, pos).isCancelled()) {
             cir.setReturnValue(false);
@@ -59,7 +62,7 @@ public abstract class MixinBlockDynamicLiquid {
     }
 
     @Inject(method = "updateTick", at = @At("HEAD"), cancellable = true)
-    public void onUpdateTick(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, Random rand, CallbackInfo ci) {
+    private void onUpdateTick(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, Random rand, CallbackInfo ci) {
         if (!worldIn.isRemote && SpongeCommonEventFactory.callChangeBlockEventPre((IMixinWorldServer) worldIn, pos).isCancelled()) {
             ci.cancel();
         }
@@ -108,4 +111,13 @@ public abstract class MixinBlockDynamicLiquid {
         }
     }
 
+    @Redirect(method = "onBlockAdded", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;scheduleUpdate(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;I)V"))
+    private void redirectScheduleUpdateIfNotTerrainGen(World world, BlockPos pos, Block blockIn, int delay) {
+        final PhaseTracker phaseTracker = PhaseTracker.getInstance();
+
+        if (!phaseTracker.getCurrentState().isWorldGeneration()) {
+            Thread.dumpStack();
+            world.scheduleUpdate(pos, blockIn, delay);
+        }
+    }
 }
