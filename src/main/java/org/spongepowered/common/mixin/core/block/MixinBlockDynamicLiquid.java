@@ -116,7 +116,6 @@ public abstract class MixinBlockDynamicLiquid {
         final PhaseTracker phaseTracker = PhaseTracker.getInstance();
 
         if (!phaseTracker.getCurrentState().isWorldGeneration()) {
-            Thread.dumpStack();
             world.scheduleUpdate(pos, blockIn, delay);
         }
     }
