@@ -57,7 +57,6 @@ import org.spongepowered.common.data.util.DataQueries;
 import org.spongepowered.common.data.util.DataVersions;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
 import org.spongepowered.common.interfaces.block.IMixinBlockState;
-import org.spongepowered.common.interfaces.data.IMixinCustomDataHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,7 +103,7 @@ public abstract class MixinStateImplementation extends BlockStateBase implements
             .worldId(location.getExtent().getUniqueId());
         if (this.block.hasTileEntity() && location.getBlockType().equals(this.block)) {
             final TileEntity tileEntity = location.getTileEntity().get();
-            for (DataManipulator<?, ?> manipulator : ((IMixinCustomDataHolder) tileEntity).getCustomManipulators()) {
+            for (DataManipulator<?, ?> manipulator : tileEntity.getContainers()) {
                 builder.add(manipulator);
             }
             final NBTTagCompound compound = new NBTTagCompound();
