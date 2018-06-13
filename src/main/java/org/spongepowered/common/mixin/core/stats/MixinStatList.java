@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.stats;
 
+import net.minecraft.entity.EntityList;
 import net.minecraft.item.Item;
 import net.minecraft.stats.StatBase;
 import net.minecraft.stats.StatCrafting;
@@ -46,15 +47,13 @@ public class MixinStatList {
     }
 
     @Redirect(method = "getStatKillEntity", at = @At(value = "NEW", args = CLASS_STAT_BASE))
-    private static StatBase createKillEntityStat(String statId, ITextComponent statName) {
-        String entityId = statId.substring(statId.lastIndexOf(".") + 1);
-        return new SpongeEntityStatistic(statId, statName, entityId);
+    private static StatBase createKillEntityStat(String statId, ITextComponent statName, EntityList.EntityEggInfo eggInfo) {
+        return new SpongeEntityStatistic(statId, statName, eggInfo.spawnedID.toString());
     }
 
     @Redirect(method = "getStatEntityKilledBy", at = @At(value = "NEW", args = CLASS_STAT_BASE))
-    private static StatBase createKilledByEntityStat(String statId, ITextComponent statName) {
-        String entityId = statId.substring(statId.lastIndexOf(".") + 1);
-        return new SpongeEntityStatistic(statId, statName, entityId);
+    private static StatBase createKilledByEntityStat(String statId, ITextComponent statName, EntityList.EntityEggInfo eggInfo) {
+        return new SpongeEntityStatistic(statId, statName, eggInfo.spawnedID.toString());
     }
 
 }
