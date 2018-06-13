@@ -32,6 +32,9 @@ import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.text.translation.SpongeTranslation;
 
@@ -44,6 +47,16 @@ import javax.annotation.Nullable;
 public abstract class MixinGameType {
 
     @Nullable private String spongeId;
+    private Translation translation;
+
+    @Inject(method = "<init>", at = @At(value = "RETURN"))
+    public void onInit(CallbackInfo ci) {
+        if (this.shadow$getName().equals("")) {
+            this.translation = new SpongeTranslation("gameMode.not_set");
+        } else {
+            this.translation = new SpongeTranslation("gameMode." + this.shadow$getName().toLowerCase(Locale.ENGLISH));
+        }
+    }
 
     @Shadow public abstract String shadow$getName();
 
@@ -61,6 +74,6 @@ public abstract class MixinGameType {
     }
 
     public Translation gamemode$getTranslation() {
-        return new SpongeTranslation("gameMode." + this.shadow$getName().toLowerCase(Locale.ENGLISH));
+        return this.translation;
     }
 }

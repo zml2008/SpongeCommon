@@ -82,7 +82,7 @@ public class CatalogTypeMethodTest {
             .put("stat.", false)
             .put("tile.", false)
             .put("potion.effect.missing", false) // Needs API changes
-            .put("gameMode.", false)
+            .put("gameMode.not_set", true) // Doesn't exist in vanilla
             .build();
 
     @Parameterized.Parameter(0)
