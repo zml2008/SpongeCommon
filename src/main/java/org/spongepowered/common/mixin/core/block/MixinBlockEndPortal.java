@@ -34,9 +34,7 @@ public abstract class MixinBlockEndPortal extends MixinBlock {
 
     @Override
     public Translation getTranslation() {
-        // This block has no unlocalized name,
-        // so we make a fake translation key
-        return new SpongeTranslation("tile.spongeapi_end_portal.name");
+        return new SpongeTranslation("End Portal");
     }
 
 }

@@ -29,6 +29,8 @@ import net.minecraft.tileentity.MobSpawnerBaseLogic;
 import org.spongepowered.api.data.manipulator.DataManipulator;
 import org.spongepowered.api.data.manipulator.mutable.MobSpawnerData;
 import org.spongepowered.api.entity.vehicle.minecart.MobSpawnerMinecart;
+import org.spongepowered.api.text.translation.FixedTranslation;
+import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.data.manipulator.mutable.SpongeMobSpawnerData;
 import org.spongepowered.common.data.processor.common.SpawnerUtils;
@@ -66,5 +68,10 @@ public abstract class MixinEntityMinecartMobSpawner extends MixinEntityMinecart 
     public void supplyVanillaManipulators(List<DataManipulator<?, ?>> manipulators) {
         super.supplyVanillaManipulators(manipulators);
         manipulators.add(getSpawnerData());
+    }
+
+    @Override
+    public Translation getTranslation() {
+        return new FixedTranslation("Minecart with Spawner");
     }
 }

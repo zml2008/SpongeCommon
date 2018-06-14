@@ -35,6 +35,8 @@ import org.spongepowered.api.entity.vehicle.minecart.TNTMinecart;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.entity.AttackEntityEvent;
+import org.spongepowered.api.text.translation.FixedTranslation;
+import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.explosion.Explosion;
@@ -187,6 +189,11 @@ public abstract class MixinEntityMinecartTNT extends MixinEntityMinecart impleme
                 cir.setReturnValue(true);
             }
         }
+    }
+
+    @Override
+    public Translation getTranslation() {
+        return new FixedTranslation("Minecart with TNT");
     }
 
 }

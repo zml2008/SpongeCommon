@@ -26,6 +26,7 @@ package org.spongepowered.common.mixin.core.data.types;
 
 import net.minecraft.world.GameType;
 import org.spongepowered.api.entity.living.player.gamemode.GameMode;
+import org.spongepowered.api.text.translation.FixedTranslation;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
@@ -52,7 +53,7 @@ public abstract class MixinGameType {
     @Inject(method = "<init>", at = @At(value = "RETURN"))
     public void onInit(CallbackInfo ci) {
         if (this.shadow$getName().equals("")) {
-            this.translation = new SpongeTranslation("gameMode.not_set");
+            this.translation = new FixedTranslation("Gamemode not set");
         } else {
             this.translation = new SpongeTranslation("gameMode." + this.shadow$getName().toLowerCase(Locale.ENGLISH));
         }

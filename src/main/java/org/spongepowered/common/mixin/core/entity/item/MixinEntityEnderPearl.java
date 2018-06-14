@@ -34,6 +34,8 @@ import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.teleport.TeleportTypes;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
+import org.spongepowered.api.text.translation.FixedTranslation;
+import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -86,6 +88,11 @@ public abstract class MixinEntityEnderPearl extends MixinEntityThrowable impleme
     public void writeToNbt(NBTTagCompound compound) {
         super.writeToNbt(compound);
         compound.setDouble(NbtDataUtil.PROJECTILE_DAMAGE_AMOUNT, this.damageAmount);
+    }
+
+    @Override
+    public Translation getTranslation() {
+        return new FixedTranslation("Ender Pearl");
     }
 
 }

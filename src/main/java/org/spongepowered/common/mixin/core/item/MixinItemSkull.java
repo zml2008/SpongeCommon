@@ -22,19 +22,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.mixin.core.block;
+package org.spongepowered.common.mixin.core.item;
 
-import net.minecraft.block.BlockEndGateway;
+import net.minecraft.item.ItemSkull;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.text.translation.SpongeTranslation;
 
-@Mixin(BlockEndGateway.class)
-public abstract class MixinBlockEndGateway extends MixinBlock {
+@Mixin(ItemSkull.class)
+public abstract class MixinItemSkull extends MixinItem {
 
     @Override
     public Translation getTranslation() {
-        return new SpongeTranslation("End Gateway");
+        return new SpongeTranslation(getUnlocalizedName() + ".skeleton.name");
     }
 
 }

@@ -36,6 +36,7 @@ import org.spongepowered.api.data.manipulator.immutable.block.ImmutableDirection
 import org.spongepowered.api.data.manipulator.immutable.block.ImmutablePistonData;
 import org.spongepowered.api.data.type.PistonType;
 import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.text.translation.FixedTranslation;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.asm.mixin.Mixin;
@@ -52,12 +53,7 @@ public abstract class MixinBlockPistonMoving extends MixinBlock {
 
     @Override
     public Translation getTranslation() {
-        // This block has no unlocalized name, and
-        // therefore no actual translation key.
-        // For the sake of completeness, we provide
-        // a fake translation entry, adding 'sponge'
-        // to the name to prevent confusion with real translation keys
-        return new SpongeTranslation("tile.spongeapi_piston_extension.name");
+        return new FixedTranslation("Piston Extension");
     }
 
     @Override
