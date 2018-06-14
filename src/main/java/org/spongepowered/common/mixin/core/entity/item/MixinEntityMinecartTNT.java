@@ -190,10 +190,4 @@ public abstract class MixinEntityMinecartTNT extends MixinEntityMinecart impleme
             }
         }
     }
-
-    @Override
-    public Translation getTranslation() {
-        return new FixedTranslation("Minecart with TNT");
-    }
-
 }

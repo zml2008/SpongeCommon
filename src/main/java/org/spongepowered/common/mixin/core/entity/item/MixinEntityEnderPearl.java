@@ -90,9 +90,4 @@ public abstract class MixinEntityEnderPearl extends MixinEntityThrowable impleme
         compound.setDouble(NbtDataUtil.PROJECTILE_DAMAGE_AMOUNT, this.damageAmount);
     }
 
-    @Override
-    public Translation getTranslation() {
-        return new FixedTranslation("Ender Pearl");
-    }
-
 }

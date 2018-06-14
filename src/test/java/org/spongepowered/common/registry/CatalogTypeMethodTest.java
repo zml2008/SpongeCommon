@@ -90,9 +90,9 @@ public class CatalogTypeMethodTest {
             // or have no entry in en_us.lang (e.g. EntityTypes.MOB_SPAWNER_MINECART has a key of
             // entity.MinecartSpawner.name, but no translation entry for that name)
             .put("Gamemode not set", true) // GameType.NOT_SET has its name set to the empty string
-            .put("Minecart with Spawnerr", true) // 'entity.MinecartSpawner.name' does not exist
-            .put("Minecart with TNT", true) // 'entity.MinecartTNT.name' does not exist
-            .put("Ender Pearl", true) // 'entity.ThrownEnderpearl.name' does not exist
+            .put("entity.MinecartSpawner.name", true) // 'entity.MinecartSpawner.name' does not exist
+            .put("entity.MinecartTNT.name", true) // 'entity.MinecartTNT.name' does not exist
+            .put("entity.ThrownEnderpearl.name", true) // 'entity.ThrownEnderpearl.name' does not exist
             .put("Piston Extension", true) // BlockTypes.PISTON_EXTENSION has no unlocalized name
             .put("End Portal", true) // BlockTypes.END_PORTAL has no unlocalized name
             .put("End Gateway", true) // BlockTypes.END_GATEWAY has no unlocalized name

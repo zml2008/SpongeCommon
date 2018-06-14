@@ -69,9 +69,4 @@ public abstract class MixinEntityMinecartMobSpawner extends MixinEntityMinecart 
         super.supplyVanillaManipulators(manipulators);
         manipulators.add(getSpawnerData());
     }
-
-    @Override
-    public Translation getTranslation() {
-        return new FixedTranslation("Minecart with Spawner");
-    }
 }
