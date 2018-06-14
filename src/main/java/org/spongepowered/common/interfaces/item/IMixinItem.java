@@ -29,6 +29,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.text.translation.Translation;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,5 +54,17 @@ public interface IMixinItem {
     default Optional<Entity> getCustomEntityItem(World world, Entity location, ItemStack itemstack) {
         return Optional.empty();
     }
+
+    /**
+     * Some Vanilla items, like ItemBanner, don't override getUnlocalizedName(ItemStack stack),
+     * despite modifying their display name based on the stack.
+     *
+     * To avoid affecting mods which may rely on this weird behavior, we add our
+     * own method. Normally, this delegates to getUnlocalizedName(ItemStack stack).
+     * In ItemBanner, we override it to return the proper unlocalized name.
+     *
+     * @return The proper translation to use
+     */
+    String getRealTranslation(ItemStack itemStack);
 
 }

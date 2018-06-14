@@ -58,6 +58,8 @@ public abstract class MixinItem implements ItemType, IMixinItem, SpongeGameDicti
     @Shadow public abstract int getItemStackLimit();
     @Shadow public abstract String getUnlocalizedName();
 
+    @Shadow public abstract String getUnlocalizedName(ItemStack stack);
+
     // A item stack used to retrieve properties
     @Nullable private org.spongepowered.api.item.inventory.ItemStack propertyItemStack;
 
@@ -122,5 +124,10 @@ public abstract class MixinItem implements ItemType, IMixinItem, SpongeGameDicti
         return MoreObjects.toStringHelper(this)
                 .add("Name", this.unlocalizedName)
                 .toString();
+    }
+
+    @Override
+    public String getRealTranslation(ItemStack itemStack) {
+        return this.getUnlocalizedName(itemStack);
     }
 }

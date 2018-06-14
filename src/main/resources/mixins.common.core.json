@@ -352,6 +352,7 @@
         "item.MixinEnchantment",
         "item.MixinItem",
         "item.MixinItemArmorMaterial",
+        "item.MixinItemBanner",
         "item.MixinItemBlock",
         "item.MixinItemCloth",
         "item.MixinItemEnderEye",

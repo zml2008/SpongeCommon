@@ -185,7 +185,7 @@ public abstract class MixinItemStack implements DataHolder, IMixinItemStack, IMi
     public void setRawData(DataView container) throws InvalidDataException {
 
     }
-    
+
     @Override
     public DataHolder copy() {
         return this.itemstack$copy();
@@ -230,7 +230,7 @@ public abstract class MixinItemStack implements DataHolder, IMixinItemStack, IMi
     }
 
     public Translation itemstack$getTranslation() {
-        return new SpongeTranslation(shadow$getItem().getUnlocalizedName((net.minecraft.item.ItemStack) (Object) this) + ".name");
+        return new SpongeTranslation(((IMixinItem) this.shadow$getItem()).getRealTranslation((net.minecraft.item.ItemStack) (Object) this) + ".name");
     }
 
     public ItemStackSnapshot itemstack$createSnapshot() {
