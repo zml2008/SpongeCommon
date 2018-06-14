@@ -60,6 +60,8 @@
         "block.MixinBlockDynamicLiquid",
         "block.MixinBlockLiquid",
         "block.MixinBlockEnderChest",
+        "block.MixinBlockEndGateway",
+        "block.MixinBlockEndPortal",
         "block.MixinBlockEndPortalFrame",
         "block.MixinBlockEventData",
         "block.MixinBlockFalling",

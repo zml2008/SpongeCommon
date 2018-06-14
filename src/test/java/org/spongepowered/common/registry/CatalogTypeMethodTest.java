@@ -82,7 +82,19 @@ public class CatalogTypeMethodTest {
             .put("stat.", false)
             .put("tile.", false)
             .put("potion.effect.missing", false) // Needs API changes
-            .put("gameMode.not_set", true) // Doesn't exist in vanilla
+
+            // All of the following translation keys have no entry
+            // in en_us.lang, even though they correspond to real entities
+            // or blocks. They tend to be either internal details
+            // (e.g. BlockTypes.PISTON_EXTENSION), or entities
+            // which never show up in chat (e.g. thrown enderpearls)
+            .put("gameMode.not_set", true)
+            .put("entity.MinecartSpawner", true)
+            .put("entity.MinecartTNT", true)
+            .put("entity.ThrownEnderpearl", true)
+            .put("tile.spongeapi_piston_extension.name", true)
+            .put("tile.spongeapi_end_portal.name", true)
+            .put("tile.spongeapi_end_gateway.name", true)
             .build();
 
     @Parameterized.Parameter(0)
