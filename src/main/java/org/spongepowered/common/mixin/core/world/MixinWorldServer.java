@@ -320,7 +320,6 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
         this.weatherIceAndSnowEnabled = this.getActiveConfig().getConfig().getWorld().getWeatherIceAndSnow();
         this.weatherThunderEnabled = this.getActiveConfig().getConfig().getWorld().getWeatherThunder();
         this.updateEntityTick = 0;
-        this.mixinChunkProviderServer = ((IMixinChunkProviderServer) this.getChunkProvider());
         this.setMemoryViewDistance(this.chooseViewDistanceValue(this.getActiveConfig().getConfig().getWorld().getViewDistance()));
     }
 
@@ -421,8 +420,8 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
         this.chunkUnloadDelay = this.activeConfig.getConfig().getWorld().getChunkUnloadDelay() * 1000;
         if (this.getChunkProvider() != null) {
             final int maxChunkUnloads = this.activeConfig.getConfig().getWorld().getMaxChunkUnloads();
-            this.mixinChunkProviderServer.setMaxChunkUnloads(maxChunkUnloads < 1 ? 1 : maxChunkUnloads);
-            this.mixinChunkProviderServer.setDenyChunkRequests(this.activeConfig.getConfig().getWorld().getDenyChunkRequests());
+            ((IMixinChunkProviderServer) this.getChunkProvider()).setMaxChunkUnloads(maxChunkUnloads < 1 ? 1 : maxChunkUnloads);
+            ((IMixinChunkProviderServer) this.getChunkProvider()).setDenyChunkRequests(this.activeConfig.getConfig().getWorld().getDenyChunkRequests());
             for (net.minecraft.entity.Entity entity : this.loadedEntityList) {
                 if (entity instanceof IModData_Activation) {
                     ((IModData_Activation) entity).requiresActivationCacheRefresh(true);
@@ -783,7 +782,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
             posX = fromPos.getX();
             posZ = fromPos.getZ();
         }
-        final net.minecraft.world.chunk.Chunk chunk = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(posX >> 4, posZ >> 4);
+        final net.minecraft.world.chunk.Chunk chunk = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(posX >> 4, posZ >> 4);
         return chunk != null && ((IMixinChunk) chunk).areNeighborsLoaded();
     }
 
@@ -1777,14 +1776,14 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
         } else {
             // ExtraUtilities 2 expects to get the proper chunk while mining or it gets stuck in infinite loop
             // TODO add TE config to disable/enable chunk loads
-            final boolean forceChunkRequests = this.mixinChunkProviderServer.getForceChunkRequests();
+            final boolean forceChunkRequests = ((IMixinChunkProviderServer) this.getChunkProvider()).getForceChunkRequests();
             final PhaseTracker phaseTracker = PhaseTracker.getInstance();
             final IPhaseState<?> currentState = phaseTracker.getCurrentState();
             if (currentState == TickPhase.Tick.TILE_ENTITY) {
                 ((IMixinChunkProviderServer) this.getChunkProvider()).setForceChunkRequests(true);
             }
             net.minecraft.world.chunk.Chunk chunk = this.getChunkFromBlockCoords(pos);
-            this.mixinChunkProviderServer.setForceChunkRequests(forceChunkRequests);
+            ((IMixinChunkProviderServer) this.getChunkProvider()).setForceChunkRequests(forceChunkRequests);
             return chunk.getBlockState(pos);
         }
     }
@@ -1808,7 +1807,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
     @Override
     public boolean spongeIsAreaLoadedForCheckingLight(World thisWorld, BlockPos pos, int radius, boolean allowEmtpy, EnumSkyBlock lightType,
             BlockPos samePosition) {
-        final Chunk chunk = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
+        final Chunk chunk = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
         return !(chunk == null || !((IMixinChunk) chunk).areNeighborsLoaded());
     }
 
@@ -1832,7 +1831,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
             }
             // Sponge Start - Use our hook to get the chunk only if it is loaded
             // return this.getChunkFromBlockCoords(pos).getLightSubtracted(pos, 0);
-            final Chunk chunk = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
+            final Chunk chunk = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
             return chunk == null ? 0 : chunk.getLightSubtracted(pos, 0);
             // Sponge End
         }
@@ -1887,7 +1886,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
                 // Sponge - Gets only loaded chunks, unloaded chunks will not get loaded to check lighting
                 // Chunk chunk = this.getChunkFromBlockCoords(pos);
                 // return chunk.getLightSubtracted(pos, this.skylightSubtracted);
-                final Chunk chunk = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
+                final Chunk chunk = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
                 return chunk == null ? 0 : chunk.getLightSubtracted(pos, this.getSkylightSubtracted());
                 // Sponge End
             }
@@ -1916,7 +1915,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
             // Sponge End
             return type.defaultLightValue;
         } else {
-            Chunk chunk = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
+            Chunk chunk = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(pos.getX() >> 4, pos.getZ() >> 4);
             if (chunk == null) {
                 return type.defaultLightValue;
             }
@@ -1980,7 +1979,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
         xEnd = xEnd >> 4;
         zEnd = zEnd >> 4;
 
-        net.minecraft.world.chunk.Chunk base = this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(xStart, zStart);
+        net.minecraft.world.chunk.Chunk base = ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(xStart, zStart);
         if (base == null) {
             return false;
         }
@@ -2036,7 +2035,7 @@ public abstract class MixinWorldServer extends MixinWorld implements IMixinWorld
      */
     @Overwrite
     protected boolean isChunkLoaded(int x, int z, boolean allowEmpty) {
-        final IMixinChunk spongeChunk = (IMixinChunk) this.mixinChunkProviderServer.getLoadedChunkWithoutMarkingActive(x, z);
+        final IMixinChunk spongeChunk = (IMixinChunk) ((IMixinChunkProviderServer) this.getChunkProvider()).getLoadedChunkWithoutMarkingActive(x, z);
         return spongeChunk != null && (!spongeChunk.isQueuedForUnload() || spongeChunk.isPersistedChunk());
     }
 
