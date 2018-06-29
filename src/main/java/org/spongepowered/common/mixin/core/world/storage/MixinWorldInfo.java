@@ -151,7 +151,7 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
     private DimensionType dimensionType = DimensionTypes.OVERWORLD;
     private SerializationBehavior serializationBehavior = SerializationBehaviors.AUTOMATIC;
     private boolean isMod = false;
-    private boolean generateBonusChest, isValid = true;
+    private boolean generateBonusChest;
     private NBTTagCompound spongeRootLevelNbt = new NBTTagCompound(), spongeNbt = new NBTTagCompound();
     private final NBTTagList playerUniqueIdNbt = new NBTTagList();
     private final BiMap<Integer, UUID> playerUniqueIdMap = HashBiMap.create();
@@ -177,8 +177,7 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
     //     public WorldInfo(WorldSettings settings, String name)
     @Inject(method = "<init>*", at = @At("RETURN"))
     private void onConstruction(WorldSettings settings, String name, CallbackInfo ci) {
-        if (name.equals("MpServer") || name.equals("sponge$dummy_world")) {
-            this.isValid = false;
+        if (!this.isValid()) {
             return;
         }
 
@@ -252,7 +251,7 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean isValid() {
-        return this.isValid;
+        return !(this.levelName == null || this.levelName.equals("") || this.levelName.equals("MpServer") || this.levelName.equals("sponge$dummy_world"));
     }
 
     @Override

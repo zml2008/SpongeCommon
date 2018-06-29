@@ -52,6 +52,7 @@ import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.storage.ISaveHandler;
+import net.minecraft.world.storage.WorldInfo;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
@@ -104,6 +105,8 @@ import org.spongepowered.common.interfaces.IMixinCommandSender;
 import org.spongepowered.common.interfaces.IMixinCommandSource;
 import org.spongepowered.common.interfaces.IMixinMinecraftServer;
 import org.spongepowered.common.interfaces.IMixinSubject;
+import org.spongepowered.common.interfaces.world.IMixinWorldInfo;
+import org.spongepowered.common.interfaces.world.IMixinWorldProvider;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.interfaces.world.gen.IMixinChunkProviderServer;
 import org.spongepowered.common.profile.SpongeProfileManager;
@@ -350,7 +353,8 @@ public abstract class MixinMinecraftServer implements Server, ConsoleSource, IMi
 
     @Override
     public void prepareSpawnArea(WorldServer worldServer) {
-        if (!((WorldProperties) worldServer.getWorldInfo()).doesGenerateSpawnOnLoad()) {
+        WorldProperties worldProperties = (WorldProperties) worldServer.getWorldInfo();
+        if (!((IMixinWorldInfo) worldProperties).isValid() || !worldProperties.doesGenerateSpawnOnLoad()) {
             return;
         }
 
@@ -620,7 +624,7 @@ public abstract class MixinMinecraftServer implements Server, ConsoleSource, IMi
                     side = result.sideHit;
                 }
 
-                Sponge.getCauseStackManager().pushCause(player); 
+                Sponge.getCauseStackManager().pushCause(player);
                 if (!player.getHeldItemMainhand().isEmpty()) {
                     if (SpongeCommonEventFactory.callInteractItemEventPrimary(player, player.getHeldItemMainhand(), EnumHand.MAIN_HAND,
                             result == null ? null : VecHelper.toVector3d(result.hitVec), blockSnapshot).isCancelled()) {
