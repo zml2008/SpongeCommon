@@ -602,6 +602,10 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean isEnabled() {
+        if (!this.isValid()) {
+            return true;
+        }
+
         boolean isEnabled = true;
         if (!this.getOrCreateWorldConfig().getConfig().isConfigEnabled()) {
             DimensionConfig dimConfig = ((IMixinDimensionType) this.dimensionType).getDimensionConfig().getConfig();
@@ -617,11 +621,18 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setEnabled(boolean enabled) {
+        if (!this.isValid()) {
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setWorldEnabled(enabled);
     }
 
     @Override
     public boolean loadOnStartup() {
+        if (!this.isValid()) {
+            return true;
+        }
+
         Boolean loadOnStartup;
         if (!this.getOrCreateWorldConfig().getConfig().isConfigEnabled()) {
             DimensionConfig dimConfig = ((IMixinDimensionType) this.dimensionType).getDimensionConfig().getConfig();
@@ -647,12 +658,19 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setLoadOnStartup(boolean state) {
+        if (!this.isValid()) {
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setLoadOnStartup(state);
         this.saveConfig();
     }
 
     @Override
     public boolean doesKeepSpawnLoaded() {
+        if (!this.isValid()) {
+            return true;
+        }
+
         Boolean keepSpawnLoaded;
         // World config isn't enabled
         if (!this.getOrCreateWorldConfig().getConfig().isConfigEnabled()) {
@@ -675,12 +693,20 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setKeepSpawnLoaded(boolean loaded) {
+        if (!this.isValid()) {
+            return;
+        }
+
         this.getOrCreateWorldConfig().getConfig().getWorld().setKeepSpawnLoaded(loaded);
         this.saveConfig();
     }
 
     @Override
     public boolean doesGenerateSpawnOnLoad() {
+        if (!this.isValid()) {
+            return false;
+        }
+
         Boolean shouldGenerateSpawn;
         if (!this.getOrCreateWorldConfig().getConfig().isConfigEnabled()) {
             DimensionConfig dimConfig = ((IMixinDimensionType) this.dimensionType).getDimensionConfig().getConfig();
@@ -701,17 +727,27 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setGenerateSpawnOnLoad(boolean state) {
+        if (!this.isValid()) {
+            return;
+        }
+
         this.getOrCreateWorldConfig().getConfig().getWorld().setGenerateSpawnOnLoad(state);
         this.saveConfig();
     }
 
     @Override
     public boolean isPVPEnabled() {
+        if (!this.isValid()) {
+            return true;
+        }
         return !this.getOrCreateWorldConfig().getConfig().isConfigEnabled() || this.getOrCreateWorldConfig().getConfig().getWorld().getPVPEnabled();
     }
 
     @Override
     public void setPVPEnabled(boolean enabled) {
+        if (!this.isValid()) {
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setPVPEnabled(enabled);
     }
 
@@ -915,6 +951,10 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
     }
 
     private void saveConfig() {
+        if (!this.isValid()) {
+            return;
+        }
+
         if (this.getOrCreateWorldConfig().getConfig().isConfigEnabled()) {
             this.getOrCreateWorldConfig().save();
         }
