@@ -36,13 +36,13 @@ import org.spongepowered.common.interfaces.event.forge.IMixinWorldTickEvent;
 
 import javax.annotation.Nullable;
 
-final class PreWorldTickListenerState extends ListenerPhaseState {
+final class PreWorldTickListenerState extends BasicListenerPhaseState {
 
     PreWorldTickListenerState() {
     }
 
     @Override
-    public void unwind(ListenerPhaseContext phaseContext) {
+    public void unwind(BasicListenerPhaseContext phaseContext) {
         final IMixinWorldTickEvent worldTickEvent = phaseContext.getTickEvent();
         final Object listener = phaseContext.getSource(Object.class)
             .orElseThrow(TrackingUtil.throwWithContext("Expected to be capturing a WorldTickEvent listener!", phaseContext));
@@ -52,7 +52,7 @@ final class PreWorldTickListenerState extends ListenerPhaseState {
         });    }
 
     @Override
-    public void associateNeighborBlockNotifier(ListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
+    public void associateNeighborBlockNotifier(BasicListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
                                                WorldServer minecraftWorld, PlayerTracker.Type notifier) {
         context.getCapturedPlayer().ifPresent(player ->
                 ((IMixinChunk) minecraftWorld.getChunkFromBlockCoords(notifyPos))

@@ -32,10 +32,12 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
+import org.spongepowered.api.CatalogType;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.CauseStackManager;
+import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -352,6 +354,16 @@ public interface IPhaseState<C extends PhaseContext<C>> {
      * @return True if this is an event listener state
      */
     default boolean isEvent() {
+        return false;
+    }
+
+    /**
+     * Allows registry implementations to delay registration of objects for specific catalog types.
+     *
+     * @param catalogType
+     * @return True if this an event listener for the specified catalog type
+     */
+    default boolean isRegistryEvent(C context, Class<? extends CatalogType> catalogType) {
         return false;
     }
 }

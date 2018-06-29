@@ -29,6 +29,8 @@ import net.minecraft.advancements.AdvancementManager;
 import org.spongepowered.api.advancement.Advancement;
 import org.spongepowered.api.registry.AdditionalCatalogRegistryModule;
 import org.spongepowered.common.advancement.SpongeAdvancementBuilder;
+import org.spongepowered.common.event.tracking.IPhaseState;
+import org.spongepowered.common.event.tracking.PhaseData;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.interfaces.advancement.IMixinAdvancement;
 import org.spongepowered.common.interfaces.advancement.IMixinAdvancementList;
@@ -56,7 +58,10 @@ public class AdvancementRegistryModule extends AbstractPrefixCheckCatalogRegistr
     public void registerAdditionalCatalog(Advancement advancement) {
         super.register(advancement);
         ((IMixinAdvancement) advancement).setRegistered();
-        if (ServerUtils.isCallingFromMainThread() && PhaseTracker.getInstance().getCurrentState().isEvent()) {
+
+        PhaseData data = PhaseTracker.getInstance().getCurrentPhaseData();
+
+        if (ServerUtils.isCallingFromMainThread() && ((IPhaseState) data.state).isRegistryEvent(data.context, Advancement.class)) {
             final net.minecraft.advancements.Advancement mcAdv = (net.minecraft.advancements.Advancement) advancement;
             final IMixinAdvancementList advancementList = (IMixinAdvancementList) AdvancementManager.ADVANCEMENT_LIST;
             advancementList.getAdvancements().put(mcAdv.getId(), mcAdv);

@@ -37,30 +37,30 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-public class ListenerPhaseContext extends PluginPhaseContext<ListenerPhaseContext> {
+public class ListenerPhaseContext<L extends ListenerPhaseContext<L>> extends PluginPhaseContext<L> {
 
 
     Object object;
     private CapturePlayer capturePlayer;
 
-    ListenerPhaseContext(IPhaseState<ListenerPhaseContext> state) {
+    public ListenerPhaseContext(IPhaseState<L> state) {
         super(state);
     }
 
-    public ListenerPhaseContext event(Object obj) {
+    public L event(Object obj) {
         this.object = obj;
-        return this;
+        return (L) this;
     }
 
     public IMixinWorldTickEvent getTickEvent() {
         return (IMixinWorldTickEvent) this.object;
     }
 
-    public ListenerPhaseContext player() {
+    public L player() {
         checkState(!this.isCompleted, "Cannot add a new object to the context if it's already marked as completed!");
         checkState(this.capturePlayer == null, "Already capturing a player object!");
         this.capturePlayer = new CapturePlayer();
-        return this;
+        return (L) this;
     }
 
     public CapturePlayer getCapturedPlayerSupplier() throws IllegalStateException {

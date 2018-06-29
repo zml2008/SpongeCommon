@@ -33,19 +33,18 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.interfaces.IMixinChunk;
-import org.spongepowered.common.interfaces.event.forge.IMixinWorldTickEvent;
 
 import javax.annotation.Nullable;
 
-final class EventListenerPhaseState extends ListenerPhaseState {
+public abstract class EventListenerPhaseState<L extends ListenerPhaseContext<L>> extends ListenerPhaseState<L> {
 
     private boolean hasPrintedEntities = false;
 
-    EventListenerPhaseState() {
+    public EventListenerPhaseState() {
     }
 
     @Override
-    public void unwind(ListenerPhaseContext phaseContext) {
+    public void unwind(L phaseContext) {
         phaseContext.getCapturedBlockSupplier().acceptAndClearIfNotEmpty(blocks -> {
             TrackingUtil.processBlockCaptures(blocks, this, phaseContext);
         });
@@ -61,7 +60,7 @@ final class EventListenerPhaseState extends ListenerPhaseState {
     }
 
     @Override
-    public void associateNeighborBlockNotifier(ListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
+    public void associateNeighborBlockNotifier(L context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
                                                WorldServer minecraftWorld, PlayerTracker.Type notifier) {
         context.getCapturedPlayer().ifPresent(player ->
                 ((IMixinChunk) minecraftWorld.getChunkFromBlockCoords(notifyPos))

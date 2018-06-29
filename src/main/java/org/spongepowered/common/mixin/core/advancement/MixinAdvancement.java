@@ -52,6 +52,8 @@ import org.spongepowered.common.advancement.ICriterion;
 import org.spongepowered.common.advancement.SpongeAdvancementBuilder;
 import org.spongepowered.common.advancement.SpongeAdvancementTree;
 import org.spongepowered.common.advancement.SpongeScoreCriterion;
+import org.spongepowered.common.event.tracking.IPhaseState;
+import org.spongepowered.common.event.tracking.PhaseData;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.interfaces.advancement.IMixinAdvancement;
 import org.spongepowered.common.interfaces.advancement.IMixinCriterion;
@@ -97,7 +99,7 @@ public class MixinAdvancement implements org.spongepowered.api.advancement.Advan
         checkState(ServerUtils.isCallingFromMainThread());
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(ResourceLocation id, @Nullable Advancement parentIn, @Nullable DisplayInfo displayIn,
             AdvancementRewards rewardsIn, Map<String, Criterion> criteriaIn, String[][] requirementsIn, CallbackInfo ci) {
@@ -114,7 +116,8 @@ public class MixinAdvancement implements org.spongepowered.api.advancement.Advan
         if (displayIn != null) {
             this.name = SpongeTexts.toPlain(displayIn.getTitle());
         }
-        if (!PhaseTracker.getInstance().getCurrentState().isEvent()) {
+        PhaseData data = PhaseTracker.getInstance().getCurrentPhaseData();
+        if (!((IPhaseState) data.state).isRegistryEvent(data.context, org.spongepowered.api.advancement.Advancement.class)) {
             AdvancementRegistryModule.getInstance().registerAdditionalCatalog(this);
         } else {
             // Wait to set the parent until the advancement is registered

@@ -43,14 +43,7 @@ import javax.annotation.Nullable;
  * A specialized phase for forge event listeners during pre tick, may need to do the same
  * if SpongeAPI adds pre tick events.
  */
-abstract class ListenerPhaseState extends PluginPhaseState<ListenerPhaseContext> {
-
-    @Override
-    public ListenerPhaseContext createPhaseContext() {
-        return new ListenerPhaseContext(this)
-            .addCaptures()
-            .player();
-    }
+abstract class ListenerPhaseState<L extends ListenerPhaseContext<L>> extends PluginPhaseState<L> {
 
     @Override
     public boolean canSwitchTo(IPhaseState<?> state) {
@@ -58,7 +51,7 @@ abstract class ListenerPhaseState extends PluginPhaseState<ListenerPhaseContext>
     }
 
     @Override
-    public void unwind(ListenerPhaseContext phaseContext) {
+    public void unwind(L phaseContext) {
 
     }
 
@@ -74,11 +67,11 @@ abstract class ListenerPhaseState extends PluginPhaseState<ListenerPhaseContext>
 
 
     @Override
-    public void addNotifierToBlockEvent(ListenerPhaseContext context, IMixinWorldServer mixinWorldServer, BlockPos pos, IMixinBlockEventData blockEvent) {
+    public void addNotifierToBlockEvent(L context, IMixinWorldServer mixinWorldServer, BlockPos pos, IMixinBlockEventData blockEvent) {
 
     }
 
-    public void associateNeighborBlockNotifier(ListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
+    public void associateNeighborBlockNotifier(L context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
                                                WorldServer minecraftWorld, PlayerTracker.Type notifier) {
 
     }

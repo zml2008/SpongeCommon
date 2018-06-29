@@ -40,6 +40,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.event.registry.SpongeGameRegistryRegisterEvent;
+import org.spongepowered.common.event.tracking.phase.packet.GameRegistryListenerPhaseContext;
 import org.spongepowered.common.event.tracking.phase.plugin.ListenerPhaseContext;
 import org.spongepowered.common.event.tracking.phase.plugin.PluginPhase;
 import org.spongepowered.common.interfaces.advancement.IMixinAdvancementList;
@@ -73,8 +74,9 @@ public class MixinAdvancementList implements IMixinAdvancementList {
             event =
             new SpongeGameRegistryRegisterEvent<>(Cause.of(EventContext.empty(), SpongeImpl.getRegistry()),
                 org.spongepowered.api.advancement.Advancement.class, AdvancementRegistryModule.getInstance());
-        try (ListenerPhaseContext context = PluginPhase.Listener.GENERAL_LISTENER.createPhaseContext()
+        try (GameRegistryListenerPhaseContext context = PluginPhase.Listener.GAME_REGISTRY_LISTENER.createPhaseContext()
             .event(event)
+             .catalogType(org.spongepowered.api.advancement.Advancement.class)
             .source(Sponge.getGame())) {
             context.buildAndSwitch();
             SpongeImpl.postEvent(event);
@@ -91,8 +93,9 @@ public class MixinAdvancementList implements IMixinAdvancementList {
             event =
             new SpongeGameRegistryRegisterEvent<>(Cause.of(EventContext.empty(), SpongeImpl.getRegistry()),
                 AdvancementTree.class, AdvancementTreeRegistryModule.getInstance());
-        try (ListenerPhaseContext context = PluginPhase.Listener.GENERAL_LISTENER.createPhaseContext()
+        try (ListenerPhaseContext context = PluginPhase.Listener.GAME_REGISTRY_LISTENER.createPhaseContext()
             .event(event)
+            .catalogType(org.spongepowered.api.advancement.Advancement.class)
             .source(Sponge.getGame())) {
             context.buildAndSwitch();
             SpongeImpl.postEvent(event);

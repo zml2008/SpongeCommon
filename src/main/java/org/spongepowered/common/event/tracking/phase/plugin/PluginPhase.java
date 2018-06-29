@@ -26,6 +26,8 @@ package org.spongepowered.common.event.tracking.phase.plugin;
 
 import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.phase.TrackingPhase;
+import org.spongepowered.common.event.tracking.phase.packet.GameRegistryListenerPhaseContext;
+import org.spongepowered.common.event.tracking.phase.packet.GameRegistryListenerPhaseState;
 
 public final class PluginPhase extends TrackingPhase {
 
@@ -41,11 +43,12 @@ public final class PluginPhase extends TrackingPhase {
     }
 
     public static final class Listener {
-        public static final IPhaseState<ListenerPhaseContext> GENERAL_LISTENER = new EventListenerPhaseState();
-        public static final IPhaseState<ListenerPhaseContext> PRE_WORLD_TICK_LISTENER = new PreWorldTickListenerState();
-        public static final IPhaseState<ListenerPhaseContext> POST_WORLD_TICK_LISTENER = new PostWorldTickListenerState();
-        public static final IPhaseState<ListenerPhaseContext> PRE_SERVER_TICK_LISTENER = new PreServerTickListenerState();
-        public static final IPhaseState<ListenerPhaseContext> POST_SERVER_TICK_LISTENER = new PostServerTickListenerState();
+        public static final IPhaseState<BasicListenerPhaseContext> GENERAL_LISTENER = new BasicListenerPhaseState();
+        public static final IPhaseState<GameRegistryListenerPhaseContext> GAME_REGISTRY_LISTENER = new GameRegistryListenerPhaseState();
+        public static final IPhaseState<BasicListenerPhaseContext> PRE_WORLD_TICK_LISTENER = new PreWorldTickListenerState();
+        public static final IPhaseState<BasicListenerPhaseContext> POST_WORLD_TICK_LISTENER = new PostWorldTickListenerState();
+        public static final IPhaseState<BasicListenerPhaseContext> PRE_SERVER_TICK_LISTENER = new PreServerTickListenerState();
+        public static final IPhaseState<BasicListenerPhaseContext> POST_SERVER_TICK_LISTENER = new PostServerTickListenerState();
 
         private Listener() {
         }

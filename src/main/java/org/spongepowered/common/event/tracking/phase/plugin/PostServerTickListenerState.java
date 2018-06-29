@@ -35,13 +35,13 @@ import org.spongepowered.common.interfaces.IMixinChunk;
 
 import javax.annotation.Nullable;
 
-final class PostServerTickListenerState extends ListenerPhaseState {
+final class PostServerTickListenerState extends BasicListenerPhaseState {
 
     PostServerTickListenerState() {
     }
 
     @Override
-    public void unwind(ListenerPhaseContext phaseContext) {
+    public void unwind(BasicListenerPhaseContext phaseContext) {
 
         final Object listener = phaseContext.getSource(Object.class)
             .orElseThrow(TrackingUtil.throwWithContext("Expected to be capturing a ServerTickEvent listener!", phaseContext));
@@ -52,7 +52,7 @@ final class PostServerTickListenerState extends ListenerPhaseState {
     }
 
     @Override
-    public void associateNeighborBlockNotifier(ListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
+    public void associateNeighborBlockNotifier(BasicListenerPhaseContext context, @Nullable BlockPos sourcePos, Block block, BlockPos notifyPos,
                                                WorldServer minecraftWorld, PlayerTracker.Type notifier) {
         context.getCapturedPlayer().ifPresent(player ->
                 ((IMixinChunk) minecraftWorld.getChunkFromBlockCoords(notifyPos))
