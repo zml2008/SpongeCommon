@@ -112,7 +112,6 @@ public class DamageEventHandler {
     public static Optional<List<DamageFunction>> createArmorModifiers(EntityLivingBase entityLivingBase,
             DamageSource damageSource, double damage) {
         if (!damageSource.isUnblockable()) {
-            damage *= 25;
             net.minecraft.item.ItemStack[] inventory = Iterables.toArray(entityLivingBase.getArmorInventoryList(), net.minecraft.item.ItemStack.class);
             List<DamageFunction> modifiers = new ArrayList<>();
             List<DamageObject> damageObjects = new ArrayList<>();
@@ -125,7 +124,7 @@ public class DamageEventHandler {
                 Item item = itemStack.getItem();
                 if (item instanceof ItemArmor) {
                     ItemArmor armor = (ItemArmor) item;
-                    double reduction = armor.damageReduceAmount / 25D;
+                    double reduction = armor.damageReduceAmount;
                     DamageObject object = new DamageObject();
                     object.slot = index;
                     object.ratio = reduction;
@@ -146,7 +145,6 @@ public class DamageEventHandler {
                     object.augment = true;
                 }
                 DoubleUnaryOperator function = incomingDamage -> {
-                    incomingDamage *= 25;
                     if (object.augment) {
                         // This is the damage that needs to be archived for the "first" armor modifier
                         // function since the armor modifiers work based on the initial damage and not as
@@ -157,7 +155,7 @@ public class DamageEventHandler {
                     object.previousDamage = functionDamage;
                     object.ratio = prop.ratio;
                     object.ratio += prop.ratio;
-                    return - ((functionDamage * prop.ratio) / 25);
+                    return - ((functionDamage * prop.ratio));
                 };
                 ratio += prop.ratio;
 
@@ -193,13 +191,12 @@ public class DamageEventHandler {
         Optional<DamageObject> property = modifier.getCause().first(DamageObject.class);
         final Iterable<net.minecraft.item.ItemStack> inventory = entity.getArmorInventoryList();
         if (property.isPresent()) {
-            damage = Math.abs(damage) * 25;
             net.minecraft.item.ItemStack stack = Iterables.get(inventory, property.get().slot);
             if (stack.isEmpty()) {
                 throw new IllegalStateException("Invalid slot position " + property.get().slot);
             }
 
-            int itemDamage = (int) (damage / 25D < 1 ? 1 : damage / 25D);
+            int itemDamage = (int)Math.max(1, damage);
             stack.damageItem(itemDamage, entity);
         }
     }

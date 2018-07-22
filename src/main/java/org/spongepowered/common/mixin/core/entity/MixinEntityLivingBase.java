@@ -41,6 +41,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
+import net.minecraft.util.CombatRules;
 import net.minecraft.util.CombatTracker;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
@@ -699,6 +700,7 @@ public abstract class MixinEntityLivingBase extends MixinEntity implements Livin
                 }
 
                 this.setAbsorptionAmount(Math.max(this.getAbsorptionAmount() + (float) absorptionModifier, 0.0F));
+                damage = (float) SpongeImplHooks.getDamageAfterAbsorb((EntityLivingBase)(Object) this, damage, damageSource);
                 if (damage != 0.0F) {
                     if (human) {
                         ((EntityPlayer) (Object) this).addExhaustion(damageSource.getHungerDamage());
