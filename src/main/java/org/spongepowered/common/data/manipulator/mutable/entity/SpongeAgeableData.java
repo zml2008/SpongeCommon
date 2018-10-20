@@ -48,6 +48,10 @@ public class SpongeAgeableData extends AbstractData<AgeableData, ImmutableAgeabl
         this.registerGettersAndSetters();
     }
 
+    public SpongeAgeableData() {
+        this(DataConstants.ADULT, true);
+    }
+
     @Override
     public AgeableData copy() {
         return new SpongeAgeableData(this.age, this.adult);
