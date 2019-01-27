@@ -437,6 +437,7 @@ public final class SpongeCauseStackManager implements CauseStackManager {
             this.storedContext.clear();
             this.lastCauseSize = -1;
             this.old_min_depth = -1;
+            this.stack_debug = null;
         }
 
         // used in chaining.
