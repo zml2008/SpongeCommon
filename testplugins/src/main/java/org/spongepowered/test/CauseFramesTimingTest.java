@@ -39,12 +39,14 @@ import org.spongepowered.api.text.Text;
 
 import java.util.Stack;
 
+import javax.annotation.Nullable;
+
 @Plugin(id = "frames-timing")
 public class CauseFramesTimingTest {
 
     private final Text numberOfFrames = Text.of("number of frames");
     private final Text numberOfRepeats = Text.of("repetitions");
-    private EventContextKey<Integer> testContextKey;
+    @Nullable private EventContextKey<Integer> testContextKey;
 
     @Listener
     public void init(GameInitializationEvent event) {
@@ -59,9 +61,9 @@ public class CauseFramesTimingTest {
                 CommandSpec.builder()
                         .arguments(
                                 GenericArguments.flags()
-                                    .valueFlag(GenericArguments.integer(this.numberOfFrames), "-frames", "f")
-                                    .valueFlag(GenericArguments.integer(this.numberOfRepeats), "-repeats", "r")
-                                    .buildWith(GenericArguments.none()))
+                                        .valueFlag(GenericArguments.integer(this.numberOfFrames), "-frames", "f")
+                                        .valueFlag(GenericArguments.integer(this.numberOfRepeats), "-repeats", "r")
+                                        .buildWith(GenericArguments.none()))
                         .executor((src, context) -> {
                             int noOfFrames = context.<Integer>getOne(this.numberOfFrames).orElse(50);
                             if (noOfFrames < 1) {
@@ -81,10 +83,11 @@ public class CauseFramesTimingTest {
                             }
 
                             CauseStackManager csm = Sponge.getCauseStackManager();
-                            long startTime = System.currentTimeMillis();
+                            long startTime = System.nanoTime();
                             for (int r = 0; r < noOfRepeats; ++r) {
+                                CauseStackManager.StackFrame[] frames = new CauseStackManager.StackFrame[noOfFrames];
                                 for (int i = 0; i < noOfFrames; ++i) {
-                                    csm.pushCauseFrame();
+                                    frames[i] = csm.pushCauseFrame();
                                     for (int j = 0; j < 5; ++j) {
                                         csm.pushCause(causes.pop());
                                     }
@@ -93,13 +96,13 @@ public class CauseFramesTimingTest {
 
                                 // Create a cause
                                 Cause cause = csm.getCurrentCause();
-                                for (int i = 0; i < noOfFrames; ++i) {
-                                    csm.popCause();
+                                for (int i = noOfFrames - 1; i >= 0; --i) {
+                                    csm.popCauseFrame(frames[i]);
                                 }
                             }
-                            long endTime = System.currentTimeMillis();
+                            long endTime = System.nanoTime();
 
-                            src.sendMessage(Text.of("Test completed in: ", endTime - startTime, "ms."));
+                            src.sendMessage(Text.of("Test completed in: ", endTime - startTime, "ns."));
                             return CommandResult.success();
                         }).build(),
                 "timecsm"
