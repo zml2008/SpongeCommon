@@ -40,7 +40,7 @@ import org.spongepowered.api.text.Text;
 import java.util.Stack;
 
 @Plugin(id = "frames-timing")
-public class SuperScientificTimingCauseFramesPlugin {
+public class CauseFramesTimingTest {
 
     private final Text numberOfFrames = Text.of("number of frames");
     private final Text numberOfRepeats = Text.of("repetitions");
