@@ -35,6 +35,8 @@ import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.comp.OrderedInventoryLens;
 import org.spongepowered.common.item.inventory.lens.impl.ConceptualLens;
+import org.spongepowered.common.item.inventory.lens.impl.DefaultEmptyLens;
+import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.struct.LensHandle;
 import org.spongepowered.common.item.inventory.lens.slots.SlotLens;
 
@@ -56,6 +58,13 @@ public class OrderedInventoryLensImpl extends ConceptualLens implements OrderedI
         checkArgument(stride > 0, "Invalid stride: %s", stride);
         this.stride = stride;
         this.init(slots);
+    }
+
+    public static Lens of(InventoryAdapter adapter, int size, SlotCollection slots) {
+        if (size == 0) {
+            return new DefaultEmptyLens(adapter);
+        }
+        return new OrderedInventoryLensImpl(0, size, 1, slots);
     }
 
     protected void cache() {

@@ -40,10 +40,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public class DefaultEmptyLens implements Lens {
 
     private static final IntSet EMPTY_SLOT_SET = IntSets.EMPTY_SET;
-    
+
+    @Nullable
     protected final InventoryAdapter adapter;
     
     public DefaultEmptyLens(InventoryAdapter adapter) {
