@@ -52,6 +52,10 @@ public abstract class MixinSPacketChunkData_Async_Lighting implements Packet<INe
     @Redirect(method = "extractChunkData", at = @At(value = "INVOKE", target =
             "Lnet/minecraft/world/chunk/Chunk;getBlockStorageArray()[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;"))
     private ExtendedBlockStorage[] onGetBlockStorageArrayForExtraction(Chunk chunk) {
-        return this.extendedBlockStorages;
+        try {
+            return this.extendedBlockStorages;
+        } finally {
+            this.extendedBlockStorages = null;
+        }
     }
 }
