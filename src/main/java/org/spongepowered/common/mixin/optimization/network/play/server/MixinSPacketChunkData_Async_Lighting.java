@@ -24,57 +24,34 @@
  */
 package org.spongepowered.common.mixin.optimization.network.play.server;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.CompositeByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.buffer.UnpooledByteBufAllocator;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.network.play.server.SPacketChunkData;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import org.apache.commons.lang3.ArrayUtils;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(value = SPacketChunkData.class, priority = 1005)
+/**
+ * Create a copy of the ExtendedBlockStorage array so that the
+ * array can't be modified after the calculation is completed.
+ */
+@Mixin(value = SPacketChunkData.class)
 public abstract class MixinSPacketChunkData_Async_Lighting implements Packet<INetHandlerPlayClient>  {
 
-    @Shadow private byte[] buffer;
-    private ByteBuf buf;
+    private ExtendedBlockStorage[] extendedBlockStorages;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/chunk/Chunk;I)V", at = @At("RETURN"))
-    private void onInitChunkData(Chunk chunk, int changedSectionFilter, CallbackInfo ci) {
-        try {
-            final int written = this.buf.writerIndex();
-            // More or less than expected bytes got written, we need to make a new buffer
-            if (written != this.buffer.length) {
-                this.buffer = new byte[written];
-                this.buf.readBytes(this.buffer);
-                // We could optimize when less bytes are written, but these
-                // cases are so rare that it's not worth it
-            }
-        } finally {
-            this.buf.release();
-            this.buf = null;
-        }
+    @Redirect(method = "calculateChunkSize", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/world/chunk/Chunk;getBlockStorageArray()[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;"))
+    private ExtendedBlockStorage[] onGetBlockStorageArrayForCalculation(Chunk chunk) {
+        return this.extendedBlockStorages = ArrayUtils.clone(chunk.getBlockStorageArray());
     }
 
-    /**
-     * @author Cybermaxke
-     * @reason Overwrite to replace the fixed buffer to allow extra data to be
-     *         written, this happens when the estimated size is no longer valid
-     *         caused by async operations.
-     */
-    @Overwrite
-    private ByteBuf getWriteBuffer() {
-        // The estimated buffer, in most cases this buffer should be enough
-        final ByteBuf estimatedBuf = Unpooled.wrappedBuffer(this.buffer);
-        // An extra buffer in case that extra bytes are necessary
-        final ByteBuf extraBuf = ByteBufAllocator.DEFAULT.buffer(0);
-        return this.buf = new CompositeByteBuf(UnpooledByteBufAllocator.DEFAULT, false, 2, estimatedBuf, extraBuf).setIndex(0, 0);
+    @Redirect(method = "extractChunkData", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/world/chunk/Chunk;getBlockStorageArray()[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;"))
+    private ExtendedBlockStorage[] onGetBlockStorageArrayForExtraction(Chunk chunk) {
+        return this.extendedBlockStorages;
     }
 }
