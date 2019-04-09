@@ -31,7 +31,6 @@ import com.google.common.cache.RemovalCause;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -44,6 +43,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.SaveHandler;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.profile.GameProfileCache;
 import org.spongepowered.api.profile.ProfileNotFoundException;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.entity.player.SpongeUser;
@@ -84,8 +84,12 @@ class UserDiscoverer {
 
     // Used to ensure that race conditions aren't hit when doing the filesystem checks
     private final static Object lockingObject = new Object();
+    private static boolean hasInitBeenStarted = false;
+    private static boolean scanningIO = true;
 
     // This is inherently tied to the user cache, so we use its removal listener to remove entries here.
+    // Note that this cache is intended for _stored_ user data, while the GameProfileCache might contain
+    // other user data. This is why we store it here.
     private static final Map<UUID, org.spongepowered.api.profile.GameProfile> gameProfileCache = new HashMap<>();
     private static final Multimap<String, User> caseInsensitiveUserByNameCache = HashMultimap.create();
 
@@ -208,12 +212,18 @@ class UserDiscoverer {
     }
 
     static Collection<org.spongepowered.api.profile.GameProfile> getAllProfiles() {
-        synchronized (lockingObject) {
-            Preconditions.checkState(Sponge.isServerAvailable(), "Server is not available!");
-            if (filesystemWatchService == null || watchKey == null || !watchKey.isValid()) {
-                startFilesystemWatchService();
-            }
+        if (scanningIO) {
+            // A good temporary measure is to use the game profile cache.
+            return ((GameProfileCache) SpongeImpl.getServer().getPlayerProfileCache()).getProfiles();
+        }
 
+        Preconditions.checkState(Sponge.isServerAvailable(), "Server is not available!");
+        if (filesystemWatchService == null || watchKey == null || !watchKey.isValid()) {
+            startFilesystemWatchService();
+            return ((GameProfileCache) SpongeImpl.getServer().getPlayerProfileCache()).getProfiles();
+        }
+
+        synchronized (lockingObject) {
             // Add all cached profiles to a new map, we don't want to alter the current "cache" map.
             final Map<UUID, org.spongepowered.api.profile.GameProfile> profiles = new HashMap<>(gameProfileCache);
 
@@ -238,7 +248,8 @@ class UserDiscoverer {
     }
 
     static void init() {
-        synchronized (lockingObject) {
+        if (!hasInitBeenStarted) {
+            hasInitBeenStarted = true;
             startFilesystemWatchService();
         }
     }
@@ -246,39 +257,51 @@ class UserDiscoverer {
     // Used to avoid blocking on a lock.
     private static void startFilesystemWatchService() {
         Preconditions.checkState(Sponge.isServerAvailable(), "Server is not available!");
+        scanningIO = true;
+        SpongeImpl.getScheduler().createAsyncExecutor(SpongeImpl.getPlugin())
+                    .execute(UserDiscoverer::startFilesystemWatchServiceTask);
+    }
 
+    private static void startFilesystemWatchServiceTask() {
         // if we're in init, we need to remove the old service and watchkey
-        if (watchKey != null) {
-            watchKey.cancel();
-            watchKey = null;
-        }
-
-        if (filesystemWatchService != null) {
-            try {
-                filesystemWatchService.close();
-            } catch (IOException e) {
-                filesystemWatchService = null;
+        synchronized (lockingObject) {
+            if (watchKey != null) {
+                watchKey.cancel();
+                watchKey = null;
             }
-        }
 
-        detectedStoredUUIDs.clear();
-        nonExistentUsers.clear();
-
-        IMixinSaveHandler saveHandler = (IMixinSaveHandler) WorldManager.getWorldByDimensionId(0).get().getSaveHandler();
-        Set<UUID> uuids = getAvailablePlayerUUIDs(saveHandler.getPlayerSaveDirectory());
-        detectedStoredUUIDs.addAll(uuids);
-
-        // Setup the watch service
-        try {
-            filesystemWatchService = FileSystems.getDefault().newWatchService();
-            watchKey = saveHandler.getPlayerSaveDirectory().register(
-                    filesystemWatchService,
-                    StandardWatchEventKinds.ENTRY_CREATE,
-                    StandardWatchEventKinds.ENTRY_DELETE);
-        } catch (IOException e) {
-            SpongeImpl.getLogger().warn("Could not start file watcher");
             if (filesystemWatchService != null) {
-                filesystemWatchService = null; // it might be the watchKey that failed, so null it out again.
+                try {
+                    filesystemWatchService.close();
+                } catch (IOException e) {
+                    filesystemWatchService = null;
+                }
+            }
+
+            detectedStoredUUIDs.clear();
+            nonExistentUsers.clear();
+
+            IMixinSaveHandler saveHandler = (IMixinSaveHandler) WorldManager.getWorldByDimensionId(0).get().getSaveHandler();
+            Set<UUID> uuids = getAvailablePlayerUUIDs(saveHandler.getPlayerSaveDirectory());
+            detectedStoredUUIDs.addAll(uuids);
+
+            // Anything we might have cached already, we should add it here,
+            // in case it's been added but not saved yet
+            detectedStoredUUIDs.addAll(userCache.asMap().keySet());
+
+            // Setup the watch service
+            try {
+                filesystemWatchService = FileSystems.getDefault().newWatchService();
+                watchKey = saveHandler.getPlayerSaveDirectory().register(
+                        filesystemWatchService,
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE);
+                scanningIO = false;
+            } catch (IOException e) {
+                SpongeImpl.getLogger().warn("Could not start file watcher");
+                if (filesystemWatchService != null) {
+                    filesystemWatchService = null; // it might be the watchKey that failed, so null it out again.
+                }
             }
         }
     }

@@ -67,8 +67,7 @@ public class SpongeInternalListeners {
         // if we have the SpongeUserService, we start init now async (this is a filesystem scan).
         Sponge.getServiceManager().provide(UserStorageService.class)
                 .filter(x -> x instanceof SpongeUserStorageService)
-                .ifPresent(x -> SpongeImpl.getScheduler().createAsyncExecutor(SpongeImpl.getSpongePlugin())
-                        .execute(((SpongeUserStorageService) x)::init));
+                .ifPresent(x -> ((SpongeUserStorageService) x).init());
     }
 
     @Listener
