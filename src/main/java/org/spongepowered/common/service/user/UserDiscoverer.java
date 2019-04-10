@@ -312,8 +312,8 @@ class UserDiscoverer {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(playersDirectory, "*.dat")) {
             for (Path entry : stream) {
                 try {
-                    String name = entry.getFileName().toString();
-                    ret.add(UUID.fromString(name.substring(0, name.lastIndexOf(".")+1)));
+                    String name = entry.getFileName().toString().replaceAll("\\.dat$", "");
+                    ret.add(UUID.fromString(name));
                 } catch (IllegalArgumentException ex) {
                     // ignored - the file is not of interest to us
                 }
