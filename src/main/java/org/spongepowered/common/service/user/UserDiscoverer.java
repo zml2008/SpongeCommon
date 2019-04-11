@@ -50,6 +50,7 @@ import org.spongepowered.common.entity.player.SpongeUser;
 import org.spongepowered.common.interfaces.IMixinSaveHandler;
 import org.spongepowered.common.interfaces.entity.player.IMixinEntityPlayerMP;
 import org.spongepowered.common.world.WorldManager;
+import sun.java2d.xr.MutableInteger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -77,6 +78,7 @@ import javax.annotation.Nullable;
 
 class UserDiscoverer {
 
+    private static final Map<String, MutableWatchEvent> updateCache = new HashMap<>();
     private static final Set<UUID> detectedStoredUUIDs = new HashSet<>();
 
     @Nullable private static WatchService filesystemWatchService = null;
@@ -274,6 +276,8 @@ class UserDiscoverer {
                 try {
                     filesystemWatchService.close();
                 } catch (IOException e) {
+                    // ignored - we're nulling this anyway
+                } finally {
                     filesystemWatchService = null;
                 }
             }
@@ -300,8 +304,15 @@ class UserDiscoverer {
             } catch (IOException e) {
                 SpongeImpl.getLogger().warn("Could not start file watcher");
                 if (filesystemWatchService != null) {
-                    filesystemWatchService = null; // it might be the watchKey that failed, so null it out again.
+                    // it might be the watchKey that failed, so null it out again.
+                    try {
+                        filesystemWatchService.close();
+                    } catch (IOException ex) {
+                        // ignored
+                    }
                 }
+                watchKey = null;
+                filesystemWatchService = null;
             }
         }
     }
@@ -340,30 +351,33 @@ class UserDiscoverer {
     private static void pollFilesystemWatcher() {
         // We've already got the UUIDs, so we need to just see if the file system
         // watcher has found any more (or removed any).
-        for (WatchEvent event : watchKey.pollEvents()) {
-            @SuppressWarnings("unchecked") WatchEvent<Path> ev = (WatchEvent<Path>) event;
-            WatchEvent.Kind<Path> kind = ev.kind();
+        synchronized (updateCache) {
+            updateCache.clear(); // just in case
+            for (WatchEvent event : watchKey.pollEvents()) {
+                @SuppressWarnings("unchecked") WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                Path file = ev.context();
+                String filename = file.getFileName().toString();
 
-            Path file = ev.context();
-            String filename = file.getFileName().toString();
-            if (filename.endsWith(".dat")) {
-                filename = filename.replace(".dat", "");
-            } else if (filename.contains(".")) {
-                continue; // no point even trying
+                // We don't determine the UUIDs yet, we'll only do that if we need to.
+                updateCache.computeIfAbsent(filename, f -> new MutableWatchEvent()).set(ev.kind());
             }
 
-            UUID uuid;
-            try {
-                uuid = UUID.fromString(filename);
-            } catch (Exception ex) {
-                continue;
+            for (Map.Entry<String, MutableWatchEvent> entry : updateCache.entrySet()) {
+                if (entry.getValue() != null) {
+                    String name = entry.getKey();
+                    UUID uuid;
+                    if (name.endsWith(".dat")) {
+                        uuid = UUID.fromString(name.substring(0, name.length() - 4));
+                        if (entry.getValue().get() == StandardWatchEventKinds.ENTRY_CREATE) {
+                            detectedStoredUUIDs.add(uuid);
+                        } else {
+                            detectedStoredUUIDs.remove(uuid);
+                        }
+                    }
+                }
             }
 
-            if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                detectedStoredUUIDs.add(uuid);
-            } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                detectedStoredUUIDs.remove(uuid);
-            }
+            updateCache.clear();
         }
     }
 
@@ -557,6 +571,26 @@ class UserDiscoverer {
                 caseInsensitiveUserByNameCache.remove(user.getName().toLowerCase(), user);
             }
         });
+    }
+
+    // Used to reduce the number of calls to maps.
+    static class MutableWatchEvent {
+
+        @Nullable private WatchEvent.Kind<?> kind = null;
+
+        @Nullable
+        public WatchEvent.Kind get() {
+            return this.kind;
+        }
+
+        public void set(WatchEvent.Kind<?> kind) {
+            if (this.kind != null && this.kind != kind) {
+                this.kind = null;
+            } else {
+                this.kind = kind;
+            }
+        }
+
     }
 
 }
