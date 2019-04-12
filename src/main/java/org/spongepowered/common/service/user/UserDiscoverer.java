@@ -50,7 +50,6 @@ import org.spongepowered.common.entity.player.SpongeUser;
 import org.spongepowered.common.interfaces.IMixinSaveHandler;
 import org.spongepowered.common.interfaces.entity.player.IMixinEntityPlayerMP;
 import org.spongepowered.common.world.WorldManager;
-import sun.java2d.xr.MutableInteger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -363,15 +362,22 @@ class UserDiscoverer {
             }
 
             for (Map.Entry<String, MutableWatchEvent> entry : updateCache.entrySet()) {
-                if (entry.getValue() != null) {
+                @Nullable WatchEvent.Kind kind = entry.getValue().get();
+                if (kind != null) {
                     String name = entry.getKey();
                     UUID uuid;
                     if (name.endsWith(".dat")) {
-                        uuid = UUID.fromString(name.substring(0, name.length() - 4));
-                        if (entry.getValue().get() == StandardWatchEventKinds.ENTRY_CREATE) {
-                            detectedStoredUUIDs.add(uuid);
-                        } else {
-                            detectedStoredUUIDs.remove(uuid);
+                        try {
+                            uuid = UUID.fromString(name.substring(0, name.length() - 4));
+
+                            // It will only be create or delete here.
+                            if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                                detectedStoredUUIDs.add(uuid);
+                            } else {
+                                detectedStoredUUIDs.remove(uuid);
+                            }
+                        } catch (IllegalArgumentException ex) {
+                            // ignored, file isn't of use to us.
                         }
                     }
                 }
@@ -584,10 +590,19 @@ class UserDiscoverer {
         }
 
         public void set(WatchEvent.Kind<?> kind) {
-            if (this.kind != null && this.kind != kind) {
-                this.kind = null;
-            } else {
-                this.kind = kind;
+            if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                // This should never happen, we don't listen to this.
+                // However, if it does, treat it as a create, because it
+                // infers the existence of the file.
+                kind = StandardWatchEventKinds.ENTRY_CREATE;
+            }
+
+            if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                if (this.kind != null && this.kind != kind) {
+                    this.kind = null;
+                } else {
+                    this.kind = kind;
+                }
             }
         }
 
