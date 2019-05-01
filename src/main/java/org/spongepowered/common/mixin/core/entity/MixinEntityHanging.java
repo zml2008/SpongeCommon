@@ -54,7 +54,7 @@ import org.spongepowered.common.data.util.DirectionResolver;
 import org.spongepowered.common.data.value.SpongeMutableValue;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.interfaces.entity.IMixinEntityHanging;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +118,7 @@ public abstract class MixinEntityHanging extends MixinEntity implements Hanging,
         // Sponge Start - Check for client worlds,, don't care about them really. If it's server world, then we care.
         final double xOffset = ((float) this.facingDirection.getXOffset() * 0.15F);
         final double zOffset = ((float) this.facingDirection.getZOffset() * 0.15F);
-        if (((IMixinWorld) this.world).isFake()) {
+        if (((IMixinWorld_Impl) this.world).isFake()) {
             // Sponge End
             EntityItem entityitem = new EntityItem(this.world, this.posX + xOffset, this.posY + (double) offsetY, this.posZ + zOffset, stack);
             entityitem.setDefaultPickupDelay();

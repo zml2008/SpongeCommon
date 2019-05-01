@@ -55,7 +55,7 @@ import org.spongepowered.common.event.tracking.PhaseData;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.TrackingPhases;
 import org.spongepowered.common.event.tracking.phase.block.BlockPhase;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.registry.type.block.TreeTypeRegistryModule;
 
 import java.util.List;
@@ -108,7 +108,7 @@ public abstract class MixinBlockLeaves extends MixinBlock {
     public void randomTick(IBlockState state, net.minecraft.world.World worldIn, BlockPos pos, Random random) {
         if (!state.get(BlockLeaves.PERSISTENT) && state.get(BlockLeaves.DISTANCE) == 7) {
             // Sponge Start - Cause tracking
-            if (!((IMixinWorld) worldIn).isFake()) {
+            if (!((IMixinWorld_Impl) worldIn).isFake()) {
                 final PhaseTracker phaseTracker = PhaseTracker.getInstance();
                 final PhaseData peek = phaseTracker.getCurrentPhaseData();
                 final IPhaseState<?> currentState = peek.state;

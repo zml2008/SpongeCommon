@@ -185,12 +185,13 @@ public final class VecHelper {
     }
 
     public static boolean inBounds(Vector3d pos, Vector3i min, Vector3i max) {
+        return inBounds(pos.getFloorX(), pos.getFloorY(), pos.getFloorZ(), min, max);
+    }
+
+    public static boolean inBounds(Vector3i pos, Vector3i min, Vector3i max) {
         return inBounds(pos.getX(), pos.getY(), pos.getZ(), min, max);
     }
 
-    public static boolean inBounds(double x, double y, double z, Vector3i min, Vector3i max) {
-        return x >= min.getX() && x <= max.getX() && y >= min.getY() && y <= max.getY() && z >= min.getZ() && z <= max.getZ();
-    }
 
     public static AxisAlignedBB toMinecraftAABB(AABB box) {
         if (box == null) {

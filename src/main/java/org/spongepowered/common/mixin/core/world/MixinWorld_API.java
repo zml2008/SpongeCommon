@@ -168,6 +168,8 @@ public abstract class MixinWorld_API implements MixinIWorld_API<org.spongepowere
 
     @Shadow @Final public List<net.minecraft.entity.Entity> weatherEffects;
 
+    @Shadow @Nullable public abstract EntityPlayer getPlayerEntityByUUID(UUID uuid);
+
     /**
      * Specifically verify the {@link UUID} for this world is going to be valid, in
      * certain cases, there are mod worlds that are extending {@link net.minecraft.world.World}
@@ -829,10 +831,9 @@ public abstract class MixinWorld_API implements MixinIWorld_API<org.spongepowere
                     ((IMixinChunk) chunk).getIntersectingEntities(chunkStart, direction, remainingDistance, filter, chunkStart.getY(), yNext, intersecting);
                 }
                 // If the intersections are near another chunk, its entities might be partially in the current chunk, so include it also
-                final IMixinChunk nearIntersections = getChunkNearIntersections(xChunk, zChunk, xCurrent, zCurrent, xNext, zNext);
+                final Chunk nearIntersections = getChunkNearIntersections(xChunk, zChunk, xCurrent, zCurrent, xNext, zNext);
                 if (nearIntersections != null && !nearIntersections.isEmpty()) {
-                    nearIntersections
-                        .getIntersectingEntities(chunkStart, direction, remainingDistance, filter, chunkStart.getY(), yNext, intersecting);
+                    ((IMixinChunk) nearIntersections).getIntersectingEntities(chunkStart, direction, remainingDistance, filter, chunkStart.getY(), yNext, intersecting);
                 }
                 // Remove the chunk from the distance
                 remainingDistance -= nextT - Math.max(0, currentT);
@@ -881,7 +882,7 @@ public abstract class MixinWorld_API implements MixinIWorld_API<org.spongepowere
     }
 
     @Nullable
-    private IMixinChunk getChunkNearIntersections(int xChunk, int zChunk, double xCurrent, double zCurrent, double xNext, double zNext) {
+    private Chunk getChunkNearIntersections(int xChunk, int zChunk, double xCurrent, double zCurrent, double xNext, double zNext) {
         final int chunkWidth = SpongeChunkLayout.CHUNK_SIZE.getX();
         // Chunk corner coordinates
         final Vector2d c1 = new Vector2d(xChunk, zChunk);
@@ -896,42 +897,42 @@ public abstract class MixinWorld_API implements MixinIWorld_API<org.spongepowere
         final boolean d21 = c1.distanceSquared(xNext, zNext) <= nearDistance2;
         if (d11 && d21) {
             // Near corner -x, -z
-            return (IMixinChunk) getChunkAtBlock(xChunk - chunkWidth, 0, zChunk - chunkWidth);
+            return getChunkAtBlock(xChunk - chunkWidth, 0, zChunk - chunkWidth);
         }
         final boolean d12 = c2.distanceSquared(xCurrent, zCurrent) <= nearDistance2;
         final boolean d22 = c2.distanceSquared(xNext, zNext) <= nearDistance2;
         if (d12 && d22) {
             // Near corner +x, -z
-            return (IMixinChunk) getChunkAtBlock(xChunk + chunkWidth, 0, zChunk - chunkWidth);
+            return getChunkAtBlock(xChunk + chunkWidth, 0, zChunk - chunkWidth);
         }
         final boolean d13 = c3.distanceSquared(xCurrent, zCurrent) <= nearDistance2;
         final boolean d23 = c3.distanceSquared(xNext, zNext) <= nearDistance2;
         if (d13 && d23) {
             // Near corner -x, +z
-            return (IMixinChunk) getChunkAtBlock(xChunk - chunkWidth, 0, zChunk + chunkWidth);
+            return getChunkAtBlock(xChunk - chunkWidth, 0, zChunk + chunkWidth);
         }
         final boolean d14 = c4.distanceSquared(xCurrent, zCurrent) <= nearDistance2;
         final boolean d24 = c4.distanceSquared(xNext, zNext) <= nearDistance2;
         if (d14 && d24) {
             // Near corner +x, +z
-            return (IMixinChunk) getChunkAtBlock(xChunk + chunkWidth, 0, zChunk + chunkWidth);
+            return getChunkAtBlock(xChunk + chunkWidth, 0, zChunk + chunkWidth);
         }
         // Look for two intersections being near the corners on the same face
         if (d11 && d23 || d21 && d13) {
             // Near face -x
-            return (IMixinChunk) getChunkAtBlock(xChunk - chunkWidth, 0, zChunk);
+            return getChunkAtBlock(xChunk - chunkWidth, 0, zChunk);
         }
         if (d11 && d22 || d21 && d12) {
             // Near face -z
-            return (IMixinChunk) getChunkAtBlock(xChunk, 0, zChunk - chunkWidth);
+            return getChunkAtBlock(xChunk, 0, zChunk - chunkWidth);
         }
         if (d14 && d22 || d24 && d12) {
             // Near face +x
-            return (IMixinChunk) getChunkAtBlock(xChunk + chunkWidth, 0, zChunk);
+            return getChunkAtBlock(xChunk + chunkWidth, 0, zChunk);
         }
         if (d14 && d23 || d24 && d13) {
             // Near face +z
-            return (IMixinChunk) getChunkAtBlock(xChunk, 0, zChunk + chunkWidth);
+            return getChunkAtBlock(xChunk, 0, zChunk + chunkWidth);
         }
         return null;
     }

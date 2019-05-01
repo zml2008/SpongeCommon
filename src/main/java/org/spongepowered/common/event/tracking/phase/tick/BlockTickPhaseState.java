@@ -24,31 +24,60 @@
  */
 package org.spongepowered.common.event.tracking.phase.tick;
 
+import com.google.common.collect.ListMultimap;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockEventData;
+import net.minecraft.block.IGrowable;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.init.Blocks;
+import net.minecraft.server.management.PlayerChunkMapEntry;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.world.LocatableBlock;
+import org.spongepowered.common.SpongeImplHooks;
+import org.spongepowered.common.block.BlockUtil;
+import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.event.tracking.phase.general.ExplosionContext;
+import org.spongepowered.common.interfaces.server.management.IMixinPlayerChunkMapEntry;
+import org.spongepowered.common.interfaces.world.IMixinWorldServer;
+import org.spongepowered.common.world.BlockChange;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 class BlockTickPhaseState extends LocationBasedTickPhaseState<BlockTickContext> {
-
+    private final BiConsumer<CauseStackManager.StackFrame, BlockTickContext> LOCATION_MODIFIER =
+        super.getFrameModifier().andThen((frame, context) ->
+            context.tickingBlock.getTickFrameModifier().accept(frame, (IMixinWorldServer) context.world)
+        );
     private final String name;
 
     BlockTickPhaseState(String name) {
         this.name = name;
+    }
+
+    @Override
+    public BiConsumer<CauseStackManager.StackFrame, BlockTickContext> getFrameModifier() {
+        return this.LOCATION_MODIFIER;
     }
 
     @Override
@@ -58,15 +87,74 @@ class BlockTickPhaseState extends LocationBasedTickPhaseState<BlockTickContext> 
     }
 
     @Override
+    public boolean tracksTileEntityChanges(BlockTickContext currentContext) {
+        return false;
+    }
+
+
+    @Override
+    public boolean shouldProvideModifiers(BlockTickContext phaseContext) {
+        return phaseContext.providesModifier;
+    }
+
+    @Override
+    public boolean getShouldCancelAllTransactions(BlockTickContext context, List<ChangeBlockEvent> blockEvents, ChangeBlockEvent.Post postEvent,
+        ListMultimap<BlockPos, BlockEventData> scheduledEvents, boolean noCancelledTransactions) {
+        if (!postEvent.getTransactions().isEmpty()) {
+            return postEvent.getTransactions().stream().anyMatch(transaction -> {
+                final BlockState state = transaction.getOriginal().getState();
+                final BlockType type = state.getType();
+                final boolean hasTile = SpongeImplHooks.hasBlockTileEntity((Block) type, BlockUtil.toNative(state));
+                final BlockPos pos = context.getSource(net.minecraft.tileentity.TileEntity.class).get().getPos();
+                final BlockPos blockPos = ((SpongeBlockSnapshot) transaction.getOriginal()).getBlockPos();
+                if (pos.equals(blockPos) && !transaction.isValid()) {
+                    return true;
+                }
+                if (!hasTile && !transaction.getIntermediary().isEmpty()) { // Check intermediary
+                    return transaction.getIntermediary().stream().anyMatch(inter -> {
+                        final BlockState iterState = inter.getState();
+                        final BlockType interType = state.getType();
+                        return SpongeImplHooks.hasBlockTileEntity((Block) interType, BlockUtil.toNative(iterState));
+                    });
+                }
+                return hasTile;
+            });
+        }
+        return false;
+    }
+
+
+    @Override
+    public void processCancelledTransaction(BlockTickContext context, Transaction<BlockSnapshot> transaction, BlockSnapshot original) {
+        context.getCapturedBlockSupplier().cancelTransaction(original);
+        final WorldServer worldServer = ((SpongeBlockSnapshot) original).getWorldServer();
+        final Chunk chunk = worldServer.getChunk(((SpongeBlockSnapshot) original).getBlockPos());
+        final PlayerChunkMapEntry entry = worldServer.getPlayerChunkMap().getEntry(chunk.x, chunk.z);
+        if (entry != null) {
+            ((IMixinPlayerChunkMapEntry) entry).markBiomesForUpdate();
+        }
+        super.processCancelledTransaction(context, transaction, original);
+    }
+
+    @Override
+    public boolean doesCaptureNeighborNotifications(BlockTickContext context) {
+        return context.allowsBulkBlockCaptures();
+    }
+
+    @Override
     LocatableBlock getLocatableBlockSourceFromContext(PhaseContext<?> context) {
         return context.getSource(LocatableBlock.class)
                 .orElseThrow(TrackingUtil.throwWithContext("Expected to be ticking over at a location!", context));
     }
 
     @Override
+    public boolean hasSpecificBlockProcess(BlockTickContext context) {
+        return true;
+    }
+
+    @Override
     public void unwind(BlockTickContext context) {
-            context.getCapturedBlockSupplier()
-                    .acceptAndClearIfNotEmpty(blockSnapshots -> TrackingUtil.processBlockCaptures(blockSnapshots, this, context));
+        TrackingUtil.processBlockCaptures(this, context);
             context.getCapturedItemsSupplier()
                     .acceptAndClearIfNotEmpty(items -> {
                         Sponge.getCauseStackManager().addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.DROPPED_ITEM);
@@ -97,11 +185,11 @@ class BlockTickPhaseState extends LocationBasedTickPhaseState<BlockTickContext> 
             frame.pushCause(locatableBlock);
             if (entity instanceof EntityXPOrb) {
                 frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.EXPERIENCE);
-                final ArrayList<org.spongepowered.api.entity.Entity> entities = new ArrayList<>(1);
+                final ArrayList<Entity> entities = new ArrayList<>(1);
                 entities.add(entity);
                 return SpongeCommonEventFactory.callSpawnEntity(entities, context);
             }
-            final List<org.spongepowered.api.entity.Entity> nonExpEntities = new ArrayList<>(1);
+            final List<Entity> nonExpEntities = new ArrayList<>(1);
             nonExpEntities.add(entity);
             frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.BLOCK_SPAWNING);
             return SpongeCommonEventFactory.callSpawnEntity(nonExpEntities, context);
@@ -112,14 +200,6 @@ class BlockTickPhaseState extends LocationBasedTickPhaseState<BlockTickContext> 
     @Override
     public boolean doesCaptureEntitySpawns() {
         return false;
-    }
-
-    @Override
-    public void postTrackBlock(BlockSnapshot snapshot, BlockTickContext context) {
-        if (context.shouldProcessImmediately()) {
-            TrackingUtil.processBlockCaptures(context.getCapturedBlocks(), this, context);
-            context.getCapturedBlockSupplier().get().remove(snapshot);
-        }
     }
 
     /**
@@ -145,6 +225,20 @@ class BlockTickPhaseState extends LocationBasedTickPhaseState<BlockTickContext> 
     @Override
     public boolean doesCaptureEntityDrops(BlockTickContext context) {
         return true; // Maybe make this configurable as well.
+    }
+
+    @Override
+    public BlockChange associateBlockChangeWithSnapshot(BlockTickContext phaseContext, IBlockState newState, Block newBlock,
+        IBlockState currentState, SpongeBlockSnapshot snapshot, Block originalBlock) {
+        if (phaseContext.tickingBlock instanceof IGrowable) {
+            if (newBlock == Blocks.AIR) {
+                return BlockChange.BREAK;
+            }
+            if (newBlock instanceof IGrowable || newState.getMaterial().getCanBurn()) {
+                return BlockChange.GROW;
+            }
+        }
+        return super.associateBlockChangeWithSnapshot(phaseContext, newState, newBlock, currentState, snapshot, originalBlock);
     }
 
     @Override

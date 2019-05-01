@@ -24,16 +24,31 @@
  */
 package org.spongepowered.common.event.tracking.phase.tick;
 
+import com.google.common.collect.ListMultimap;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockEventData;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.server.management.PlayerChunkMapEntry;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.tileentity.TileEntity;
+import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.CauseStackManager.StackFrame;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.world.LocatableBlock;
+import org.spongepowered.common.SpongeImplHooks;
+import org.spongepowered.common.block.BlockUtil;
+import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
@@ -41,12 +56,19 @@ import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.event.tracking.phase.general.ExplosionContext;
 import org.spongepowered.common.interfaces.block.tile.IMixinTileEntity;
+import org.spongepowered.common.interfaces.server.management.IMixinPlayerChunkMapEntry;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTickContext> {
+    private final BiConsumer<StackFrame, TileEntityTickContext> TILE_ENTITY_MODIFIER =
+        super.getFrameModifier().andThen((frame, context) ->
+            context.getSource(TileEntity.class)
+                .ifPresent(frame::pushCause)
+        );
 
     private String name;
 
@@ -60,6 +82,11 @@ class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTic
                 .addEntityCaptures()
                 .addEntityDropCaptures()
                 .addBlockCaptures();
+    }
+
+    @Override
+    public BiConsumer<StackFrame, TileEntityTickContext> getFrameModifier() {
+        return this.TILE_ENTITY_MODIFIER;
     }
 
     @Override
@@ -86,10 +113,9 @@ class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTic
                 .orElseThrow(TrackingUtil.throwWithContext("Not ticking on a TileEntity!", context));
         try (StackFrame frame = Sponge.getCauseStackManager().pushCauseFrame()) {
 
-            context.getCapturedBlockSupplier()
-                    .acceptAndClearIfNotEmpty(blockSnapshots -> {
-                        TrackingUtil.processBlockCaptures(blockSnapshots, this, context);
-                    });
+            // TODO - Determine if we need to pass the supplier or perform some parameterized
+            //  process if not empty method on the capture object.
+            TrackingUtil.processBlockCaptures(this, context);
             frame.pushCause(tickingTile.getLocatableBlock());
             frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.BLOCK_SPAWNING);
             context.getCapturedItemsSupplier()
@@ -131,9 +157,12 @@ class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTic
                     // Now to clean up the list that is tied to the entity, so that this phase context isn't continuously wrapped
                     EntityUtil.toMixin(nestedEntity).clearWrappedCaptureList();
                 });
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Exception occurred while processing tile entity %s at %s", tickingTile, tickingTile.getLocation()), e);
         }
+    }
+
+    @Override
+    public boolean tracksTileEntityChanges(TileEntityTickContext currentContext) {
+        return this.doesBulkBlockCapture(currentContext);
     }
 
     @Override
@@ -183,6 +212,48 @@ class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTic
         return false;
     }
 
+    @Override
+    public boolean getShouldCancelAllTransactions(TileEntityTickContext context, List<ChangeBlockEvent> blockEvents, ChangeBlockEvent.Post postEvent,
+        ListMultimap<BlockPos, BlockEventData> scheduledEvents, boolean noCancelledTransactions) {
+        if (!postEvent.getTransactions().isEmpty()) {
+            return postEvent.getTransactions().stream().anyMatch(transaction -> {
+                final BlockState state = transaction.getOriginal().getState();
+                final BlockType type = state.getType();
+                final boolean hasTile = SpongeImplHooks.hasBlockTileEntity((Block) type, BlockUtil.toNative(state));
+                final BlockPos pos = context.getSource(net.minecraft.tileentity.TileEntity.class).get().getPos();
+                final BlockPos blockPos = ((SpongeBlockSnapshot) transaction.getOriginal()).getBlockPos();
+                if (pos.equals(blockPos) && !transaction.isValid()) {
+                    return true;
+                }
+                if (!hasTile && !transaction.getIntermediary().isEmpty()) { // Check intermediary
+                    return transaction.getIntermediary().stream().anyMatch(inter -> {
+                        final BlockState iterState = inter.getState();
+                        final BlockType interType = state.getType();
+                        return SpongeImplHooks.hasBlockTileEntity((Block) interType, BlockUtil.toNative(iterState));
+                    });
+                }
+                return hasTile;
+            });
+        }
+        return false;
+    }
+
+    @Override
+    public void processCancelledTransaction(TileEntityTickContext context, Transaction<BlockSnapshot> transaction, BlockSnapshot original) {
+        context.getCapturedBlockSupplier().cancelTransaction(original);
+        final WorldServer worldServer = ((SpongeBlockSnapshot) original).getWorldServer();
+        final Chunk chunk = worldServer.getChunk(((SpongeBlockSnapshot) original).getBlockPos());
+        final PlayerChunkMapEntry entry = worldServer.getPlayerChunkMap().getEntry(chunk.x, chunk.z);
+        if (entry != null) {
+            ((IMixinPlayerChunkMapEntry) entry).markBiomesForUpdate();
+        }
+        super.processCancelledTransaction(context, transaction, original);
+    }
+
+    @Override
+    public boolean doesCaptureNeighborNotifications(TileEntityTickContext context) {
+        return context.allowsBulkBlockCaptures();
+    }
 
     @Override
     public boolean doesBulkBlockCapture(TileEntityTickContext context) {
@@ -192,6 +263,11 @@ class TileEntityTickPhaseState extends LocationBasedTickPhaseState<TileEntityTic
     @Override
     public boolean doesBlockEventTracking(TileEntityTickContext context) {
         return context.allowsBlockEvents();
+    }
+
+    @Override
+    public boolean hasSpecificBlockProcess(TileEntityTickContext context) {
+        return true;
     }
 
     @Override

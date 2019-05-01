@@ -31,13 +31,12 @@ import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.world.LocatableBlock;
-import org.spongepowered.api.world.Location;
+import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.phase.generation.GenerationPhase;
 import org.spongepowered.common.interfaces.IMixinChunk;
-import org.spongepowered.common.util.VecHelper;
 import org.spongepowered.common.world.BlockChange;
 
 import java.util.function.BiConsumer;
@@ -77,12 +76,24 @@ abstract class LocationBasedTickPhaseState<T extends LocationBasedTickContext<T>
         Transaction<BlockSnapshot> snapshotTransaction, T context) {
         // If we do not have a notifier at this point then there is no need to attempt to retrieve one from the chunk
         context.applyNotifierIfAvailable(user -> {
-            final Block block = (Block) snapshotTransaction.getOriginal().getState().getType();
-            final Location changedLocation = snapshotTransaction.getOriginal().getLocation().get();
-            final BlockPos changedBlockPos = VecHelper.toBlockPos(changedLocation);
-            final IMixinChunk changedMixinChunk = (IMixinChunk) ((WorldServer) changedLocation.getWorld()).getChunk(changedBlockPos);
+            final SpongeBlockSnapshot original = (SpongeBlockSnapshot) snapshotTransaction.getOriginal();
+            final Block block = (Block) original.getState().getType();
+            final BlockPos changedBlockPos = original.getBlockPos();
+            final IMixinChunk changedMixinChunk = (IMixinChunk) original.getWorldServer().getChunk(changedBlockPos);
             changedMixinChunk.addTrackedBlockPosition(block, changedBlockPos, user, PlayerTracker.Type.NOTIFIER);
-
+            // and check for owner, if it's available, only if the block change was placement
+            // We don't want to set owners on modify because that would mean the current context owner
+            // would be setting itself onto potentially other owner's blocks, which since it is a modification, it's considered a
+            // notification for a block change so to speak (this is how you can avoid blocks changing colors and being re-branded for
+            // ownership to whoever triggered some redstone devices that caused a color change). Only block placements will be considered
+            // to have new owners, which we can gather from the context.
+            if (blockChange == BlockChange.PLACE) {
+                context.applyOwnerIfAvailable(owner -> {
+                    // We can do this when we check for notifiers because owners will always have a notifier set
+                    // if not, well, file a bug report and find out the corner case that owners are set but not notifiers with block changes.
+                    changedMixinChunk.addTrackedBlockPosition(block, changedBlockPos, owner, PlayerTracker.Type.OWNER);
+                });
+            }
         });
     }
 

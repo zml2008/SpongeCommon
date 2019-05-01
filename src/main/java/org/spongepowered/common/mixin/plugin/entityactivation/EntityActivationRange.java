@@ -68,7 +68,7 @@ import org.spongepowered.common.config.type.GeneralConfigBase;
 import org.spongepowered.common.entity.SpongeEntityType;
 import org.spongepowered.common.interfaces.IMixinChunk;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.interfaces.world.gen.IMixinChunkProviderServer;
 import org.spongepowered.common.mixin.plugin.entityactivation.interfaces.IModData_Activation;
@@ -126,7 +126,7 @@ public class EntityActivationRange {
      */
     public static void initializeEntityActivationState(Entity entity) {
         final IModData_Activation spongeEntity = (IModData_Activation) entity;
-        if (((IMixinWorld) entity.world).isFake()) {
+        if (((IMixinWorld_Impl) entity.world).isFake()) {
             return;
         }
 
@@ -215,7 +215,7 @@ public class EntityActivationRange {
      * @param world The world to perform activation checks in
      */
     public static void activateEntities(World world) {
-        if (((IMixinWorld) world).isFake()) {
+        if (((IMixinWorld_Impl) world).isFake()) {
             return;
         }
 

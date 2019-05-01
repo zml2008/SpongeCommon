@@ -26,6 +26,7 @@ package org.spongepowered.common.event.tracking.phase.general;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.math.BlockPos;
 import org.spongepowered.api.Sponge;
@@ -35,19 +36,18 @@ import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
+import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
-import org.spongepowered.api.world.explosion.Explosion;
+import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
-import org.spongepowered.common.event.tracking.IEntitySpecificItemDropsState;
 import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
-final class ExplosionState extends GeneralState<ExplosionContext> implements IEntitySpecificItemDropsState<ExplosionContext> {
+final class ExplosionState extends GeneralState<ExplosionContext> {
 
     public final BiConsumer<CauseStackManager.StackFrame, ExplosionContext> EXPLOSION_MODIFIER =
         super.getFrameModifier().andThen((frame, context) -> frame.pushCause(context.getExplosion()));
@@ -98,8 +98,9 @@ final class ExplosionState extends GeneralState<ExplosionContext> implements IEn
 
     @Override
     public void unwind(ExplosionContext context) {
-        context.getCapturedBlockSupplier()
-            .acceptAndClearIfNotEmpty(blocks -> TrackingUtil.processBlockCaptures(blocks, this, context));
+        // TODO - Determine if we need to pass the supplier or perform some parameterized
+        //  process if not empty method on the capture object.
+        TrackingUtil.processBlockCaptures(this, context);
         context.getCapturedEntitySupplier()
             .acceptAndClearIfNotEmpty(entities -> {
                 try (CauseStackManager.StackFrame smaller = Sponge.getCauseStackManager().pushCauseFrame()) {
@@ -111,13 +112,15 @@ final class ExplosionState extends GeneralState<ExplosionContext> implements IEn
     }
 
     @Override
-    public ChangeBlockEvent.Post createChangeBlockPostEvent(ExplosionContext context, ImmutableList<Transaction<BlockSnapshot>> transactions) {
-        return SpongeEventFactory.createExplosionEventPost(Sponge.getCauseStackManager().getCurrentCause(), context.getSpongeExplosion(), transactions);
+    public ChangeBlockEvent.Post createChangeBlockPostEvent(ExplosionContext context, ImmutableList<Transaction<BlockSnapshot>> transactions,
+        Cause cause) {
+        return SpongeEventFactory.createExplosionEventPost(cause, context.getSpongeExplosion(), transactions);
     }
 
     @Override
     public boolean shouldCaptureBlockChangeOrSkip(ExplosionContext phaseContext,
-        BlockPos pos) {
+        BlockPos pos, IBlockState currentState, IBlockState newState,
+        BlockChangeFlag flags) {
         return true;
     }
 
@@ -147,6 +150,11 @@ final class ExplosionState extends GeneralState<ExplosionContext> implements IEn
 
     @Override
     public boolean doesCaptureEntitySpawns() {
+        return true;
+    }
+
+    @Override
+    public boolean tracksEntitySpecificDrops() {
         return true;
     }
 

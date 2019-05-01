@@ -109,7 +109,7 @@ import org.spongepowered.common.event.tracking.phase.packet.PacketPhase;
 import org.spongepowered.common.interfaces.ITargetedLocation;
 import org.spongepowered.common.interfaces.entity.player.IMixinEntityPlayer;
 import org.spongepowered.common.interfaces.entity.player.IMixinInventoryPlayer;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 import org.spongepowered.common.mixin.core.entity.MixinEntityLivingBase;
 import org.spongepowered.common.registry.type.event.DamageSourceRegistryModule;
@@ -345,7 +345,7 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayer;isPlayerSleeping()Z"))
     public boolean onIsPlayerSleeping(EntityPlayer self) {
         if (self.isPlayerSleeping()) {
-            if (!((IMixinWorld) this.world).isFake()) {
+            if (!((IMixinWorld_Impl) this.world).isFake()) {
                 Sponge.getCauseStackManager().pushCause(this);
                 SpongeImpl.postEvent(SpongeEventFactory.
                         createSleepingEventTick(Sponge.getCauseStackManager().getCurrentCause(),
@@ -426,7 +426,7 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
             return null;
         }
         // Sponge Start - redirect to our handling to capture and throw events.
-        if (!((IMixinWorld) this.world).isFake()) {
+        if (!((IMixinWorld_Impl) this.world).isFake()) {
             return EntityUtil.playerDropItem(this, droppedItem, dropAround, traceItem);
         }
         // Sponge end

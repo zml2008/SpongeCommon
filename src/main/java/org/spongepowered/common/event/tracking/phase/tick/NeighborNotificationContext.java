@@ -27,6 +27,7 @@ package org.spongepowered.common.event.tracking.phase.tick;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.world.LocatableBlock;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.block.BlockUtil;
@@ -41,6 +42,8 @@ public final class NeighborNotificationContext extends LocationBasedTickContext<
     @Nullable private Block sourceNotifier;
     @Nullable private BlockPos notifiedBlockPos;
     @Nullable private IBlockState notifiedBlockState;
+    @Nullable BlockSnapshot notificationSnapshot;
+    private int depth;
 
     NeighborNotificationContext(IPhaseState<NeighborNotificationContext> phaseState) {
         super(phaseState);
@@ -106,5 +109,18 @@ public final class NeighborNotificationContext extends LocationBasedTickContext<
     public NeighborNotificationContext setNotifiedBlockState(@Nullable IBlockState notifiedBlockState) {
         this.notifiedBlockState = notifiedBlockState;
         return this;
+    }
+
+    public NeighborNotificationContext setSourceNotification(@Nullable BlockSnapshot neighborNotificationSource) {
+        this.notificationSnapshot = neighborNotificationSource;
+        return this;
+    }
+
+    public int getDepth() {
+        return this.depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 }

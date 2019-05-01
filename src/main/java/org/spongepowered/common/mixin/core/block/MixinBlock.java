@@ -92,7 +92,7 @@ import org.spongepowered.common.event.tracking.PhaseData;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.block.BlockPhase;
 import org.spongepowered.common.interfaces.block.IMixinBlock;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.registry.type.BlockTypeRegistryModule;
 import org.spongepowered.common.text.translation.SpongeTranslation;
@@ -365,7 +365,7 @@ public abstract class MixinBlock implements BlockType, IMixinBlock {
     @Inject(method = "dropBlockAsItemWithChance", at = @At(value = "HEAD"), cancellable = true)
     private void onDropBlockAsItemWithChanceHead(IBlockState state, net.minecraft.world.World worldIn, BlockPos pos, float chance, int fortune,
         CallbackInfo ci) {
-        if (!((IMixinWorld) worldIn).isFake()) {
+        if (!((IMixinWorld_Impl) worldIn).isFake()) {
             if (PhaseTracker.getInstance().getCurrentState() == BlockPhase.State.RESTORING_BLOCKS) {
                 ci.cancel();
                 return;
@@ -393,7 +393,7 @@ public abstract class MixinBlock implements BlockType, IMixinBlock {
     @Inject(method = "dropBlockAsItemWithChance", at = @At(value = "RETURN"), cancellable = true)
     private void onDropBlockAsItemWithChanceReturn(IBlockState state, net.minecraft.world.World worldIn, BlockPos pos, float chance, int fortune,
         CallbackInfo ci) {
-        if (!((IMixinWorld) worldIn).isFake()) {
+        if (!((IMixinWorld_Impl) worldIn).isFake()) {
             if (this.data == null) {
                 // means that we didn't need to capture before
                 return;

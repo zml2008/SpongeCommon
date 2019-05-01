@@ -55,6 +55,7 @@ import org.spongepowered.common.data.util.NbtDataUtil;
 import org.spongepowered.common.interfaces.data.IMixinCustomDataHolder;
 import org.spongepowered.common.world.SpongeBlockChangeFlag;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,14 +65,13 @@ import javax.annotation.Nullable;
 
 public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapshot> implements BlockSnapshot.Builder {
 
-    @Nullable BlockState blockState;
-    @Nullable UUID worldUuid;
+    BlockState blockState;
+    UUID worldUuid;
     @Nullable UUID creatorUuid;
     @Nullable UUID notifierUuid;
-    @Nullable Vector3i coords;
+    Vector3i coords;
     @Nullable List<ImmutableDataManipulator<?, ?>> manipulators;
     @Nullable NBTTagCompound compound;
-
     SpongeBlockChangeFlag flag = (SpongeBlockChangeFlag) BlockChangeFlags.ALL;
 
 
@@ -113,13 +113,13 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
         this.worldUuid = location.getWorld().getUniqueId();
         this.coords = location.getBlockPosition();
         if (this.blockState.getType() instanceof ITileEntityProvider) {
-            final org.spongepowered.api.block.tileentity.TileEntity te = location.getTileEntity().orElse(null);
-            if (te != null) {
+            if (location.hasTileEntity()) {
                 this.compound = new NBTTagCompound();
+                org.spongepowered.api.block.tileentity.TileEntity te = location.getTileEntity().get();
                 ((TileEntity) te).write(this.compound);
                 this.manipulators = ((IMixinCustomDataHolder) te).getCustomManipulators().stream()
-                        .map(DataManipulator::asImmutable)
-                        .collect(Collectors.toList());
+                    .map(DataManipulator::asImmutable)
+                    .collect(Collectors.toList());
             }
         }
         return this;
@@ -127,13 +127,13 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
 
     @Override
     public SpongeBlockSnapshotBuilder creator(UUID uuid) {
-        this.creatorUuid = checkNotNull(uuid);
+        this.creatorUuid = uuid;
         return this;
     }
 
     @Override
     public SpongeBlockSnapshotBuilder notifier(UUID uuid) {
-        this.notifierUuid = checkNotNull(uuid);
+        this.notifierUuid = uuid;
         return this;
     }
 
@@ -153,7 +153,12 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
         if (this.manipulators == null) {
             this.manipulators = Lists.newArrayList();
         }
-        this.manipulators.removeIf(existing -> manipulator.getClass().isInstance(existing));
+        for (Iterator<ImmutableDataManipulator<?, ?>> iterator = this.manipulators.iterator(); iterator.hasNext();) {
+            final ImmutableDataManipulator<?, ?> existing = iterator.next();
+            if (manipulator.getClass().isInstance(existing)) {
+                iterator.remove();
+            }
+        }
         this.manipulators.add(manipulator);
         return this;
     }
@@ -184,8 +189,9 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
         this.coords = holder.getPosition();
         this.manipulators = Lists.newArrayList(holder.getManipulators());
         if (holder instanceof SpongeBlockSnapshot) {
-            if (((SpongeBlockSnapshot) holder).compound != null) {
-                this.compound = ((SpongeBlockSnapshot) holder).compound.copy();
+            final NBTTagCompound compound = ((SpongeBlockSnapshot) holder).compound;
+            if (compound != null) {
+                this.compound = compound.copy();
             }
         }
         return this;
@@ -204,7 +210,7 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
     }
 
     @Override
-    public BlockSnapshot build() {
+    public SpongeBlockSnapshot build() {
         checkState(this.blockState != null);
         return new SpongeBlockSnapshot(this);
     }
@@ -224,7 +230,7 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
 
         // We now reconstruct the custom data and all extra data.
         final BlockState blockState = container.getSerializable(DataQueries.BLOCK_STATE, BlockState.class).get();
-        BlockState extendedState;
+        BlockState extendedState = null;
         if (container.contains(DataQueries.BLOCK_EXTENDED_STATE)) {
             extendedState = container.getSerializable(DataQueries.BLOCK_EXTENDED_STATE, BlockState.class).get();
         } else {
@@ -232,18 +238,23 @@ public class SpongeBlockSnapshotBuilder extends AbstractDataBuilder<BlockSnapsho
         }
 
         builder.blockState(blockState)
-                .position(coordinate)
-                .worldId(worldUuid);
-        creatorUuid.ifPresent(s -> builder.creator(UUID.fromString(s)));
-        notifierUuid.ifPresent(s -> builder.notifier(UUID.fromString(s)));
-
+            .position(coordinate)
+            .worldId(worldUuid);
+        if (creatorUuid.isPresent()) {
+            builder.creator(UUID.fromString(creatorUuid.get()));
+        }
+        if (notifierUuid.isPresent()) {
+            builder.notifier(UUID.fromString(notifierUuid.get()));
+        }
         Optional<DataView> unsafeCompound = container.getView(DataQueries.UNSAFE_NBT);
-        unsafeCompound.map(dataView -> NbtTranslator.getInstance().translateData(dataView)).ifPresent(builder::unsafeNbt);
-
+        final NBTTagCompound compound = unsafeCompound.isPresent() ? NbtTranslator.getInstance().translateData(unsafeCompound.get()) : null;
+        if (compound != null) {
+            builder.unsafeNbt(compound);
+        }
         if (container.contains(DataQueries.SNAPSHOT_TILE_DATA)) {
             final List<DataView> dataViews = container.getViewList(DataQueries.SNAPSHOT_TILE_DATA).get();
-            DataUtil.deserializeImmutableManipulatorList(dataViews).forEach(builder::add);
+            DataUtil.deserializeImmutableManipulatorList(dataViews).stream().forEach(builder::add);
         }
-        return Optional.of(new SpongeBlockSnapshot(builder));
+        return Optional.of(builder.build());
     }
 }

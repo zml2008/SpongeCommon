@@ -56,7 +56,7 @@ import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.generation.GenerationPhase;
 import org.spongepowered.common.interfaces.IMixinChunk;
 import org.spongepowered.common.interfaces.block.tile.IMixinTileEntity;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldInfo;
 import org.spongepowered.common.profile.SpongeProfileManager;
 import org.spongepowered.common.util.SpongeHooks;
@@ -377,7 +377,7 @@ public abstract class MixinChunk_Tracker implements Chunk, IMixinChunk {
 
     @Inject(method = "onLoad", at = @At("HEAD"))
     private void startLoad(CallbackInfo callbackInfo) {
-        final boolean isFake = ((IMixinWorld) this.world).isFake();
+        final boolean isFake = ((IMixinWorld_Impl) this.world).isFake();
         if (!isFake) {
             if (!SpongeImplHooks.isMainThread()) {
                 final PrettyPrinter printer = new PrettyPrinter(60).add("Illegal Async Chunk Load").centre().hr()
@@ -402,7 +402,7 @@ public abstract class MixinChunk_Tracker implements Chunk, IMixinChunk {
 
     @Inject(method = "onLoad", at = @At("RETURN"))
     private void endLoad(CallbackInfo callbackInfo) {
-        if (!((IMixinWorld) this.world).isFake() && SpongeImplHooks.isMainThread()) {
+        if (!((IMixinWorld_Impl) this.world).isFake() && SpongeImplHooks.isMainThread()) {
             // IF we're not on the main thread,
             PhaseTracker.getInstance().getCurrentContext().close();
         }

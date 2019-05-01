@@ -34,14 +34,14 @@ import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.common.mixin.core.world.MixinWorld;
+import org.spongepowered.common.mixin.core.world.MixinWorld_Impl;
 
 import java.util.Collections;
 import java.util.List;
 
 @Mixin(value = WorldServer.class, priority = 1111)
 @SuppressWarnings("UnresolvedMixinReference") // MinecraftDev
-public abstract class MixinWorldServer_Explosion extends MixinWorld {
+public abstract class MixinWorldServer_Explosion extends MixinWorld_Impl {
 
     @Redirect(method = "triggerInternalExplosion", at = @At(value = "FIELD",
             target = "Lnet/minecraft/world/WorldServer;playerEntities:Ljava/util/List;", opcode = Opcodes.GETFIELD))

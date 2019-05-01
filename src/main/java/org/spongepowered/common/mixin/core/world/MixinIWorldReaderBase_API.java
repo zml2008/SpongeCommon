@@ -340,6 +340,7 @@ public interface MixinIWorldReaderBase_API<R extends ReadableRegion<R>> extends 
     default boolean isAreaAvailable(int x, int y, int z) {
         return isAreaLoaded(x, y, z, x, y, z, false);
     }
+
     @Override
     default R getView(Vector3i newMin, Vector3i newMax) {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IWorldReaderBase that isn't part of Sponge API");
@@ -349,6 +350,7 @@ public interface MixinIWorldReaderBase_API<R extends ReadableRegion<R>> extends 
     default BlockState getBlock(int x, int y, int z) {
         return BlockUtil.fromNative(getBlockState(new BlockPos(x, y, z)));
     }
+
     @Override
     default BlockState getBlock(Vector3i vector3i) {
         return BlockUtil.fromNative(getBlockState(VecHelper.toBlockPos(vector3i)));
@@ -363,6 +365,7 @@ public interface MixinIWorldReaderBase_API<R extends ReadableRegion<R>> extends 
     default UnmodifiableBlockVolume<?> asUnmodifiableBlockVolume() {
         return new WrappedUnmodifiableBlockVolume<>(this);
     }
+
     @Override
     default ImmutableBlockVolume asImmutableBlockVolume() {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IWorldReaderBase that isn't part of Sponge API");

@@ -42,7 +42,7 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.util.VecHelper;
 
@@ -55,7 +55,7 @@ public class MixinBlockStaticLiquid {
             target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Z"))
     private boolean onSpreadFire(World world, BlockPos pos, IBlockState blockState) {
         if (!ShouldFire.CHANGE_BLOCK_EVENT_PRE) { // If we're not throwing events... well..
-            if (!((IMixinWorld) world).isFake()) {
+            if (!((IMixinWorld_Impl) world).isFake()) {
                 return PhaseTracker.getInstance().setBlockState(((IMixinWorldServer) world), pos, blockState, BlockChangeFlags.ALL);
             } else {
                 return world.setBlockState(pos, blockState);

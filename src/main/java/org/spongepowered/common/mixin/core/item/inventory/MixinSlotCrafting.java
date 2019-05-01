@@ -54,7 +54,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.interfaces.IMixinContainer;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 
 import java.util.Iterator;
@@ -130,7 +130,7 @@ public abstract class MixinSlotCrafting extends Slot {
      */
     @Inject(method = "onTake", cancellable = true, at = @At("RETURN"))
     private void afterTake(EntityPlayer thePlayer, ItemStack stack, CallbackInfoReturnable<ItemStack> cir) {
-        if (((IMixinWorld) thePlayer.world).isFake()) {
+        if (((IMixinWorld_Impl) thePlayer.world).isFake()) {
             return;
         }
         ((IMixinContainer) thePlayer.openContainer).detectAndSendChanges(true);

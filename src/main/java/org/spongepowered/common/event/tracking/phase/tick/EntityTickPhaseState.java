@@ -45,6 +45,7 @@ import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.damage.source.DamageSource;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
+import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.TrackingUtil;
@@ -97,12 +98,11 @@ class EntityTickPhaseState extends TickPhaseState<EntityTickContext> {
         phaseContext.addNotifierAndOwnerToCauseStack(frame);
         // If we're doing bulk captures for blocks, go ahead and do them. otherwise continue with entity checks
         if (phaseContext.allowsBulkBlockCaptures()) {
-            phaseContext.getCapturedBlockSupplier()
-                .acceptAndClearIfNotEmpty(blockSnapshots -> {
-                    if (!TrackingUtil.processBlockCaptures(blockSnapshots, this, phaseContext)) {
-                        EntityUtil.toMixin(tickingEntity).onCancelledBlockChange(phaseContext);
-                    }
-                });
+            // TODO - Determine if we need to pass the supplier or perform some parameterized
+            //  process if not empty method on the capture object.
+            if (!TrackingUtil.processBlockCaptures(this, phaseContext)) {
+                EntityUtil.toMixin(tickingEntity).onCancelledBlockChange(phaseContext);
+            }
         }
         // And finally, if we're not capturing entities, there's nothing left for us to do.
         if (!phaseContext.allowsBulkEntityCaptures()) {
@@ -169,9 +169,9 @@ class EntityTickPhaseState extends TickPhaseState<EntityTickContext> {
         // Would depend on whether entity captures are done.
         phaseContext.getBlockItemDropSupplier()
             .acceptAndClearIfNotEmpty(map -> {
-                final List<BlockSnapshot> capturedBlocks = phaseContext.getCapturedBlocks();
-                for (BlockSnapshot snapshot : capturedBlocks) {
-                    final BlockPos blockPos = VecHelper.toBlockPos(snapshot.getLocation().get());
+                final List<SpongeBlockSnapshot> capturedBlocks = phaseContext.getCapturedOriginalBlocksChanged();
+                for (SpongeBlockSnapshot snapshot : capturedBlocks) {
+                    final BlockPos blockPos = snapshot.getBlockPos();
                     final Collection<EntityItem> entityItems = map.get(blockPos);
                     if (!entityItems.isEmpty()) {
                         frame.pushCause(snapshot);
@@ -193,6 +193,31 @@ class EntityTickPhaseState extends TickPhaseState<EntityTickContext> {
                     frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.DROPPED_ITEM);
                     SpongeCommonEventFactory.callDropItemCustom(items, phaseContext);
                 });
+
+        // Some entities (DynamicTrees) can tell blocks to break themselves while they're ticking, and
+        // specifically having removed the block but not performed the drops until the entity is ticking.
+        phaseContext.getPerBlockEntitySpawnSuppplier()
+            .acceptAndClearIfNotEmpty(blockDrops -> blockDrops.asMap().forEach((pos, drops) -> {
+                final List<Entity> items = drops.stream()
+                    .filter(entity -> entity instanceof EntityItem)
+                    .map(EntityUtil::fromNative)
+                    .collect(Collectors.toList());
+                final BlockSnapshot snapshot = tickingEntity.getWorld().createSnapshot(VecHelper.toVector3i(pos));
+                frame.pushCause(snapshot);
+                if (!items.isEmpty()) {
+                    frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.DROPPED_ITEM);
+                    SpongeCommonEventFactory.callDropItemCustom(items, phaseContext);
+                }
+                final List<Entity> nonItems = drops.stream()
+                    .filter(entity -> !(entity instanceof EntityItem))
+                    .map(EntityUtil::fromNative)
+                    .collect(Collectors.toList());
+                if (!nonItems.isEmpty()) {
+                    frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.BLOCK_SPAWNING);
+                    SpongeCommonEventFactory.callSpawnEntityCustom(nonItems, phaseContext);
+                }
+            }));
+
     }
 
     private void appendContextOfPossibleEntityDeath(Entity tickingEntity, CauseStackManager.StackFrame frame) {
@@ -223,10 +248,10 @@ class EntityTickPhaseState extends TickPhaseState<EntityTickContext> {
             for (EntityHanging entityHanging : EntityUtil.findHangingEntities(EntityUtil.getMinecraftWorld(tickingEntity), blockPos)) {
                 if (entityHanging instanceof EntityItemFrame) {
                     final EntityItemFrame itemFrame = (EntityItemFrame) entityHanging;
-                    if (!itemFrame.removed) {
+                    if (!itemFrame.isDead) {
                         itemFrame.dropItemOrSelf(EntityUtil.toNative(tickingEntity), true);
                     }
-                    itemFrame.remove();
+                    itemFrame.setDead();
                 }
             }
         }
@@ -234,12 +259,10 @@ class EntityTickPhaseState extends TickPhaseState<EntityTickContext> {
 
     @Override
     public void appendContextPreExplosion(ExplosionContext explosionContext, EntityTickContext context) {
-        if (!context.applyNotifierIfAvailable(explosionContext::notifier)) {
+        if (!context.applyNotifierIfAvailable(explosionContext::owner)) {
             context.applyOwnerIfAvailable(explosionContext::owner);
         }
-        final Entity tickingEntity = context.getSource(Entity.class)
-                .orElseThrow(TrackingUtil.throwWithContext("Expected to be processing over a ticking entity!", context));
-        Sponge.getCauseStackManager().pushCause(tickingEntity);
+        explosionContext.source(context.getSource(Entity.class).orElseThrow(() -> new IllegalStateException("Ticking a non Entity")));
     }
 
     @Override

@@ -39,7 +39,7 @@ import org.spongepowered.common.interfaces.IMixinChunk;
 import org.spongepowered.common.interfaces.util.math.IMixinBlockPos;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.interfaces.world.gen.IMixinChunkProviderServer;
-import org.spongepowered.common.mixin.core.world.MixinWorld;
+import org.spongepowered.common.mixin.core.world.MixinWorld_Impl;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +48,7 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 @Mixin(value = WorldServer.class)
-public abstract class MixinWorldServer_Async_Lighting extends MixinWorld implements IMixinWorldServer {
+public abstract class MixinWorldServer_Async_Lighting extends MixinWorld_Impl implements IMixinWorldServer {
 
     private static final int NUM_XZ_BITS = 4;
     private static final int NUM_SHORT_Y_BITS = 8;

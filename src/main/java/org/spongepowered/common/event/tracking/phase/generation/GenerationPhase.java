@@ -49,11 +49,15 @@ public final class GenerationPhase extends TrackingPhase {
     @SuppressWarnings("unchecked")
     public static final class State {
 
-        public static final IPhaseState<GenericGenerationContext> CHUNK_LOADING = new BasicGenerationState("CHUNK_LOADING").bake();
+        public static final IPhaseState<ChunkLoadContext> CHUNK_LOADING = new ChunkLoadPhaseState().bake();
+
+        public static final IPhaseState<GenericGenerationContext> CHUNK_REGENERATING_LOAD_EXISTING = new ChunkRegeneratingLoadExistingPhaseState();
+
+        public static final IPhaseState<ChunkRegenerateContext> CHUNK_REGENERATING = new ChunkRegeneratePhaseState();
 
         public static final IPhaseState<GenericGenerationContext> WORLD_SPAWNER_SPAWNING = new WorldSpawnerPhaseState().bake();
 
-        public static final IPhaseState<FeaturePhaseContext> POPULATOR_RUNNING = new FeatureGenerationPhaseState("POPULATOR_RUNNING");
+        public static final IPhaseState<FeaturePhaseContext> POPULATOR_RUNNING = new PopulatorGenerationPhaseState("POPULATOR_RUNNING");
 
         public static final IPhaseState<GenericGenerationContext> TERRAIN_GENERATION = new TerrainGenerationState();
 
@@ -72,6 +76,14 @@ public final class GenerationPhase extends TrackingPhase {
                     .addCompatibleState(BlockPhase.State.RESTORING_BLOCKS)
                     .addCompatibleState(GenerationPhase.State.POPULATOR_RUNNING)
                     .addCompatibleState(GenerationPhase.State.WORLD_SPAWNER_SPAWNING)
+                    .addCompatibleState(GeneralPhase.Post.UNWINDING)
+                    .bake();
+            ((GeneralGenerationPhaseState<?>) CHUNK_REGENERATING)
+                    .addCompatibleState(BlockPhase.State.BLOCK_DECAY)
+                    .addCompatibleState(BlockPhase.State.BLOCK_DROP_ITEMS)
+                    .addCompatibleState(BlockPhase.State.RESTORING_BLOCKS)
+                    .addCompatibleState(State.WORLD_SPAWNER_SPAWNING)
+                    .addCompatibleState(State.POPULATOR_RUNNING)
                     .addCompatibleState(GeneralPhase.Post.UNWINDING)
                     .bake();
         }

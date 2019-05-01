@@ -27,7 +27,7 @@ package org.spongepowered.common.world;
 import com.flowpowered.math.vector.Vector3i;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 
 public final class WorldUtil {
@@ -54,7 +54,7 @@ public final class WorldUtil {
     return (org.spongepowered.api.world.World) world;
   }
 
-  public static org.spongepowered.api.world.World fromNative(IMixinWorld world) {
+  public static org.spongepowered.api.world.World fromNative(IMixinWorld_Impl world) {
     return (org.spongepowered.api.world.World) world;
   }
 

@@ -49,6 +49,7 @@ public interface MixinIBlockReader_API extends PrimitiveGameVolume {
     @Shadow @Nullable net.minecraft.tileentity.TileEntity getTileEntity(BlockPos pos);
     @Shadow IBlockState getBlockState(BlockPos pos);
     @Shadow IFluidState getFluidState(BlockPos pos);
+    @Shadow int shadow$getMaxLightLevel();
 
     @Override
     default Optional<TileEntity> getTileEntity(int x, int y, int z) {
@@ -65,30 +66,49 @@ public interface MixinIBlockReader_API extends PrimitiveGameVolume {
         return FluidUtil.fromNative(getFluidState(new BlockPos(x, y, z)));
     }
 
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default Vector3i getBlockMin() {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");
     }
 
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default Vector3i getBlockMax() {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");
     }
 
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default Vector3i getBlockSize() {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");
     }
 
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default boolean containsBlock(int x, int y, int z) {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");
     }
 
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default boolean isAreaAvailable(int x, int y, int z) {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");
     }
+
+    /*
+    To be overridden in MixinIChunk_API, MixinIWorldReaderBase_API
+     */
     @Override
     default Volume getView(Vector3i newMin, Vector3i newMax) {
         throw new UnsupportedOperationException("Unfortunately, you've found an extended class of IBlockReader that isn't part of Sponge API");

@@ -26,7 +26,6 @@ package org.spongepowered.common.event.tracking.phase.tick;
 
 import net.minecraft.entity.item.EntityXPOrb;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager.StackFrame;
 import org.spongepowered.api.event.cause.EventContextKeys;
@@ -41,8 +40,15 @@ import org.spongepowered.common.event.tracking.phase.general.ExplosionContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 class NeighborNotificationState extends LocationBasedTickPhaseState<NeighborNotificationContext> {
+
+    private final BiConsumer<StackFrame, NeighborNotificationContext> FRAME_MODIFIER = super.getFrameModifier().andThen((frame, context) -> {
+        if (context.notificationSnapshot != null) {
+            frame.addContext(EventContextKeys.NEIGHBOR_NOTIFY_SOURCE, context.notificationSnapshot);
+        }
+    });
 
     private final String name;
 
@@ -54,6 +60,11 @@ class NeighborNotificationState extends LocationBasedTickPhaseState<NeighborNoti
     public NeighborNotificationContext createPhaseContext() {
         return new NeighborNotificationContext(this)
                 .addCaptures();
+    }
+
+    @Override
+    public BiConsumer<StackFrame, NeighborNotificationContext> getFrameModifier() {
+        return this.FRAME_MODIFIER;
     }
 
     @Override
@@ -83,7 +94,6 @@ class NeighborNotificationState extends LocationBasedTickPhaseState<NeighborNoti
         }
         try (StackFrame frame = Sponge.getCauseStackManager().pushCauseFrame()) {
             frame.pushCause(locatableBlock);
-            associateAdditionalCauses(context, frame);
             if (entity instanceof EntityXPOrb) {
                 frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.EXPERIENCE);
                 final ArrayList<Entity> entities = new ArrayList<>(1);
@@ -97,6 +107,11 @@ class NeighborNotificationState extends LocationBasedTickPhaseState<NeighborNoti
         }
     }
 
+    @Override
+    public void provideNotifierForNeighbors(NeighborNotificationContext context, NeighborNotificationContext notification) {
+        super.provideNotifierForNeighbors(context, notification);
+        notification.setDepth(context.getDepth() + 1);
+    }
 
     @Override
     public boolean doesCaptureEntitySpawns() {
@@ -106,10 +121,6 @@ class NeighborNotificationState extends LocationBasedTickPhaseState<NeighborNoti
     @Override
     public boolean isNotReEntrant() {
         return false;
-    }
-
-    @Override
-    public void postTrackBlock(BlockSnapshot snapshot, NeighborNotificationContext context) {
     }
 
     /**

@@ -139,7 +139,7 @@ import org.spongepowered.common.interfaces.entity.IMixinEntity;
 import org.spongepowered.common.interfaces.entity.IMixinGriefer;
 import org.spongepowered.common.interfaces.network.IMixinNetHandlerPlayServer;
 import org.spongepowered.common.interfaces.text.IMixinTextComponent;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.interfaces.world.gen.IMixinChunkProviderServer;
 import org.spongepowered.common.profile.SpongeProfileManager;
@@ -1418,7 +1418,7 @@ public abstract class MixinEntity implements org.spongepowered.api.entity.Entity
             at = @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;fire:I", opcode = Opcodes.PUTFIELD)
     )
     private void onFire(net.minecraft.entity.Entity entity, int ticks) {
-        if (((IMixinWorld) this.world).isFake() || !ShouldFire.IGNITE_ENTITY_EVENT) {
+        if (((IMixinWorld_Impl) this.world).isFake() || !ShouldFire.IGNITE_ENTITY_EVENT) {
             this.fire = ticks; // Vanilla functionality
             return;
         }

@@ -32,30 +32,31 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.crash.ReportedException;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityOwnable;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.registry.IRegistry;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import org.apache.logging.log4j.Level;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
+import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.entity.SpawnEntityEvent;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.api.scheduler.ScheduledTask;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.util.Tuple;
 import org.spongepowered.api.world.BlockChangeFlag;
@@ -70,22 +71,24 @@ import org.spongepowered.common.config.category.PhaseTrackerCategory;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.ShouldFire;
+import org.spongepowered.common.event.tracking.context.SpongeProxyBlockAccess;
 import org.spongepowered.common.event.tracking.phase.TrackingPhase;
 import org.spongepowered.common.event.tracking.phase.general.GeneralPhase;
-import org.spongepowered.common.event.tracking.phase.general.UnwindingPhaseContext;
 import org.spongepowered.common.event.tracking.phase.tick.NeighborNotificationContext;
 import org.spongepowered.common.event.tracking.phase.tick.TickPhase;
 import org.spongepowered.common.interfaces.IMixinChunk;
+import org.spongepowered.common.interfaces.block.IMixinBlock;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.registry.type.event.SpawnTypeRegistryModule;
-import org.spongepowered.common.util.VecHelper;
 import org.spongepowered.common.world.SpongeBlockChangeFlag;
+import org.spongepowered.common.world.SpongeLocatableBlockBuilder;
 import org.spongepowered.common.world.WorldUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -101,8 +104,81 @@ import javax.annotation.Nullable;
  */
 @SuppressWarnings("unchecked")
 public final class PhaseTracker {
+    public static final PhaseTracker CLIENT = new PhaseTracker();
+    public static final PhaseTracker SERVER = new PhaseTracker();
 
-    private static final PhaseTracker INSTANCE = new PhaseTracker();
+    public void init() {
+        if (this != SERVER) {
+            return;
+        }
+        if (this.hasRun) {
+            return;
+        }
+        this.hasRun = true;
+        Task.builder()
+            .name("Sponge Async To Sync Entity Spawn Task")
+            .intervalTicks(1)
+            .execute(() -> {
+                if (ASYNC_CAPTURED_ENTITIES.isEmpty()) {
+                    return;
+                }
+
+                final List<net.minecraft.entity.Entity> entities = new ArrayList<>(ASYNC_CAPTURED_ENTITIES);
+                ASYNC_CAPTURED_ENTITIES.removeAll(entities);
+                try (final CauseStackManager.StackFrame frame = Sponge.getCauseStackManager().pushCauseFrame()) {
+                    // We are forcing the spawn, as we can't throw the proper event at the proper time, so
+                    // we'll just mark it as "forced".
+                    frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypeRegistryModule.FORCED);
+                    for (net.minecraft.entity.Entity entity : entities) {
+                        // At this point, we don't care what the causes are...
+                        PhaseTracker.getInstance().spawnEntityWithCause((World) entity.getEntityWorld(), (Entity) entity);
+                    }
+                }
+
+            })
+            .plugin(SpongeImpl.getPlugin())
+            .build();
+    }
+
+    public static final String MINECRAFT_CLIENT = "net.minecraft.client.Minecraft";
+    public static final String DEDICATED_SERVER = "net.minecraft.server.dedicated.DedicatedServer";
+    public static final String MINECRAFT_SERVER = "net.minecraft.server.MinecraftServer";
+    public static final String INTEGRATED_SERVER = "net.minecraft.server.integrated.IntegratedServer";
+    @Nullable private Thread sidedThread;
+    private boolean hasRun = false;
+
+
+    @SuppressWarnings("ThrowableNotThrown")
+    public void setThread(@Nullable Thread thread) throws IllegalAccessException {
+        final StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+        if ((stackTrace.length < 3)) {
+            throw new IllegalAccessException("Cannot call directly to change thread.");
+        }
+
+        String callingClass = stackTrace[1].getClassName();
+        String callingParent = stackTrace[2].getClassName();
+        if (
+            !(
+                (MINECRAFT_CLIENT.equals(callingClass) && MINECRAFT_CLIENT.equals(callingParent))
+                || (MINECRAFT_SERVER.equals(callingClass) && MINECRAFT_SERVER.equals(callingParent))
+                || (DEDICATED_SERVER.equals(callingClass) && MINECRAFT_CLIENT.equals(callingParent))
+                || (INTEGRATED_SERVER.equals(callingClass) && MINECRAFT_CLIENT.equals(callingParent))
+            )
+        ) {
+            throw new IllegalAccessException("Illegal Attempts to re-assign PhaseTracker threads on Sponge");
+        }
+
+        this.sidedThread = thread;
+
+    }
+
+
+
+    @Nullable
+    public Thread getSidedThread() {
+        return this.sidedThread;
+    }
+
     public static final String ASYNC_BLOCK_CHANGE_MESSAGE = "Sponge adapts the vanilla handling of block changes to power events and plugins "
                                                 + "such that it follows the known fact that block changes MUST occur on the server "
                                                 + "thread (even on clients, this exists as the InternalServer thread). It is NOT "
@@ -115,43 +191,21 @@ public final class PhaseTracker {
                                                       + "performing these sort of changes.";
 
     public static PhaseTracker getInstance() {
-        return checkNotNull(INSTANCE, "PhaseTracker instance was illegally set to null!");
+        return SERVER;
     }
 
     private static final CopyOnWriteArrayList<net.minecraft.entity.Entity> ASYNC_CAPTURED_ENTITIES = new CopyOnWriteArrayList<>();
 
-    @SuppressWarnings("unused")
-    private static final ScheduledTask ASYNC_TO_SYNC_SPAWNER = Sponge.getServer().getScheduler().submit(Task.builder()
-        .name("Sponge Async To Sync Entity Spawn Task")
-        .intervalTicks(1)
-        .execute(() -> {
-            if (ASYNC_CAPTURED_ENTITIES.isEmpty()) {
-                return;
-            }
 
-            final List<net.minecraft.entity.Entity> entities = new ArrayList<>(ASYNC_CAPTURED_ENTITIES);
-            ASYNC_CAPTURED_ENTITIES.removeAll(entities);
-            try (final CauseStackManager.StackFrame frame = Sponge.getCauseStackManager().pushCauseFrame()) {
-                // We are forcing the spawn, as we can't throw the proper event at the proper time, so
-                // we'll just mark it as "forced".
-                frame.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypeRegistryModule.FORCED);
-                for (net.minecraft.entity.Entity entity : entities) {
-                    // At this point, we don't care what the causes are...
-                    PhaseTracker.getInstance().spawnEntityWithCause((World) entity.getEntityWorld(), (Entity) entity);
-                }
-            }
-
-        }).plugin(SpongeImpl.getPlugin())
-        .build());
 
     public static final BiConsumer<PrettyPrinter, PhaseContext<?>> CONTEXT_PRINTER = (printer, context) ->
         context.printCustom(printer, 4);
 
-    private static final BiConsumer<PrettyPrinter, PhaseData> PHASE_PRINTER = (printer, data) -> {
-        printer.add("  - Phase: %s", data.state);
+    private static final BiConsumer<PrettyPrinter, PhaseContext<?>> PHASE_PRINTER = (printer, context) -> {
+        printer.add("  - Phase: %s", context.state);
         printer.add("    Context:");
-        data.context.printCustom(printer, 4);
-        data.context.printTrace(printer);
+        context.printCustom(printer, 4);
+        context.printTrace(printer);
     };
 
     private final PhaseStack stack = new PhaseStack();
@@ -199,7 +253,7 @@ public final class PhaseTracker {
             }
         }
 
-        if (Sponge.isServerAvailable()) {
+        if (Sponge.isServerAvailable() && ((IPhaseState) state).shouldProvideModifiers(phaseContext)) {
             SpongeImpl.getCauseStackManager().registerPhaseContextProvider(phaseContext, ((IPhaseState) state).getFrameModifier());
         }
         this.stack.push(state, phaseContext);
@@ -215,7 +269,7 @@ public final class PhaseTracker {
     }
 
     @SuppressWarnings({"rawtypes", "unused", "try"})
-    public void completePhase(IPhaseState<?> prevState) {
+    void completePhase(IPhaseState<?> prevState) {
         if (!SpongeImplHooks.isMainThread()) {
             // lol no, report the block change properly
             new PrettyPrinter(60).add("Illegal Async PhaseTracker Access").centre().hr()
@@ -225,8 +279,8 @@ public final class PhaseTracker {
                 .log(SpongeImpl.getLogger(), Level.ERROR);
             return;
         }
-        final PhaseData currentPhaseData = this.stack.peek();
-        final IPhaseState<?> state = currentPhaseData.state;
+        final PhaseContext<?> currentContext = this.stack.peek();
+        final IPhaseState<?> state = currentContext.state;
         final boolean isEmpty = this.stack.isEmpty();
         if (isEmpty) {
             // The random occurrence that we're told to complete a phase
@@ -254,25 +308,26 @@ public final class PhaseTracker {
         }
 
         final TrackingPhase phase = state.getPhase();
-        final PhaseContext<?> context = currentPhaseData.context;
-        try (final UnwindingPhaseContext unwinding = UnwindingPhaseContext.unwind(state, context) ) {
+        final boolean hasCaptures = currentContext.hasCaptures();
+        try (final UnwindingPhaseContext unwinding = UnwindingPhaseContext.unwind(state, currentContext, hasCaptures) ) {
             // With UnwindingPhaseContext#unwind checking for post, if it is null, the try
             // will not attempt to close the phase context. If it is required,
             // it already automatically pushes onto the phase stack, along with
             // a new list of capture lists
             try { // Yes this is a nested try, but in the event the current phase cannot be unwound,
-                  // at least unwind UNWINDING to process any captured objects so we're not totally without
-                  // loss of objects
-                if (context.hasCaptures()) {
-                    ((IPhaseState) state).unwind(context);
+                // at least unwind UNWINDING to process any captured objects so we're not totally without
+                // loss of objects
+                if (hasCaptures) {
+                    ((IPhaseState) state).unwind(currentContext);
                 }
             } catch (Exception e) {
-                this.printMessageWithCaughtException("Exception Exiting Phase", "Something happened when trying to unwind", state, context, e);
+                this.printMessageWithCaughtException("Exception Exiting Phase", "Something happened when trying to unwind", state, currentContext, e);
             }
         } catch (Exception e) {
-            this.printMessageWithCaughtException("Exception Post Dispatching Phase", "Something happened when trying to post dispatch state", state, context, e);
+            this.printMessageWithCaughtException("Exception Post Dispatching Phase", "Something happened when trying to post dispatch state", state,
+                currentContext, e);
         }
-        this.checkPhaseContextProcessed(state, context);
+        this.checkPhaseContextProcessed(state, currentContext);
         // If pop is called, the Deque will already throw an exception if there is no element
         // so it's an error properly handled.
         this.stack.pop();
@@ -437,6 +492,9 @@ public final class PhaseTracker {
         if (t != null) {
             printer.add("Stacktrace:")
                     .add(t);
+            if (t.getCause() != null) {
+                printer.add(t.getCause());
+            }
         }
         printer.add();
         this.generateVersionInfo(printer);
@@ -491,7 +549,7 @@ public final class PhaseTracker {
                 state, context, null);
     }
 
-    private void printBlockTrackingException(PhaseData phaseData, IPhaseState<?> phaseState, Throwable e) {
+    private void printBlockTrackingException(PhaseContext<?> phaseData, IPhaseState<?> phaseState, Throwable e) {
         if (!SpongeImpl.getGlobalConfig().getConfig().getPhaseTracker().isVerbose() && !this.printedExceptionsForBlocks.isEmpty()) {
             if (this.printedExceptionsForBlocks.contains(phaseState)) {
                 return;
@@ -499,7 +557,7 @@ public final class PhaseTracker {
         }
         final PrettyPrinter printer = new PrettyPrinter(60).add("Exception attempting to capture a block change!").centre().hr();
         printer.addWrapped(60, "%s :", "PhaseContext");
-        CONTEXT_PRINTER.accept(printer, phaseData.context);
+        CONTEXT_PRINTER.accept(printer, phaseData);
         printer.addWrapped(60, "%s :", "Phases remaining");
         this.stack.forEach(data -> PHASE_PRINTER.accept(printer, data));
         printer.add("Stacktrace:");
@@ -567,10 +625,6 @@ public final class PhaseTracker {
 
     // ----------------- SIMPLE GETTERS --------------------------------------
 
-    public PhaseData getCurrentPhaseData() {
-        return this.stack.peek();
-    }
-
     public IPhaseState<?> getCurrentState() {
         return this.stack.peekState();
     }
@@ -585,14 +639,13 @@ public final class PhaseTracker {
      * Replacement of {@link net.minecraft.world.World#neighborChanged(BlockPos, Block, BlockPos)}
      * that adds tracking into play.
      *
-     * @param mixinWorld THe world
+     *  @param mixinWorld THe world
      * @param notifyPos The original notification position
      * @param sourceBlock The source block type
      * @param sourcePos The source block position
      */
     @SuppressWarnings("rawtypes")
-    public void notifyBlockOfStateChange(final IMixinWorldServer mixinWorld, final BlockPos notifyPos,
-        final Block sourceBlock, final BlockPos sourcePos) {
+    public void notifyBlockOfStateChange(final IMixinWorldServer mixinWorld, final IBlockState notifyState, final BlockPos notifyPos, final Block sourceBlock, final BlockPos sourcePos) {
         if (!SpongeImplHooks.isMainThread()) {
             // lol no, report the block change properly
             new PrettyPrinter(60).add("Illegal Async PhaseTracker Access").centre().hr()
@@ -603,47 +656,59 @@ public final class PhaseTracker {
             // Maybe? I don't think this is wise to try and sync back a notification on the main thread.
             return;
         }
-        final IBlockState iblockstate = ((WorldServer) mixinWorld).getBlockState(notifyPos);
-
         try {
             // Sponge start - prepare notification
-            final PhaseData peek = this.stack.peek();
-            final IPhaseState<?> state = peek.state;
-            ((IPhaseState) state).associateNeighborStateNotifier(peek.context,
-                sourcePos, iblockstate.getBlock(), notifyPos, ((WorldServer) mixinWorld), PlayerTracker.Type.NOTIFIER);
-            final LocatableBlock block = LocatableBlock.builder()
-                .position(VecHelper.toVector3i(sourcePos))
-                .world((World) mixinWorld)
-                .build();
+            final PhaseContext<?> peek = this.stack.peek();
+            final IPhaseState state = peek.state;
+            if (!((IMixinBlock) notifyState.getBlock()).hasNeighborChangedLogic()) {
+                // A little short-circuit so we do not waste expense to call neighbor notifications on blocks that do
+                // not override the method neighborChanged
+                return;
+            }
+            // If the phase state does not want to allow neighbor notifications to leak while processing,
+            // it needs to be able to do so. It will replay the notifications in the order in which they were received,
+            // such that the notification will be sent out in the same order as the block changes that may have taken place.
+            if (ShouldFire.CHANGE_BLOCK_EVENT && ShouldFire.NOTIFY_NEIGHBOR_BLOCK_EVENT && state.doesCaptureNeighborNotifications(peek)) {
+                peek.getCapturedBlockSupplier().captureNeighborNotification(mixinWorld, notifyState, notifyPos, sourceBlock, sourcePos);
+                return;
+            }
+            state.associateNeighborStateNotifier(peek, sourcePos, notifyState.getBlock(), notifyPos, ((WorldServer) mixinWorld), PlayerTracker.Type.NOTIFIER);
+            final LocatableBlock block = new SpongeLocatableBlockBuilder()
+                .world(((World) mixinWorld))
+                .position(sourcePos.getX(), sourcePos.getY(), sourcePos.getZ())
+                .state((BlockState) sourceBlock.getDefaultState()).build();
             try (final NeighborNotificationContext context = TickPhase.Tick.NEIGHBOR_NOTIFY.createPhaseContext()
                 .source(block)
                 .sourceBlock(sourceBlock)
                 .setNotifiedBlockPos(notifyPos)
-                .setNotifiedBlockState(iblockstate)
+                .setNotifiedBlockState(notifyState)
                 .setSourceNotification(sourcePos)
-                 .allowsCaptures(state) // We need to pass the previous state so we don't capture blocks when we're in world gen.
+                .allowsCaptures(state) // We need to pass the previous state so we don't capture blocks when we're in world gen.
 
             ) {
                 // Since the notifier may have just been set from the previous state, we can
                 // ask it to contribute to our state
-                ((IPhaseState) state).provideNotifierForNeighbors(peek.context, context);
+                state.provideNotifierForNeighbors(peek, context);
+                if (PhaseTracker.checkMaxBlockProcessingDepth(state, peek, context.getDepth())) {
+                    return;
+                }
                 context.buildAndSwitch();
                 // Sponge End
 
-                iblockstate.neighborChanged(((WorldServer) mixinWorld), notifyPos, sourceBlock, sourcePos);
+                notifyState.neighborChanged(((WorldServer) mixinWorld), notifyPos, sourceBlock, sourcePos);
             }
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Exception while updating neighbours");
             CrashReportCategory crashreportcategory = crashreport.makeCategory("Block being updated");
             crashreportcategory.addDetail("Source block type", () -> {
                 try {
-                    return String.format("ID %s (%s // %s)", IRegistry.BLOCK.getKey((sourceBlock)),
-                            sourceBlock.getTranslationKey(), sourceBlock.getClass().getCanonicalName());
+                    return String.format("ID #%d (%s // %s)", Block.getIdFromBlock(sourceBlock),
+                        sourceBlock.getTranslationKey(), sourceBlock.getClass().getCanonicalName());
                 } catch (Throwable var2) {
-                    return "ID #" + IRegistry.BLOCK.getKey((sourceBlock));
+                    return "ID #" + Block.getIdFromBlock(sourceBlock);
                 }
             });
-            CrashReportCategory.addBlockInfo(crashreportcategory, notifyPos, iblockstate);
+            CrashReportCategory.addBlockInfo(crashreportcategory, notifyPos, notifyState);
             throw new ReportedException(crashreport);
         }
     }
@@ -677,106 +742,118 @@ public final class PhaseTracker {
         }
         final SpongeBlockChangeFlag spongeFlag = (SpongeBlockChangeFlag) flag;
         final net.minecraft.world.World minecraftWorld = WorldUtil.asNative(mixinWorld);
+
+        // Vanilla start - get the chunk
         final Chunk chunk = minecraftWorld.getChunk(pos);
+        // Sponge - double check the chunk is not empty.
         // It is now possible for setBlockState to be called on an empty chunk due to our optimization
         // for returning empty chunks when we don't want a chunk to load.
         // If chunk is empty, we simply return to avoid any further logic.
         if (chunk.isEmpty()) {
             return false;
         }
-
-        final Block block = newState.getBlock();
-        // Sponge Start - Up to this point, we've copied exactly what Vanilla minecraft does.
+        // Sponge End
         final IBlockState currentState = chunk.getBlockState(pos);
+        // Forge patches - allows getting the light changes to check for relighting.
+        int oldLight = SpongeImplHooks.getChunkPosLight(currentState, minecraftWorld, pos);
+        int oldOpacity = SpongeImplHooks.getBlockLightOpacity(currentState, minecraftWorld, pos);
 
+        // Sponge Start - micro optimization to avoid calling extra stuff on the same block state instance
         if (currentState == newState) {
             // Some micro optimization in case someone is trying to set the new state to the same as current
+            final SpongeProxyBlockAccess proxyAccess = mixinWorld.getProxyAccess();
+            if (proxyAccess.isProcessingNeighbors() && proxyAccess.getBlockState(pos) != currentState) {
+                proxyAccess.onChunkChanged(pos, newState);
+            }
             return false;
         }
 
-        // Now we need to do some of our own logic to see if we need to capture.
-        final PhaseData phaseData = this.stack.peek();
-        final IPhaseState<?> phaseState = phaseData.state;
-        final PhaseContext<?> context = phaseData.context;
+        final PhaseContext<?> context = this.stack.peek();
+        final IPhaseState<?> phaseState = context.state;
         final boolean isComplete = phaseState == GeneralPhase.State.COMPLETE;
+        // Do a sanity check, if we're not in any phase state that accepts block changes, well, why the hell are
+        // we doing any changes?? The changes themselves will still go through, but we want to be as verbose
+        // about those changes as possible, if we're configured to do so.
         if (isComplete && SpongeImpl.getGlobalConfig().getConfig().getPhaseTracker().isVerbose()) { // Fail fast.
             // The random occurrence that we're told to complete a phase
             // while a world is being changed unknowingly.
-            this.printUnexpectedBlockChange(mixinWorld, pos, currentState, newState);
+//            this.printUnexpectedBlockChange(mixinWorld, pos, currentState, newState);
         }
-        if (((IPhaseState) phaseState).doesBulkBlockCapture(context)) {
-            try {
-                // Default, this means we've captured the block. Keeping with the semantics
-                // of the original method where true means it successfully changed.
-                return TrackingUtil.captureBulkBlockChange(mixinWorld, chunk, currentState, newState, pos, flag, context, phaseState);
-            } catch (Exception | NoClassDefFoundError e) {
-                this.printBlockTrackingException(phaseData, phaseState, e);
-                return false;
-            }
+        // We can allow the block to get changed, regardless how it's captured, not captured, etc.
+        // because MixinChunk will perform the necessary changes, and appropriately prevent any specific
+        // physics handling.
+
+        final IMixinChunk mixinChunk = (IMixinChunk) chunk;
+        // Sponge - Use our mixin method that allows using the BlockChangeFlag.
+
+        final IBlockState originalBlockState = mixinChunk.setBlockState(pos, newState, currentState, spongeFlag);
+        // Sponge End
+        if (originalBlockState == null) {
+            return false;
         }
-        if (((IPhaseState) phaseState).doesBlockEventTracking(context)) {
+
+        // else { // Sponge - unnecessary formatting
+        // Forge changes the BlockState.getLightOpacity to use Forge's hook.
+        if (SpongeImplHooks.getBlockLightOpacity(newState, minecraftWorld, pos) != oldOpacity || SpongeImplHooks
+                                                                                                     .getChunkPosLight(newState, minecraftWorld, pos) != oldLight) {
+            // Sponge - End
+            minecraftWorld.profiler.startSection("checkLight");
+            minecraftWorld.checkLight(pos);
+            minecraftWorld.profiler.endSection();
+        }
+
+        // Sponge Start - At this point, we can stop and check for captures.
+        //  by short circuiting here, we avoid additional block processing that would otherwise
+        //  have potential side effects (and MixinChunk#setBlockState does a wonderful job at avoiding
+        //  unnecessary logic in those cases).
+        if (((IPhaseState) phaseState).doesBulkBlockCapture(context) && ShouldFire.CHANGE_BLOCK_EVENT) {
+            // Basically at this point, there's nothing left for us to do since
+            // MixinChunk will capture the block change, and submit it to be
+            // "captured". It's only when there's immediate block event
+            // processing that we need to actually create the event and process
+            // that transaction.
+            return true;
+        }
+        if (((IPhaseState) phaseState).doesBlockEventTracking(context) && ShouldFire.CHANGE_BLOCK_EVENT) {
             try {
-                final SpongeBlockChangeFlag spongeFlag1 = (SpongeBlockChangeFlag) flag;
-                final Block block1 = newState.getBlock();
-
-                if (!ShouldFire.CHANGE_BLOCK_EVENT) { // If we don't have to worry about any block events, don't bother
-                    // Sponge End - continue with vanilla mechanics
-                    // Also, call the direct method instead of letting the overwrites do their job, because we want to
-                    // reduce the amount of nested calls
-                    final IBlockState iblockstate = ((IMixinChunk) chunk).setBlockState(pos, newState, chunk.getBlockState(pos), null, flag);
-
-                    if (iblockstate == null) {
-                        return false;
-                    }
-                    // else { // Sponge - unnecessary formatting
-                    // Continue doing neighbor notification
-                    if (newState.getOpacity(minecraftWorld, pos) != iblockstate.getOpacity(minecraftWorld, pos) || newState.getLightValue() != iblockstate.getLightValue()) {
-                        minecraftWorld.profiler.startSection("checkLight"); // Sponge - we don't need to us the profiler
-                        minecraftWorld.checkLight(pos);
-                        minecraftWorld.profiler.endSection(); // Sponge - We don't need to use the profiler
-                    }
-
-                    if (spongeFlag1.isNotifyClients() && chunk.isPopulated()) {
-                        minecraftWorld.notifyBlockUpdate(pos, iblockstate, newState, spongeFlag1.getRawFlag());
-                    }
-
-                    if (flag.updateNeighbors()) {
-                        minecraftWorld.notifyNeighborsRespectDebug(pos, iblockstate.getBlock(), true);
-
-                        if (newState.hasComparatorInputOverride()) {
-                            minecraftWorld.updateComparatorOutputLevel(pos, block1);
-                        }
-                    } else if (flag.notifyObservers()) {
-                        minecraftWorld.updateObservingBlocksAt(pos, block1);
-                    }
-
-                    return true;
-                }
-                // Sponge Start - Fall back to performing a singular block capture and throwing an event with all the
-                // reprocussions, such as neighbor notifications and whatnot. Entity spawns should also be
+                // Fall back to performing a singular block capture and throwing an event with all the
+                // repercussions, such as neighbor notifications and whatnot. Entity spawns should also be
                 // properly handled since bulk captures technically should be disabled if reaching
                 // this point.
-                final SpongeBlockSnapshot originalBlockSnapshot= mixinWorld.createSpongeBlockSnapshot(currentState, currentState, pos, flag);
-                final List<BlockSnapshot> capturedSnapshots = new ArrayList<>(1); // only need tone
-                final Block newBlock = newState.getBlock();
 
-                TrackingUtil.associateBlockChangeWithSnapshot(phaseState, newBlock, currentState, originalBlockSnapshot, capturedSnapshots);
-                final IMixinChunk mixinChunk = (IMixinChunk) chunk;
-                final IBlockState originalBlockState = mixinChunk.setBlockState(pos, newState, currentState, originalBlockSnapshot, BlockChangeFlags.ALL);
-                if (originalBlockState == null) {
-                    return false; // Return fast
-                }
+                final SpongeBlockSnapshot originalBlockSnapshot = context.singleSnapshot;
+
                 final Transaction<BlockSnapshot> transaction = TrackingUtil.TRANSACTION_CREATION.apply(originalBlockSnapshot);
                 final ImmutableList<Transaction<BlockSnapshot>> transactions = ImmutableList.of(transaction);
                 // Create and throw normal event
+                final Cause currentCause = Sponge.getCauseStackManager().getCurrentCause();
                 final ChangeBlockEvent normalEvent =
-                    originalBlockSnapshot.blockChange.createEvent(Sponge.getCauseStackManager().getCurrentCause(), transactions);
+                    originalBlockSnapshot.blockChange.createEvent(currentCause, transactions);
                 try (final CauseStackManager.StackFrame frame = Sponge.getCauseStackManager().pushCauseFrame()) {
-                    ((IPhaseState) phaseState).associateAdditionalCauses(context, frame);
                     SpongeImpl.postEvent(normalEvent);
-                    frame.pushCause(normalEvent); // Because of our contract for post events
-                    final ChangeBlockEvent.Post post = ((IPhaseState) phaseState).createChangeBlockPostEvent(context, transactions);
-                    SpongeImpl.postEvent(post);
+                    // We put the normal event at the end of the cause, still keeping in line with the
+                    // API contract that the ChangeBlockEvnets are pushed to the cause for Post, but they
+                    // will not replace the root causes. Likewise, this does not leak into the cause stack
+                    // for plugin event listeners performing other operations that could potentially alter
+                    // the cause stack (CauseStack:[Player, ScheduledTask] vs. CauseStack:[ChangeBlockEvent, Player, ScheduledTask])
+                    final Cause normalizedEvent;
+                    if (ShouldFire.CHANGE_BLOCK_EVENT_POST) {
+                        normalizedEvent = currentCause.with(normalEvent);
+                    } else {
+                        normalizedEvent = currentCause;
+                    }
+                    if (normalEvent.isCancelled()) {
+                        // If the normal event is cancelled, mark the transaction as invalid already
+                        transaction.setValid(false);
+                    }
+                    final ChangeBlockEvent.Post post = ((IPhaseState) phaseState).createChangeBlockPostEvent(context, transactions, normalizedEvent);
+                    if (ShouldFire.CHANGE_BLOCK_EVENT_POST) {
+                        SpongeImpl.postEvent(post);
+                    }
+                    if (post.isCancelled()) {
+                        // And finally, if the post event is cancelled, mark the transaction as invalid.
+                        transaction.setValid(false);
+                    }
                     if (!transaction.isValid()) {
                         transaction.getOriginal().restore(true, BlockChangeFlags.NONE);
                         if (((IPhaseState) phaseState).tracksBlockSpecificDrops(context)) {
@@ -786,37 +863,33 @@ public final class PhaseTracker {
                     }
                     // And now, proceed as normal.
                     // If we've gotten this far, the transaction wasn't cancelled, so pass 'noCancelledTransactions' as 'true'
-                    return TrackingUtil.performTransactionProcess(transaction, phaseState, context, true, 0);
+                    return TrackingUtil.performTransactionProcess(transaction, phaseState, context, Collections.emptyList(), true, 0);
                 }
             } catch (Exception | NoClassDefFoundError e) {
-                this.printBlockTrackingException(phaseData, phaseState, e);
+                this.printBlockTrackingException(context, phaseState, e);
                 return false;
             }
         }
         // Sponge End - continue with vanilla mechanics
-        final IBlockState iblockstate = ((IMixinChunk) chunk).setBlockState(pos, newState, chunk.getBlockState(pos), null, flag);
 
-        if (iblockstate == null) {
-            return false;
-        }
-        // else { // Sponge - unnecessary formatting
-        if (newState.getOpacity(minecraftWorld, pos) != iblockstate.getOpacity(minecraftWorld, pos) || newState.getLightValue() != iblockstate.getLightValue()) {
-            minecraftWorld.profiler.startSection("checkLight");
-            minecraftWorld.checkLight(pos);
-            minecraftWorld.profiler.endSection();
-        }
-
+        // Sponge - Use SpongeFlag. Inline world.isRemote since it's checked, and use the BlockChangeFlag#isNotifyClients()) And chunks are never null
+        // flags & 2 is replaced with BlockChangeFlag#isNotifyClients
+        // !this.isRemote is guaranteed since we are on the server
+        // chunks are never null
+        // if ((flags & 2) != 0 && (!this.isRemote || (flags & 4) == 0) && (chunk == null || chunk.isPopulated()))
         if (spongeFlag.isNotifyClients() && chunk.isPopulated()) {
-            minecraftWorld.notifyBlockUpdate(pos, iblockstate, newState, spongeFlag.getRawFlag());
+            // Sponge End
+            minecraftWorld.notifyBlockUpdate(pos, originalBlockState, newState, spongeFlag.getRawFlag());
         }
 
-        if (spongeFlag.updateNeighbors()) {
-            minecraftWorld.notifyNeighborsRespectDebug(pos, iblockstate.getBlock(), true);
+        final Block block = newState.getBlock();
+        if (spongeFlag.updateNeighbors()) { // Sponge - Replace flags & 1 != 0 with BlockChangeFlag#updateNeighbors
+            minecraftWorld.notifyNeighborsRespectDebug(pos, originalBlockState.getBlock(), true);
 
             if (newState.hasComparatorInputOverride()) {
                 minecraftWorld.updateComparatorOutputLevel(pos, block);
             }
-        } else if ( spongeFlag.notifyObservers()) {
+        } else if ( spongeFlag.notifyObservers()) { // Sponge - Replace flags & 16 == 0 with BlockChangeFlag#notifyObservers.
             minecraftWorld.updateObservingBlocksAt(pos, block);
         }
 
@@ -839,6 +912,10 @@ public final class PhaseTracker {
     @SuppressWarnings("rawtypes")
     public boolean spawnEntity(World world, Entity entity) {
         checkNotNull(entity, "Entity cannot be null!");
+        // Forge requires checking if we're restoring in a world to avoid spawning item drops.
+        if (entity instanceof EntityItem && SpongeImplHooks.isRestoringBlocks((net.minecraft.world.World) world)) {
+            return false;
+        }
 
         // Sponge Start - handle construction phases
         if (((IMixinEntity) entity).isInConstructPhase()) {
@@ -848,9 +925,8 @@ public final class PhaseTracker {
         final net.minecraft.entity.Entity minecraftEntity = EntityUtil.toNative(entity);
         final WorldServer minecraftWorld = (WorldServer) world;
         final IMixinWorldServer mixinWorldServer = (IMixinWorldServer) minecraftWorld;
-        final PhaseData phaseData = this.stack.peek();
-        final IPhaseState<?> phaseState = phaseData.state;
-        final PhaseContext<?> context = phaseData.context;
+        final PhaseContext<?> context = this.stack.peek();
+        final IPhaseState<?> phaseState = context.state;
         final boolean isForced = minecraftEntity.forceSpawn || minecraftEntity instanceof EntityPlayer;
 
         // Certain phases disallow entity spawns (such as block restoration)
@@ -905,7 +981,7 @@ public final class PhaseTracker {
             if (!isForced) {
                 if (ShouldFire.SPAWN_ENTITY_EVENT
                     || (ShouldFire.CHANGE_BLOCK_EVENT // This bottom part of the if is due to needing to be able to capture block entity spawns
-                                                      // while block events are being listened to
+                        // while block events are being listened to
                         && ((IPhaseState) phaseState).doesBulkBlockCapture(context)
                         && ((IPhaseState) phaseState).tracksBlockSpecificDrops(context)
                         && context.getCaptureBlockPos().getPos().isPresent())) {
@@ -982,7 +1058,7 @@ public final class PhaseTracker {
      * @return True if the entity spawn is on the main thread.
      */
     public static boolean isEntitySpawnInvalid(Entity entity) {
-        if (Sponge.isServerAvailable() && (Sponge.getServer().onMainThread() || SpongeImpl.getServer().isServerStopped())) {
+        if (Sponge.isServerAvailable() && (Sponge.getServer().isMainThread() || SpongeImpl.getServer().isServerStopped())) {
             return false;
         }
         // We aren't in the server thread at this point, and an entity is spawning on the server....
@@ -1070,4 +1146,5 @@ public final class PhaseTracker {
 
         return true;
     }
+
 }

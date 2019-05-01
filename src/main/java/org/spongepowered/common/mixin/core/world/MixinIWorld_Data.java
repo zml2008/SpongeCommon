@@ -75,72 +75,72 @@ import java.util.Set;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 @Mixin(IWorld.class)
-public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements ProtoWorld<P>, LocationBasePropertyHolder, LocationCompositeValueStore {
+public interface MixinIWorld_Data<P extends ProtoWorld<P>> extends ProtoWorld<P>, LocationBasePropertyHolder, LocationCompositeValueStore {
 
-    @Shadow public abstract net.minecraft.world.World shadow$getWorld();
+    @Shadow net.minecraft.world.World shadow$getWorld();
 
     @Override
-    public Map<Property<?>, ?> getProperties(Vector3i coords) {
+    default Map<Property<?>, ?> getProperties(Vector3i coords) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getPropertiesFor(new Location(getWorld(), coords));
     }
 
     @Override
-    public Map<Property<?>, ?> getProperties(int x, int y, int z) {
+    default Map<Property<?>, ?> getProperties(int x, int y, int z) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getPropertiesFor(new Location(getWorld(), x, y, z));
     }
 
     @Override
-    public <V> Optional<V> getProperty(Vector3i coords, Property<V> property) {
+    default <V> Optional<V> getProperty(Vector3i coords, Property<V> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getStore(property).getFor(new Location(getWorld(), coords));
     }
 
     @Override
-    public <V> Optional<V> getProperty(int x, int y, int z, Property<V> property) {
+    default <V> Optional<V> getProperty(int x, int y, int z, Property<V> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getStore(property).getFor(new Location(getWorld(), x, y, z));
     }
 
     @Override
-    public <V> Optional<V> getProperty(Vector3i coords, Direction direction, Property<V> property) {
+    default <V> Optional<V> getProperty(Vector3i coords, Direction direction, Property<V> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getStore(property).getFor(new Location(getWorld(), coords), direction);
     }
 
     @Override
-    public <V> Optional<V> getProperty(int x, int y, int z, Direction direction, Property<V> property) {
+    default <V> Optional<V> getProperty(int x, int y, int z, Direction direction, Property<V> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getStore(property).getFor(new Location(getWorld(), x, y, z), direction);
     }
 
     @Override
-    public OptionalDouble getDoubleProperty(Vector3i coords, Property<Double> property) {
+    default OptionalDouble getDoubleProperty(Vector3i coords, Property<Double> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getDoubleStore(property).getDoubleFor(new Location(getWorld(), coords));
     }
 
     @Override
-    public OptionalDouble getDoubleProperty(int x, int y, int z, Property<Double> property) {
+    default OptionalDouble getDoubleProperty(int x, int y, int z, Property<Double> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getDoubleStore(property).getDoubleFor(new Location(getWorld(), x, y, z));
     }
 
     @Override
-    public OptionalInt getIntProperty(Vector3i coords, Property<Integer> property) {
+    default OptionalInt getIntProperty(Vector3i coords, Property<Integer> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getIntStore(property).getIntFor(new Location(getWorld(), coords));
     }
 
     @Override
-    public OptionalInt getIntProperty(int x, int y, int z, Property<Integer> property) {
+    default OptionalInt getIntProperty(int x, int y, int z, Property<Integer> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         return SpongeImpl.getPropertyRegistry().getIntStore(property).getIntFor(new Location(getWorld(), x, y, z));
     }
 
     @Override
-    public Collection<Direction> getFacesWithProperty(Vector3i coords, Property<?> property) {
+    default Collection<Direction> getFacesWithProperty(Vector3i coords, Property<?> property) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         final PropertyStore<?> store = Sponge.getPropertyRegistry().getStore(property);
         final Location loc = new Location(getWorld(), coords);
@@ -155,12 +155,12 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public Collection<Direction> getFacesWithProperty(int x, int y, int z, Property<?> property) {
+    default Collection<Direction> getFacesWithProperty(int x, int y, int z, Property<?> property) {
         return getFacesWithProperty(new Vector3i(x, y, z), property);
     }
 
     @Override
-    public <E> Optional<E> get(int x, int y, int z, Key<? extends Value<E>> key) {
+    default <E> Optional<E> get(int x, int y, int z, Key<? extends Value<E>> key) {
         checkState(shadow$getWorld() instanceof World, "Not a valid type of world!");
         final Optional<E> optional = getBlock(x, y, z).get(key);
         if (optional.isPresent()) {
@@ -172,7 +172,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends DataManipulator<?, ?>> Optional<T> get(int x, int y, int z, Class<T> manipulatorClass) {
+    default <T extends DataManipulator<?, ?>> Optional<T> get(int x, int y, int z, Class<T> manipulatorClass) {
         final Collection<DataManipulator<?, ?>> manipulators = getManipulators(x, y, z);
         for (DataManipulator<?, ?> manipulator : manipulators) {
             if (manipulatorClass.isInstance(manipulator)) {
@@ -183,7 +183,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public <T extends DataManipulator<?, ?>> Optional<T> getOrCreate(int x, int y, int z, Class<T> manipulatorClass) {
+    default <T extends DataManipulator<?, ?>> Optional<T> getOrCreate(int x, int y, int z, Class<T> manipulatorClass) {
         final Optional<T> optional = get(x, y, z, manipulatorClass);
         if (optional.isPresent()) {
             return optional;
@@ -193,7 +193,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public <E, V extends Value<E>> Optional<V> getValue(int x, int y, int z, Key<V> key) {
+    default <E, V extends Value<E>> Optional<V> getValue(int x, int y, int z, Key<V> key) {
         final BlockState blockState = getBlock(x, y, z);
         if (blockState.supports(key)) {
             return blockState.getValue(key);
@@ -206,7 +206,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public boolean supports(int x, int y, int z, Key<?> key) {
+    default boolean supports(int x, int y, int z, Key<?> key) {
         final BlockState blockState = getBlock(x, y, z);
         final boolean blockSupports = blockState.supports(key);
         final Optional<TileEntity> tileEntity = getTileEntity(x, y, z);
@@ -215,7 +215,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public boolean supports(int x, int y, int z, Class<? extends DataManipulator<?, ?>> manipulatorClass) {
+    default boolean supports(int x, int y, int z, Class<? extends DataManipulator<?, ?>> manipulatorClass) {
         final BlockState blockState = getBlock(x, y, z);
         final List<ImmutableDataManipulator<?, ?>> immutableDataManipulators = blockState.getManipulators();
         boolean blockSupports = false;
@@ -235,7 +235,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public Set<Key<?>> getKeys(int x, int y, int z) {
+    default Set<Key<?>> getKeys(int x, int y, int z) {
         final ImmutableSet.Builder<Key<?>> builder = ImmutableSet.builder();
         final BlockState blockState = getBlock(x, y, z);
         builder.addAll(blockState.getKeys());
@@ -245,7 +245,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public Set<Value.Immutable<?>> getValues(int x, int y, int z) {
+    default Set<Value.Immutable<?>> getValues(int x, int y, int z) {
         final ImmutableSet.Builder<Value.Immutable<?>> builder = ImmutableSet.builder();
         final BlockState blockState = getBlock(x, y, z);
         builder.addAll(blockState.getValues());
@@ -255,7 +255,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public <E> DataTransactionResult offer(int x, int y, int z, Key<? extends Value<E>> key, E value) {
+    default <E> DataTransactionResult offer(int x, int y, int z, Key<? extends Value<E>> key, E value) {
         final BlockState blockState = getBlock(x, y, z);
         if (blockState.supports(key)) {
             Value.Immutable<E> old = ((Value.Mutable<E>) getValue(x, y, z, (Key) key).get()).asImmutable();
@@ -269,7 +269,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public DataTransactionResult offer(int x, int y, int z, DataManipulator<?, ?> manipulator, MergeFunction function) {
+    default DataTransactionResult offer(int x, int y, int z, DataManipulator<?, ?> manipulator, MergeFunction function) {
         final BlockState blockState = getBlock(x, y, z);
         final ImmutableDataManipulator<?, ?> immutableDataManipulator = manipulator.asImmutable();
         if (blockState.supports((Class) immutableDataManipulator.getClass())) {
@@ -285,7 +285,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public DataTransactionResult remove(int x, int y, int z, Class<? extends DataManipulator<?, ?>> manipulatorClass) {
+    default DataTransactionResult remove(int x, int y, int z, Class<? extends DataManipulator<?, ?>> manipulatorClass) {
         final Optional<TileEntity> tileEntityOptional = getTileEntity(x, y, z);
         return tileEntityOptional
             .map(tileEntity -> tileEntity.remove(manipulatorClass))
@@ -293,7 +293,7 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public DataTransactionResult remove(int x, int y, int z, Key<?> key) {
+    default DataTransactionResult remove(int x, int y, int z, Key<?> key) {
         final Optional<TileEntity> tileEntityOptional = getTileEntity(x, y, z);
         return tileEntityOptional
             .map(tileEntity -> tileEntity.remove(key))
@@ -301,17 +301,17 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public DataTransactionResult undo(int x, int y, int z, DataTransactionResult result) {
+    default DataTransactionResult undo(int x, int y, int z, DataTransactionResult result) {
         return DataTransactionResult.failNoData(); // todo
     }
 
     @Override
-    public DataTransactionResult copyFrom(int xTo, int yTo, int zTo, DataHolder from) {
+    default DataTransactionResult copyFrom(int xTo, int yTo, int zTo, DataHolder from) {
         return copyFrom(xTo, yTo, zTo, from, MergeFunction.IGNORE_ALL);
     }
 
     @Override
-    public DataTransactionResult copyFrom(int xTo, int yTo, int zTo, DataHolder from, MergeFunction function) {
+    default DataTransactionResult copyFrom(int xTo, int yTo, int zTo, DataHolder from, MergeFunction function) {
         final DataTransactionResult.Builder builder = DataTransactionResult.builder();
         final Collection<DataManipulator<?, ?>> manipulators = from.getContainers();
         for (DataManipulator<?, ?> manipulator : manipulators) {
@@ -321,12 +321,12 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public DataTransactionResult copyFrom(int xTo, int yTo, int zTo, int xFrom, int yFrom, int zFrom, MergeFunction function) {
+    default DataTransactionResult copyFrom(int xTo, int yTo, int zTo, int xFrom, int yFrom, int zFrom, MergeFunction function) {
         return copyFrom(xTo, yTo, zTo, new Location(getWorld(), xFrom, yFrom, zFrom), function);
     }
 
     @Override
-    public Collection<DataManipulator<?, ?>> getManipulators(int x, int y, int z) {
+    default Collection<DataManipulator<?, ?>> getManipulators(int x, int y, int z) {
         final List<DataManipulator<?, ?>> list = new ArrayList<>();
         final Collection<ImmutableDataManipulator<?, ?>> manipulators = getBlock(x, y, z)
             .getManipulators();
@@ -340,12 +340,12 @@ public abstract class MixinIWorld_Data<P extends ProtoWorld<P>> implements Proto
     }
 
     @Override
-    public boolean validateRawData(int x, int y, int z, DataView container) {
+    default boolean validateRawData(int x, int y, int z, DataView container) {
         return false; // todo
     }
 
     @Override
-    public void setRawData(int x, int y, int z, DataView container) throws InvalidDataException {
+    default void setRawData(int x, int y, int z, DataView container) throws InvalidDataException {
         // todo
     }
 

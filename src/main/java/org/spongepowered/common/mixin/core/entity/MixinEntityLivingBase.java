@@ -108,7 +108,7 @@ import org.spongepowered.common.event.tracking.phase.entity.EntityPhase;
 import org.spongepowered.common.interfaces.entity.IMixinEntityLivingBase;
 import org.spongepowered.common.interfaces.entity.player.IMixinEntityPlayerMP;
 import org.spongepowered.common.interfaces.entity.player.IMixinInventoryPlayer;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.slots.SlotAdapter;
 import org.spongepowered.common.item.inventory.lens.comp.HotbarLens;
@@ -288,7 +288,7 @@ public abstract class MixinEntityLivingBase extends MixinEntity implements Livin
     public void onDeath(DamageSource cause) {
         // Sponge Start - Call our event, and forge's event
         // This will transitively call the forge event
-        final boolean isMainThread = !((IMixinWorld) this.world).isFake() || Sponge.isServerAvailable() && Sponge.getServer().onMainThread();
+        final boolean isMainThread = !((IMixinWorld_Impl) this.world).isFake() || Sponge.isServerAvailable() && Sponge.getServer().onMainThread();
         if (!this.removed) { // removed should be set later on in this method so we aren't re-throwing the events.
             if (isMainThread && this.deathEventsPosted <= MAX_DEATH_EVENTS_BEFORE_GIVING_UP) {
                 // ignore because some moron is not resetting the entity.
@@ -379,7 +379,7 @@ public abstract class MixinEntityLivingBase extends MixinEntity implements Livin
     @Nullable
     private EntityDeathContext createOrNullDeathPhase(boolean isMainThread, DamageSource source) {
         boolean tracksEntityDeaths = false;
-        if (((IMixinWorld) this.world).isFake() || !isMainThread) { // Short circuit to avoid erroring on handling
+        if (((IMixinWorld_Impl) this.world).isFake() || !isMainThread) { // Short circuit to avoid erroring on handling
             return null;
         }
         final IPhaseState<?> state = PhaseTracker.getInstance().getCurrentPhaseData().state;

@@ -32,7 +32,7 @@ import org.spongepowered.api.event.CauseStackManager.StackFrame;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.damage.source.DamageSource;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
-import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.api.world.gamerule.DefaultGameRules;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.TrackingUtil;
@@ -118,9 +118,9 @@ final class EntityDeathState extends EntityPhaseState<EntityDeathContext> {
 
             if (entityPlayer != null) {
                 if (((IMixinEntityPlayerMP) entityPlayer).keepInventory()) {
-                    keepInventoryRule = entityPlayer.world.getGameRules().getBoolean("keepInventory");
+                    keepInventoryRule = entityPlayer.world.getGameRules().getBoolean(DefaultGameRules.KEEP_INVENTORY);
                     // Set global keep-inventory gamerule so mods do not drop items
-                    entityPlayer.world.getGameRules().setOrCreateGameRule("keepInventory", "true", SpongeImpl.getServer());
+                    entityPlayer.world.getGameRules().setOrCreateGameRule(DefaultGameRules.KEEP_INVENTORY, "true");
                 }
             }
             SpongeCommonEventFactory.callDropItemDestruct(entities, context);
@@ -128,7 +128,7 @@ final class EntityDeathState extends EntityPhaseState<EntityDeathContext> {
             if (entityPlayer != null) {
                 if (((IMixinEntityPlayerMP) entityPlayer).keepInventory()) {
                     // Restore global keep-inventory gamerule
-                    entityPlayer.world.getGameRules().setOrCreateGameRule("keepInventory", String.valueOf(keepInventoryRule), SpongeImpl.getServer());
+                    entityPlayer.world.getGameRules().setOrCreateGameRule(DefaultGameRules.KEEP_INVENTORY, String.valueOf(keepInventoryRule));
                 }
             }
         }
@@ -136,8 +136,9 @@ final class EntityDeathState extends EntityPhaseState<EntityDeathContext> {
         // Note that this is only used if and when item pre-merging is enabled. Which is never enabled in forge.
         EntityDropPhaseState.processPerItemDrop(context, dyingEntity, isPlayer, entityPlayer);
 
-        context.getCapturedBlockSupplier()
-            .acceptAndClearIfNotEmpty(snapshots -> TrackingUtil.processBlockCaptures(snapshots, this, context));
+        // TODO - Determine if we need to pass the supplier or perform some parameterized
+        //  process if not empty method on the capture object.
+        TrackingUtil.processBlockCaptures(this, context);
 
     }
 

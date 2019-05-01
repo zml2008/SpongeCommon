@@ -28,40 +28,28 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
-import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.interfaces.IMixinChunk;
 
-import java.util.function.BiConsumer;
-
 import javax.annotation.Nullable;
 
 final class EventListenerPhaseState extends ListenerPhaseState {
 
-    public final BiConsumer<CauseStackManager.StackFrame, ListenerPhaseContext> LISTENER_MODIFIER = super.getFrameModifier()
-        .andThen((frame, context) -> {
-            context.getSource(PluginContainer.class)
-                .ifPresent(frame::pushCause);
-        });
     private boolean hasPrintedEntities = false;
 
     EventListenerPhaseState() {
     }
 
-    @Override
-    public BiConsumer<CauseStackManager.StackFrame, ListenerPhaseContext> getFrameModifier() {
-        return this.LISTENER_MODIFIER;
-    }
+
 
     @Override
     public void unwind(ListenerPhaseContext phaseContext) {
-        phaseContext.getCapturedBlockSupplier().acceptAndClearIfNotEmpty(blocks -> {
-            TrackingUtil.processBlockCaptures(blocks, this, phaseContext);
-        });
+        // TODO - Determine if we need to pass the supplier or perform some parameterized
+        //  process if not empty method on the capture object.
+        TrackingUtil.processBlockCaptures(this, phaseContext);
 
         // TODO - determine if entities are needed to be captured.
         phaseContext.getCapturedEntitySupplier().acceptAndClearIfNotEmpty(entities ->  {

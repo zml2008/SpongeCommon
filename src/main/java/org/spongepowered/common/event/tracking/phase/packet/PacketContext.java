@@ -26,25 +26,31 @@ package org.spongepowered.common.event.tracking.phase.packet;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.Packet;
+import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.data.type.HandType;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.event.tracking.PhaseContext;
+import org.spongepowered.common.item.inventory.SpongeItemStackSnapshot;
 
 import javax.annotation.Nullable;
 
 @SuppressWarnings("unchecked")
 public class PacketContext<P extends PacketContext<P>> extends PhaseContext<P> {
 
-    @Nullable EntityPlayerMP packetPlayer;
+    @SuppressWarnings("NullableProblems") protected EntityPlayerMP packetPlayer; // Set by packetPlayer(EntityPlayerMP)
     @Nullable Packet<?> packet;
-    @Nullable private ItemStackSnapshot cursor;
-    @Nullable private ItemStack itemUsed;
+    private ItemStackSnapshot cursor = ItemStackSnapshot.NONE;
+    private ItemStack itemUsed = ItemStack.empty();
+    private SpongeItemStackSnapshot itemUsedSnapshot = (SpongeItemStackSnapshot) ItemStackSnapshot.NONE;
+    private BlockSnapshot targetBlock = BlockSnapshot.NONE;
+    @Nullable private HandType handUsed;
     private boolean ignoreCreative;
     private boolean interactItemChanged;
 
-    PacketContext(PacketState<? extends P> state) {
+    protected PacketContext(PacketState<? extends P> state) {
         super(state);
     }
 
@@ -55,6 +61,11 @@ public class PacketContext<P extends PacketContext<P>> extends PhaseContext<P> {
 
     public P packetPlayer(EntityPlayerMP playerMP) {
         this.packetPlayer = playerMP;
+        return (P) this;
+    }
+
+    public P targetBlock(BlockSnapshot snapshot) {
+        this.targetBlock = snapshot;
         return (P) this;
     }
 
@@ -72,6 +83,7 @@ public class PacketContext<P extends PacketContext<P>> extends PhaseContext<P> {
         return this.packetPlayer;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public Player getSpongePlayer() {
         return (Player) this.packetPlayer;
     }
@@ -84,17 +96,26 @@ public class PacketContext<P extends PacketContext<P>> extends PhaseContext<P> {
         return this.cursor;
     }
 
+    public BlockSnapshot getTargetBlock() {
+        return this.targetBlock;
+    }
+
     public boolean getIgnoringCreative() {
         return this.ignoreCreative;
     }
 
     public P itemUsed(ItemStack stack) {
         this.itemUsed = stack;
+        this.itemUsedSnapshot = (SpongeItemStackSnapshot) this.itemUsed.createSnapshot();
         return (P) this;
     }
 
     public ItemStack getItemUsed() {
         return this.itemUsed;
+    }
+
+    public SpongeItemStackSnapshot getItemUsedSnapshot() {
+        return this.itemUsedSnapshot;
     }
 
     public P interactItemChanged(boolean changed) {
@@ -104,6 +125,15 @@ public class PacketContext<P extends PacketContext<P>> extends PhaseContext<P> {
 
     public boolean getInteractItemChanged() {
         return this.interactItemChanged;
+    }
+
+    public P handUsed(HandType hand) {
+        this.handUsed = hand;
+        return (P) this;
+    }
+
+    public HandType getHandUsed() {
+        return this.handUsed;
     }
 
     @Override

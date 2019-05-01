@@ -24,7 +24,10 @@
  */
 package org.spongepowered.common.event.tracking.phase.block;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.init.Blocks;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager.StackFrame;
@@ -34,12 +37,15 @@ import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.world.LocatableBlock;
 import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.event.tracking.context.GeneralizedContext;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
+import org.spongepowered.common.world.BlockChange;
 import org.spongepowered.common.world.WorldUtil;
 
 import java.util.List;
@@ -73,11 +79,11 @@ final class BlockDecayPhaseState extends BlockPhaseState {
     public void unwind(GeneralizedContext context) {
         final LocatableBlock locatable = context.getSource(LocatableBlock.class)
                 .orElseThrow(TrackingUtil.throwWithContext("Expected to be ticking over at a location!", context));
-        final Location worldLocation = locatable.getLocation();
-        final IMixinWorldServer mixinWorld = ((IMixinWorldServer) worldLocation.getWorld());
-
-        context.getCapturedBlockSupplier()
-            .acceptAndClearIfNotEmpty(blocks -> TrackingUtil.processBlockCaptures(blocks, this, context));
+        final Location<World> worldLocation = locatable.getLocation();
+        final IMixinWorldServer mixinWorld = ((IMixinWorldServer) worldLocation.getExtent());
+        // TODO - Determine if we need to pass the supplier or perform some parameterized
+        //  process if not empty method on the capture object.
+        TrackingUtil.processBlockCaptures(this, context);
 
         context.getCapturedItemsSupplier()
             .acceptAndClearIfNotEmpty(items -> {
@@ -110,5 +116,16 @@ final class BlockDecayPhaseState extends BlockPhaseState {
                 }
             });
 
+    }
+
+    @Override
+    public BlockChange associateBlockChangeWithSnapshot(GeneralizedContext phaseContext, IBlockState newState,
+        Block newBlock,
+        IBlockState currentState, SpongeBlockSnapshot snapshot, Block originalBlock) {
+        if (newBlock == Blocks.AIR) {
+            return BlockChange.DECAY;
+        } else {
+            return super.associateBlockChangeWithSnapshot(phaseContext, newState, newBlock, currentState, snapshot, originalBlock);
+        }
     }
 }

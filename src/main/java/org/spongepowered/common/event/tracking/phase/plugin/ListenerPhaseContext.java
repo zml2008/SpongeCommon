@@ -31,7 +31,6 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.TrackingUtil;
-import org.spongepowered.common.interfaces.event.forge.IMixinWorldTickEvent;
 
 import java.util.Optional;
 

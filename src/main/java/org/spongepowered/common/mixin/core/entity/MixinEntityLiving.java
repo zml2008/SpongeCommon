@@ -80,7 +80,7 @@ import org.spongepowered.common.interfaces.ai.IMixinEntityAIBase;
 import org.spongepowered.common.interfaces.ai.IMixinEntityAITasks;
 import org.spongepowered.common.interfaces.entity.IMixinEntity;
 import org.spongepowered.common.interfaces.entity.IMixinGriefer;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 
 import java.util.ArrayList;
@@ -217,7 +217,7 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase implements
     @Nullable
     @Redirect(method = "checkDespawn", at = @At(value = "INVOKE", target = GET_CLOSEST_PLAYER))
     public EntityPlayer onDespawnEntity(World world, net.minecraft.entity.Entity entity, double distance) {
-        return ((IMixinWorld) world).getClosestPlayerToEntityWhoAffectsSpawning(entity, distance);
+        return ((IMixinWorld_Impl) world).getClosestPlayerToEntityWhoAffectsSpawning(entity, distance);
     }
 
     @Override

@@ -34,7 +34,6 @@ import net.minecraft.util.math.BlockPos;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.data.Transaction;
-import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.world.LocatableBlock;
@@ -47,7 +46,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.block.BlockUtil;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
-import org.spongepowered.common.interfaces.world.IMixinWorld;
+import org.spongepowered.common.interfaces.world.IMixinWorld_Impl;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 
 import java.util.Random;
@@ -57,7 +56,7 @@ public abstract class MixinBlockDynamicLiquid {
 
     @Inject(method = "canFlowInto", at = @At("HEAD"), cancellable = true)
     public void onCanFlowInto(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, CallbackInfoReturnable<Boolean> cir) {
-        if (!((IMixinWorld) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE &&
+        if (!((IMixinWorld_Impl) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE &&
             SpongeCommonEventFactory.callChangeBlockEventPre((IMixinWorldServer) worldIn, pos).isCancelled()) {
             cir.setReturnValue(false);
         }
@@ -65,7 +64,7 @@ public abstract class MixinBlockDynamicLiquid {
 
     @Inject(method = "updateTick", at = @At("HEAD"), cancellable = true)
     public void onUpdateTickHead(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, Random rand, CallbackInfo ci) {
-        if (!((IMixinWorld) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE) {
+        if (!((IMixinWorld_Impl) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE) {
             Sponge.getCauseStackManager().addContext(EventContextKeys.LIQUID_FLOW, (org.spongepowered.api.world.World) worldIn);
             if (SpongeCommonEventFactory.callChangeBlockEventPre((IMixinWorldServer) worldIn, pos).isCancelled()) {
                 ci.cancel();
@@ -75,7 +74,7 @@ public abstract class MixinBlockDynamicLiquid {
 
     @Inject(method = "updateTick", at = @At("RETURN"), cancellable = true)
     public void onUpdateTickReturn(net.minecraft.world.World worldIn, BlockPos pos, IBlockState state, Random rand, CallbackInfo ci) {
-        if (!((IMixinWorld) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE) {
+        if (!((IMixinWorld_Impl) worldIn).isFake() && ShouldFire.CHANGE_BLOCK_EVENT_PRE) {
             Sponge.getCauseStackManager().removeContext(EventContextKeys.LIQUID_FLOW);
         }
     }
