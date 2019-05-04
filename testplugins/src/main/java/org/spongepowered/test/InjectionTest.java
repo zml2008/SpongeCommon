@@ -42,7 +42,7 @@ public class InjectionTest {
     @Inject
     private InjectionTest(
             final Logger logger,
-            @ChannelId("injection") ChannelBinding.RawDataChannel channel
+            @ChannelId(namespace = "injection-test", value = "injection") ChannelBinding.RawDataChannel channel
     ) {
         this.logger = logger;
         this.channel = channel;

@@ -35,6 +35,7 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.ChangeEntityEquipmentEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import javax.annotation.Nullable;
 
@@ -42,6 +43,7 @@ import javax.annotation.Nullable;
 public class ChangeEntityEquipmentTest {
     public static final String DESCRIPTION = "A plugin for testing ChangeEntityEquipmentEvents.";
     @Inject private Logger logger;
+    @Inject private PluginContainer container;
 
     @Nullable
     private TestListener listener = null;
@@ -58,7 +60,7 @@ public class ChangeEntityEquipmentTest {
             this.listener = null;
         } else {
             this.listener = new TestListener();
-            Sponge.getEventManager().registerListeners(this, this.listener);
+            Sponge.getEventManager().registerListeners(this.container, this.listener);
         }
         return CommandResult.success();
     }

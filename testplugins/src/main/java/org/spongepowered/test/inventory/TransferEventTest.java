@@ -34,12 +34,17 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
+
+import javax.inject.Inject;
 
 /**
  * Bedrock in hoppers prevents them from working
  */
 @Plugin(id = "hoppereventtest", name = "Hopper Event Test", description = "A plugin to test hopper event", version = "0.0.0")
 public class TransferEventTest {
+
+    @Inject private PluginContainer container;
 
     private final TransferListener listener = new TransferListener();
     private boolean registered = false;
@@ -53,7 +58,7 @@ public class TransferEventTest {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     } else {
                         this.registered = true;
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     }
                     return CommandResult.success();
                 }).build(), "togglebedrocktransferblockage");

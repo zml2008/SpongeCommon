@@ -32,14 +32,18 @@ import org.spongepowered.api.event.entity.ConstructEntityEvent;
 import org.spongepowered.api.event.entity.SpawnEntityEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
+
 @Plugin(id = "witherspawntest", name = "Wither Spawn Test", description = "Log Wither Skele Spawn and generation", version = "0.0.0")
 public class WitherSpawnTest {
 
+    @Inject private PluginContainer container;
     private final SpawnListener listener = new SpawnListener();
     private boolean enabled = false;
 
@@ -50,7 +54,7 @@ public class WitherSpawnTest {
                     this.enabled = !this.enabled;
                     src.sendMessage(Text.of("Enabled: ", this.enabled));
                     if (this.enabled) {
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     } else {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     }
@@ -64,7 +68,7 @@ public class WitherSpawnTest {
         @Listener
         public void onSpawn(SpawnEntityEvent event) {
             final String entities = event.getEntities().stream()
-                    .map(entity -> entity.getType().getId())
+                    .map(entity -> entity.getType().getKey().toString())
                     .collect(Collectors.joining(", "));
             Sponge.getServer().getBroadcastChannel().send(
                     Text.of(TextColors.GREEN, "Spawning: ", entities, " ", TextColors.WHITE, event.getCause())
@@ -73,7 +77,7 @@ public class WitherSpawnTest {
 
         @Listener
         public void onConstruct(ConstructEntityEvent.Post event) {
-            final String entity = event.getTargetType().getId();
+            final String entity = event.getTargetType().getKey().toString();
             Sponge.getServer().getBroadcastChannel().send(
                     Text.of(TextColors.RED, "Constructing: ", TextColors.WHITE, entity)
             );

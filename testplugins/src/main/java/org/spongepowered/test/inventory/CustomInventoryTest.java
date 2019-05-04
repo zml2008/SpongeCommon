@@ -55,10 +55,13 @@ import org.spongepowered.api.item.inventory.slot.SlotIndex;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 
 import java.util.UUID;
+
+import javax.inject.Inject;
 
 /**
  * When trying to break an Inventory TE while sneaking you open a custom Version of it instead.
@@ -67,6 +70,8 @@ import java.util.UUID;
  */
 @Plugin(id = "custominventorytest", name = "Custom Inventory Test", description = "A plugin to test custom inventories", version = "0.0.0")
 public class CustomInventoryTest {
+
+    @Inject private PluginContainer container;
 
     @Listener
     public void onPunchBlock(InteractBlockEvent.Primary event, @Root Player player) {
@@ -94,7 +99,7 @@ public class CustomInventoryTest {
             }
             Inventory inventory = builder.property(InventoryProperties.TITLE, Text.of("Custom Mule"))
                     .withCarrier((Horse) event.getEntity())
-                    .build(this);
+                    .build(this.container);
             int i = 1;
             for (Inventory slot : inventory.slots()) {
                 slot.set(ItemStack.of(ItemTypes.APPLE, i++));
@@ -112,7 +117,7 @@ public class CustomInventoryTest {
             }
             Inventory inventory = builder.property(InventoryProperties.TITLE, Text.of("Custom Llama"))
                     .withCarrier((Horse) event.getEntity())
-                    .build(this);
+                    .build(this.container);
             int i = 1;
             for (Inventory slot : inventory.slots()) {
                 slot.set(ItemStack.of(ItemTypes.APPLE, i++));
@@ -125,7 +130,7 @@ public class CustomInventoryTest {
             Inventory inventory = Inventory.builder().of(InventoryArchetypes.HORSE)
                     .property(InventoryProperties.TITLE, Text.of("Custom Horse"))
                     .withCarrier(((Horse) event.getEntity()))
-                    .build(this);
+                    .build(this.container);
             int i = 1;
             for (Inventory slot : inventory.slots()) {
                 slot.set(ItemStack.of(ItemTypes.APPLE, i++));
@@ -141,7 +146,7 @@ public class CustomInventoryTest {
                     .property(InventoryProperties.TITLE, Text.of("Slime Content"))
                     .property(InventoryProperties.UNIQUE_ID, UUID.randomUUID())
                     .property(InventoryProperties.GUI_ID, GuiIds.DISPENSER)
-                    .build(this);
+                    .build(this.container);
             ItemStack flard = ItemStack.of(ItemTypes.SLIME_BALL, 1);
             flard.offer(Keys.DISPLAY_NAME, Text.of("Flard?"));
             for (Inventory slot : inventory.slots()) {
@@ -157,7 +162,7 @@ public class CustomInventoryTest {
         if (loc.getBlock().getType() == BlockTypes.CRAFTING_TABLE) {
             Inventory inventory = Inventory.builder().of(InventoryArchetypes.WORKBENCH)
                     .property(InventoryProperties.TITLE, Text.of("Custom Workbench"))
-                    .build(this);
+                    .build(this.container);
             for (Inventory slot : inventory.slots()) {
                 slot.set(ItemStack.of(ItemTypes.IRON_NUGGET, 1));
             }
@@ -176,7 +181,7 @@ public class CustomInventoryTest {
                 Inventory custom = Inventory.builder().from(((Carrier) te).getInventory())
                         .property(InventoryProperties.TITLE, Text.of("Custom ", ((Carrier) te).getInventory().getName()))
                         .withCarrier(myCarrier)
-                        .build(this);
+                        .build(this.container);
                 myCarrier.init(custom);
                 Sponge.getCauseStackManager().pushCause(player);
                 player.openInventory(custom);
@@ -198,7 +203,7 @@ public class CustomInventoryTest {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     } else {
                         this.registered = true;
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     }
                     return CommandResult.success();
                 }).build(), "togglesuperannoyinginventorymessage");

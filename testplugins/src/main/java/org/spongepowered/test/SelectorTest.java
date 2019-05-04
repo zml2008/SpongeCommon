@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.test;
+/*package org.spongepowered.test;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
  * The Selector test provides the command `/test-selector` and prints out
  * the number of entities detected along with their positions and distance
  * from the selector origin
- */
+ * /
 @Plugin(id = "selector-test", name = "Selector Test", description = "Selector Test", version = "0.0.0")
 public class SelectorTest {
 
@@ -172,3 +172,4 @@ public class SelectorTest {
         }
     }
 }
+*/

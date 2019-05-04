@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.test;
+/*package org.spongepowered.test;
 
 import static org.spongepowered.api.command.args.GenericArguments.doubleNum;
 import static org.spongepowered.api.command.args.GenericArguments.firstParsing;
@@ -132,3 +132,4 @@ public class ScaledHealthTest {
 
 
 }
+*/

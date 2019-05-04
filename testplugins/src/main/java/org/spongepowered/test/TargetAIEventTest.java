@@ -32,6 +32,9 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.ai.SetAITargetEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
+
+import javax.inject.Inject;
 
 /**
  * ignore players on command
@@ -41,6 +44,7 @@ public class TargetAIEventTest {
 
     private final AITargetListener listener = new AITargetListener();
     private boolean registered = false;
+    @Inject private PluginContainer container;
 
     @Listener
     public void onInit(GameInitializationEvent event) {
@@ -51,7 +55,7 @@ public class TargetAIEventTest {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     } else {
                         this.registered = true;
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     }
                     return CommandResult.success();
                 }).build(), "togglecannottargetplayers");

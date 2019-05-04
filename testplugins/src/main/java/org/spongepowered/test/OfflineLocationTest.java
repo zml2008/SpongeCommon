@@ -35,6 +35,7 @@ import org.spongepowered.api.event.filter.cause.Root;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
@@ -44,6 +45,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
 /**
  * Test for User(Offline-Player) Location and Rotation
  */
@@ -51,6 +54,7 @@ import java.util.UUID;
 public class OfflineLocationTest {
 
     private Set<UUID> set = new HashSet<>();
+    @Inject private PluginContainer container;
 
     @Listener
     public void onGamePreInitialization(GamePreInitializationEvent event) {
@@ -73,7 +77,7 @@ public class OfflineLocationTest {
     public void onDisconnect(ClientConnectionEvent.Disconnect event, @Root Player player) {
         UUID uuid = player.getUniqueId();
         if (set.remove(uuid)) {
-            Task t = Task.builder().delayTicks(20).execute(() -> this.run(uuid)).plugin(this).build();
+            Task t = Task.builder().delayTicks(20).execute(() -> this.run(uuid)).plugin(this.container).build();
             Sponge.getServer().getScheduler().submit(t);
         }
     }

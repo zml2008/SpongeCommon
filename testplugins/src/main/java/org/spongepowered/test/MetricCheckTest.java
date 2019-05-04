@@ -31,6 +31,7 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.metric.MetricsConfigManager;
 
@@ -42,6 +43,8 @@ public class MetricCheckTest {
 
     @Inject
     private MetricsConfigManager configManager;
+    @Inject
+    private PluginContainer container;
 
     @Listener
     public void onInit(GameInitializationEvent event) {
@@ -49,7 +52,7 @@ public class MetricCheckTest {
                 .register(this,
                         CommandSpec.builder().executor((source, context) -> {
                             source.sendMessage(Text.of("Metrics checking for \"metricheck\" is set to: ",
-                                    this.configManager.areMetricsEnabled(this)));
+                                    this.configManager.areMetricsEnabled(this.container)));
                             return CommandResult.success();
                         }).build(),
                         "metricheck");

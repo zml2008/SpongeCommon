@@ -86,7 +86,7 @@ public class WorldRenameTest {
                         .executor((source, context) -> {
                             // Name clashes should be handled by the impl.
                             WorldProperties newProperties = Sponge.getServer()
-                                    .renameWorld(context.<WorldProperties>getOne(worldKey).get(), context.<String>getOne(newNameKey).get())
+                                    .renameWorld(context.<WorldProperties>getOne(worldKey).get().getDirectoryName(), context.<String>getOne(newNameKey).get())
                                     .orElseThrow(() -> new CommandException(Text.of(TextColors.RED, "The world was not renamed.")));
 
                             source.sendMessage(Text.of("The world was renamed to " + newProperties.getWorldName()));
@@ -113,7 +113,7 @@ public class WorldRenameTest {
                         .executor((source, context) -> {
                             WorldProperties wp = context.<WorldProperties>getOne(worldKey).get();
                             source.sendMessage(Text.of("World: ", wp.getWorldName(), " - UUID: ", wp.getUniqueId(), " - Dim ID:",
-                                    wp.getAdditionalProperties().getInt(DataQuery.of("SpongeData", "dimensionId")).map(Object::toString)
+                                    wp.toContainer().getInt(DataQuery.of("dimensionId")).map(Object::toString)
                                             .orElse("unknown")));
                             return CommandResult.success();
                         }).build(), "worldinfo");

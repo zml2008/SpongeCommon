@@ -44,6 +44,7 @@ import org.spongepowered.api.item.inventory.type.GridInventory;
 import org.spongepowered.api.item.inventory.type.InventoryColumn;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
@@ -57,6 +58,7 @@ public class InventorySetOpsTest {
 
     public static final String DESCRIPTION = "A plugin to test inventory set operations";
     @Inject private Logger logger;
+    @Inject private PluginContainer container;
 
     @Listener
     public void onStart(GameStartedServerEvent event) {
@@ -84,7 +86,7 @@ public class InventorySetOpsTest {
     }
 
     private void testIntersect() {
-        Inventory chest = Inventory.builder().build(this);
+        Inventory chest = Inventory.builder().build(this.container);
         Inventory firstSlots = chest.query(PropertyMatcher.of(InventoryProperties.SLOT_INDEX, SlotIndex.of(0)));
         Inventory firstRow = chest.query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryRow.class)).children().get(0);
         Inventory firstCol = chest.query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryColumn.class)).children().get(0);
@@ -94,7 +96,7 @@ public class InventorySetOpsTest {
 
     private void testUnion() {
 
-        Inventory chest = Inventory.builder().build(this);
+        Inventory chest = Inventory.builder().build(this.container);
         Inventory firstSlots = chest.query(PropertyMatcher.of(InventoryProperties.SLOT_INDEX, SlotIndex.of(0)));
         Inventory firstRow = chest.query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryRow.class)).children().get(0);
         GridInventory grid = (GridInventory) chest.query(QueryOperationTypes.INVENTORY_TYPE.of(GridInventory.class));
@@ -109,7 +111,7 @@ public class InventorySetOpsTest {
     }
 
     private void testSlotOps() {
-        Inventory chest = Inventory.builder().build(this);
+        Inventory chest = Inventory.builder().build(this.container);
         chest.offer(ItemStack.of(ItemTypes.DIAMOND, 10));
         chest.offer(ItemStack.of(ItemTypes.DIRT, 1));
         chest.set(SlotIndex.of(2), ItemStack.of(ItemTypes.DIAMOND, 20));

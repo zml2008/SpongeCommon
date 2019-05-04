@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.test;
+/*package org.spongepowered.test;
 
 import static org.spongepowered.api.command.args.GenericArguments.seq;
 import static org.spongepowered.api.command.args.GenericArguments.string;
@@ -284,3 +284,4 @@ public class CopyPasta {
         }
     }
 }
+*/

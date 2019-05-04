@@ -29,18 +29,21 @@ import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.entity.ai.SetAITargetEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.item.inventory.container.InteractContainerEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
+
+import javax.inject.Inject;
 
 @Plugin(id = "inventoryplugintest", name = "Inventory Test", description = "A plugin to test the owner of an inventory.", version = "0.0.0")
 public class InventoryPluginTest {
 
     private final InventoryPluginListener listener = new InventoryPluginListener();
     private boolean registered = false;
+    @Inject private PluginContainer container;
 
     @Listener
     public void onInit(GameInitializationEvent event) {
@@ -51,7 +54,7 @@ public class InventoryPluginTest {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     } else {
                         this.registered = true;
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     }
                     return CommandResult.success();
                 }).build(), "toggleinventoryplugintest");

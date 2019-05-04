@@ -40,8 +40,12 @@ import org.spongepowered.api.text.Text;
 
 import java.util.Optional;
 
+import javax.inject.Inject;
+
 @Plugin(id = "inventoryopenclosetest", name = "Inventory Open/Close Test", description = InventoryOpenCloseTest.DESCRIPTION, version = "0.0.0")
 public class InventoryOpenCloseTest {
+
+    @Inject private PluginContainer container;
 
     public static final String DESCRIPTION = "A plugin to test open and close during inventory events.";
     private final InventoryListener listener = new InventoryListener();
@@ -56,7 +60,7 @@ public class InventoryOpenCloseTest {
                         Sponge.getEventManager().unregisterListeners(this.listener);
                     } else {
                         this.registered = true;
-                        Sponge.getEventManager().registerListeners(this, this.listener);
+                        Sponge.getEventManager().registerListeners(this.container, this.listener);
                     }
                     return CommandResult.success();
                 }).build(), "toggleinventoryopenclosetest");
@@ -66,7 +70,7 @@ public class InventoryOpenCloseTest {
 
         @Listener
         public void onInventoryPrimary(ClickContainerEvent.Primary event, @First Player player) {
-            Inventory inv = Inventory.builder().build(InventoryOpenCloseTest.this);
+            Inventory inv = Inventory.builder().build(InventoryOpenCloseTest.this.container);
             // This will open the inventory the next tick
             player.openInventory(inv);
         }

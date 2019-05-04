@@ -32,6 +32,7 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.ScheduledTask;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
@@ -39,10 +40,12 @@ import org.spongepowered.api.text.Text;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 @Plugin(id = "activeitemdatatest", name = "ActiveItemDataTEst", description = "Testing some nice active item data.", version = "0.0.0")
 public final class ActiveItemDataTest {
 
+    @Inject private PluginContainer container;
     @Nullable private ScheduledTask task;
 
     @Listener
@@ -65,7 +68,7 @@ public final class ActiveItemDataTest {
                                     });
                                 })
                                 .delay(5, TimeUnit.SECONDS)
-                                .plugin(this)
+                                .plugin(this.container)
                                 .build();
                         this.task = Sponge.getServer().getScheduler().submit(t);
 
