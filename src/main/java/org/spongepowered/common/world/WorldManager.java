@@ -335,7 +335,7 @@ public final class WorldManager {
         return Optional.empty();
     }
 
-    private static void registerWorldProperties(WorldProperties properties) {
+    public static void registerWorldProperties(WorldProperties properties) {
         checkNotNull(properties);
         worldPropertiesByFolderName.put(properties.getWorldName(), properties);
         worldPropertiesByWorldUuid.put(properties.getUniqueId(), properties);
@@ -845,7 +845,7 @@ public final class WorldManager {
 
         ((IMixinChunkProviderServer) worldServer.getChunkProvider()).setForceChunkRequests(false);
 
-        // While we try to prevnt mods from changing a worlds' WorldInfo, we aren't always
+        // While we try to prevent mods from changing a worlds' WorldInfo, we aren't always
         // successful. We re-do the fake world check to catch any changes made to WorldInfo
         // that would make it invalid
         ((IMixinWorld) worldServer).clearFakeCheck();

@@ -75,19 +75,17 @@ import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.config.SpongeConfig;
-import org.spongepowered.common.config.type.DimensionConfig;
 import org.spongepowered.common.config.type.WorldConfig;
 import org.spongepowered.common.data.persistence.NbtTranslator;
 import org.spongepowered.common.data.util.DataQueries;
 import org.spongepowered.common.data.util.DataUtil;
 import org.spongepowered.common.data.util.NbtDataUtil;
-import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.PhaseTracker;
+import org.spongepowered.common.interfaces.world.IMixinDerivedWorldInfo;
 import org.spongepowered.common.interfaces.world.IMixinDimensionType;
 import org.spongepowered.common.interfaces.world.IMixinGameRules;
 import org.spongepowered.common.interfaces.world.IMixinWorldInfo;
 import org.spongepowered.common.interfaces.world.IMixinWorldSettings;
-import org.spongepowered.common.registry.type.entity.GameModeRegistryModule;
 import org.spongepowered.common.registry.type.world.DimensionTypeRegistryModule;
 import org.spongepowered.common.registry.type.world.PortalAgentRegistryModule;
 import org.spongepowered.common.registry.type.world.WorldGeneratorModifierRegistryModule;
@@ -206,7 +204,6 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
             // use config modifiers
             this.setGeneratorModifiers(modifiers);
         }
-        this.setDoesGenerateBonusChest(archetype.doesGenerateBonusChest());
         this.setSerializationBehavior(archetype.getSerializationBehavior());
         this.createWorldConfig();
     }
@@ -242,6 +239,10 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean createWorldConfig() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().createWorldConfig();
+        }
+
         if (this.worldConfig != null) {
              return false;
         }
@@ -262,16 +263,28 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean isValid() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().isValid();
+        }
+
         return !(this.levelName == null || this.levelName.equals("") || this.levelName.equals("MpServer") || this.levelName.equals("sponge$dummy_world"));
     }
 
     @Override
     public Vector3i getSpawnPosition() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getSpawnPosition();
+        }
         return new Vector3i(this.spawnX, this.spawnY, this.spawnZ);
     }
 
     @Override
     public void setSpawnPosition(Vector3i position) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setSpawnPosition(position);
+            return;
+        }
+
         checkNotNull(position);
         this.spawnX = position.getX();
         this.spawnY = position.getY();
@@ -280,46 +293,78 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public GeneratorType getGeneratorType() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGeneratorType();
+        }
         return (GeneratorType) this.terrainType;
     }
 
     @Override
     public void setGeneratorType(GeneratorType type) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setGeneratorType(type);
+            return;
+        }
         this.terrainType = (WorldType) type;
     }
 
     @Intrinsic
     public long worldproperties$getSeed() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getSeed();
+        }
         return this.randomSeed;
     }
 
     @Override
     public void setSeed(long seed) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setSeed(seed);
+            return;
+        }
+
         this.randomSeed = seed;
     }
 
     @Override
     public long getTotalTime() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getTotalTime();
+        }
         return this.totalTime;
     }
 
     @Intrinsic
     public long worldproperties$getWorldTime() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldTime();
+        }
         return this.worldTime;
     }
 
     @Override
     public void setWorldTime(long time) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldTime(time);
+            return;
+        }
         this.worldTime = time;
     }
 
     @Override
     public DimensionType getDimensionType() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getDimensionType();
+        }
         return this.dimensionType;
     }
 
     @Override
     public void setDimensionType(DimensionType type) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setDimensionType(type);
+            return;
+        }
         this.dimensionType = type;
         String modId = SpongeImplHooks.getModIdFromClass(this.dimensionType.getDimensionClass());
         if (!modId.equals("minecraft")) {
@@ -329,6 +374,9 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public PortalAgentType getPortalAgentType() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getPortalAgentType();
+        }
         if (this.portalAgentType == null) {
             this.portalAgentType = PortalAgentTypes.DEFAULT;
         }
@@ -337,96 +385,161 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setPortalAgentType(PortalAgentType type) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setPortalAgentType(type);
+            return;
+        }
         this.portalAgentType = type;
     }
 
     @Intrinsic
     public boolean worldproperties$isRaining() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isRaining();
+        }
         return this.raining;
     }
 
     @Override
     public void setRaining(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setRaining(state);
+            return;
+        }
         this.raining = state;
     }
 
     @Intrinsic
     public int worldproperties$getRainTime() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getRainTime();
+        }
         return this.rainTime;
     }
 
     @Intrinsic
     public void worldproperties$setRainTime(int time) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setRainTime(time);
+            return;
+        }
         this.rainTime = time;
     }
 
     @Intrinsic
     public boolean worldproperties$isThundering() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isThundering();
+        }
         return this.thundering;
     }
 
     @Intrinsic
     public void worldproperties$setThundering(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setThundering(state);
+        }
         this.thundering = state;
     }
 
     @Override
     public int getThunderTime() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getThunderTime();
+        }
         return this.thunderTime;
     }
 
     @Override
     public void setThunderTime(int time) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setThunderTime(time);
+            return;
+        }
         this.thunderTime = time;
     }
 
     @Override
     public GameMode getGameMode() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGameMode();
+        }
         return (GameMode) (Object) this.gameType;
     }
 
     @Override
     public void setGameMode(GameMode gamemode) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setGameMode(gamemode);
+            return;
+        }
         this.gameType = (GameType) (Object) gamemode;
     }
 
     @Override
     public boolean usesMapFeatures() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().usesMapFeatures();
+        }
         return this.mapFeaturesEnabled;
     }
 
     @Override
     public void setMapFeaturesEnabled(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setMapFeaturesEnabled(state);
+            return;
+        }
         this.mapFeaturesEnabled = state;
     }
 
     @Override
     public boolean isHardcore() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isHardcore();
+        }
         return this.hardcore;
     }
 
     @Override
     public void setHardcore(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setHardcore(state);
+            return;
+        }
         this.hardcore = state;
     }
 
     @Override
     public boolean areCommandsAllowed() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().areCommandsAllowed();
+        }
         return this.allowCommands;
     }
 
     @Override
     public void setCommandsAllowed(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setCommandsAllowed(state);
+            return;
+        }
         this.allowCommands = state;
     }
 
     @Override
     public boolean isInitialized() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isInitialized();
+        }
         return this.initialized;
     }
 
     @Override
     public Difficulty getDifficulty() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getDifficulty();
+        }
         return (Difficulty) (Object) this.difficulty;
     }
 
@@ -459,111 +572,180 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setDifficulty(Difficulty difficulty) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setDifficulty(difficulty);
+            return;
+        }
         this.setDifficulty((EnumDifficulty) (Object) difficulty);
     }
 
     @Override
     public boolean hasCustomDifficulty() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().hasCustomDifficulty();
+        }
         return this.hasCustomDifficulty;
     }
 
     @Override
     public void forceSetDifficulty(EnumDifficulty difficulty) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().forceSetDifficulty(difficulty);
+            return;
+        }
         this.difficulty = difficulty;
     }
 
     @Override
     public boolean doesGenerateBonusChest() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().doesGenerateBonusChest();
+        }
         return this.generateBonusChest;
-    }
-
-    private void setDoesGenerateBonusChest(boolean state) {
-        this.generateBonusChest = state;
     }
 
     @Override
     public Vector3d getWorldBorderCenter() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderCenter();
+        }
         return new Vector3d(this.borderCenterX, 0, this.borderCenterZ);
     }
 
     @Override
     public void setWorldBorderCenter(double x, double z) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderCenter(x, z);
+            return;
+        }
         this.borderCenterX = x;
         this.borderCenterZ = z;
     }
 
     @Override
     public double getWorldBorderDiameter() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderDiameter();
+        }
         return this.borderSize;
     }
 
     @Override
     public void setWorldBorderDiameter(double diameter) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderDiameter(diameter);
+            return;
+        }
         this.borderSize = diameter;
     }
 
     @Override
     public double getWorldBorderTargetDiameter() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderTargetDiameter();
+        }
         return this.borderSizeLerpTarget;
     }
 
     @Override
     public void setWorldBorderTargetDiameter(double diameter) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderTargetDiameter(diameter);
+            return;
+        }
         this.borderSizeLerpTarget = diameter;
     }
 
     @Override
     public double getWorldBorderDamageThreshold() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderDamageThreshold();
+        }
         return this.borderSafeZone;
     }
 
     @Override
     public void setWorldBorderDamageThreshold(double distance) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderDamageThreshold(distance);
+            return;
+        }
         this.borderSafeZone = distance;
     }
 
     @Override
     public double getWorldBorderDamageAmount() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderDamageAmount();
+        }
         return this.borderDamagePerBlock;
     }
 
     @Override
     public void setWorldBorderDamageAmount(double damage) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderDamageAmount(damage);
+            return;
+        }
         this.borderDamagePerBlock = damage;
     }
 
     @Override
     public int getWorldBorderWarningTime() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderWarningTime();
+        }
         return this.borderWarningTime;
     }
 
     @Override
     public void setWorldBorderWarningTime(int time) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderWarningTime(time);
+            return;
+        }
         this.borderWarningTime = time;
     }
 
     @Override
     public int getWorldBorderWarningDistance() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderWarningDistance();
+        }
         return this.borderWarningDistance;
     }
 
     @Override
     public void setWorldBorderWarningDistance(int distance) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderWarningDistance(distance);
+            return;
+        }
         this.borderWarningDistance = distance;
     }
 
     @Override
     public long getWorldBorderTimeRemaining() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getWorldBorderTimeRemaining();
+        }
         return this.borderSizeLerpTime;
     }
 
     @Override
     public void setWorldBorderTimeRemaining(long time) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setWorldBorderTimeRemaining(time);
+            return;
+        }
         this.borderSizeLerpTime = time;
     }
 
     @Override
     public Optional<String> getGameRule(String gameRule) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGameRule(gameRule);
+        }
         checkNotNull(gameRule, "The gamerule cannot be null!");
         if (this.gameRules.hasRule(gameRule)) {
             return Optional.of(this.gameRules.getString(gameRule));
@@ -573,6 +755,9 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public Map<String, String> getGameRules() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGameRules();
+        }
         ImmutableMap.Builder<String, String> ruleMap = ImmutableMap.builder();
         for (String rule : this.gameRules.getRules()) {
             ruleMap.put(rule, this.gameRules.getString(rule));
@@ -582,6 +767,10 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setGameRule(String gameRule, String value) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setGameRule(gameRule, value);
+            return;
+        }
         checkNotNull(gameRule, "The gamerule cannot be null!");
         checkNotNull(value, "The gamerule value cannot be null!");
         this.gameRules.setOrCreateGameRule(gameRule, value);
@@ -589,47 +778,76 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public boolean removeGameRule(String gameRule) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().removeGameRule(gameRule);
+        }
         checkNotNull(gameRule, "The gamerule cannot be null!");
         return ((IMixinGameRules) this.gameRules).removeGameRule(gameRule);
     }
 
     @Override
     public void setDimensionId(int id) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setDimensionId(id);
+            return;
+        }
         this.dimensionId = id;
     }
 
     @Override
     public Integer getDimensionId() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getDimensionId();
+        }
         return this.dimensionId;
     }
 
     @Override
     public UUID getUniqueId() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getUniqueId();
+        }
         return this.uuid;
     }
 
     @Override
     public int getContentVersion() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getContentVersion();
+        }
         return 0;
     }
 
     @Override
     public DataContainer toContainer() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().toContainer();
+        }
         return NbtTranslator.getInstance().translateFrom(this.cloneNBTCompound(null));
     }
 
     @Override
     public boolean isEnabled() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isEnabled();
+        }
         return this.getOrCreateWorldConfig().getConfig().getWorld().isWorldEnabled();
     }
 
     @Override
     public void setEnabled(boolean enabled) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setEnabled(enabled);
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setWorldEnabled(enabled);
     }
 
     @Override
     public boolean loadOnStartup() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().loadOnStartup();
+        }
         Boolean loadOnStartup = this.getOrCreateWorldConfig().getConfig().getWorld().loadOnStartup();
         if (loadOnStartup == null) {
            loadOnStartup = ((IMixinDimensionType) this.dimensionType).shouldGenerateSpawnOnLoad();
@@ -640,12 +858,19 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setLoadOnStartup(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setLoadOnStartup(state);
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setLoadOnStartup(state);
         this.saveConfig();
     }
 
     @Override
     public boolean doesKeepSpawnLoaded() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().doesKeepSpawnLoaded();
+        }
         Boolean keepSpawnLoaded = this.getOrCreateWorldConfig().getConfig().getWorld().getKeepSpawnLoaded();
         if (keepSpawnLoaded == null) {
             keepSpawnLoaded = ((IMixinDimensionType) this.dimensionType).shouldLoadSpawn();
@@ -660,12 +885,19 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setKeepSpawnLoaded(boolean loaded) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setKeepSpawnLoaded(loaded);
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setKeepSpawnLoaded(loaded);
         this.saveConfig();
     }
 
     @Override
     public boolean doesGenerateSpawnOnLoad() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().doesGenerateSpawnOnLoad();
+        }
         Boolean shouldGenerateSpawn = this.getOrCreateWorldConfig().getConfig().getWorld().getGenerateSpawnOnLoad();
         if (shouldGenerateSpawn == null) {
             shouldGenerateSpawn = ((IMixinDimensionType) this.dimensionType).shouldGenerateSpawnOnLoad();
@@ -676,41 +908,70 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setGenerateSpawnOnLoad(boolean state) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setGenerateSpawnOnLoad(state);
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setGenerateSpawnOnLoad(state);
     }
 
     @Override
     public boolean isPVPEnabled() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().isPVPEnabled();
+        }
         return this.getOrCreateWorldConfig().getConfig().getWorld().getPVPEnabled();
     }
 
     @Override
     public void setPVPEnabled(boolean enabled) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setPVPEnabled(enabled);
+            return;
+        }
         this.getOrCreateWorldConfig().getConfig().getWorld().setPVPEnabled(enabled);
     }
 
     @Override
     public void setUniqueId(UUID uniqueId) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setUniqueId(uniqueId);
+            return;
+        }
         this.uuid = uniqueId;
     }
 
     @Override
     public void setIsMod(boolean flag) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setIsMod(flag);
+            return;
+        }
         this.isMod = flag;
     }
 
     @Override
     public void setScoreboard(ServerScoreboard scoreboard) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setScoreboard(scoreboard);
+            return;
+        }
         this.scoreboard = scoreboard;
     }
 
     @Override
     public boolean getIsMod() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getIsMod();
+        }
         return this.isMod;
     }
 
     @Override
     public SpongeConfig<WorldConfig> getOrCreateWorldConfig() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getOrCreateWorldConfig();
+        }
         if (this.worldConfig == null) {
             this.createWorldConfig();
         }
@@ -719,16 +980,26 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public SpongeConfig<WorldConfig> getWorldConfig() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getOrCreateWorldConfig();
+        }
         return this.getOrCreateWorldConfig();
     }
 
     @Override
     public Collection<WorldGeneratorModifier> getGeneratorModifiers() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGeneratorModifiers();
+        }
         return WorldGeneratorModifierRegistryModule.getInstance().toModifiers(this.getOrCreateWorldConfig().getConfig().getWorldGenModifiers());
     }
 
     @Override
     public void setGeneratorModifiers(Collection<WorldGeneratorModifier> modifiers) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setGeneratorModifiers(modifiers);
+            return;
+        }
         checkNotNull(modifiers, "modifiers");
 
         this.getOrCreateWorldConfig().getConfig().getWorldGenModifiers().clear();
@@ -737,6 +1008,9 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public DataContainer getGeneratorSettings() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getGeneratorSettings();
+        }
         // Minecraft uses a String, we want to return a fancy DataContainer
         // Parse the world generator settings as JSON
         try {
@@ -748,16 +1022,26 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public SerializationBehavior getSerializationBehavior() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getSerializationBehavior();
+        }
         return this.serializationBehavior;
     }
 
     @Override
     public void setSerializationBehavior(SerializationBehavior behavior) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setSerializationBehavior(behavior);
+            return;
+        }
         this.serializationBehavior = behavior;
     }
 
     @Override
     public Optional<DataView> getPropertySection(DataQuery path) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getPropertySection(path);
+        }
         if (this.spongeRootLevelNbt.hasKey(path.toString())) {
             return Optional
                     .<DataView>of(NbtTranslator.getInstance().translateFrom(this.spongeRootLevelNbt.getCompoundTag(path.toString())));
@@ -767,12 +1051,19 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void setPropertySection(DataQuery path, DataView data) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getAPIDelegate().setPropertySection(path, data);
+            return;
+        }
         NBTTagCompound nbt = NbtTranslator.getInstance().translateData(data);
         this.spongeRootLevelNbt.setTag(path.toString(), nbt);
     }
 
     @Override
     public int getIndexForUniqueId(UUID uuid) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getIndexForUniqueId(uuid);
+        }
         final Integer index = this.playerUniqueIdMap.inverse().get(uuid);
         if (index != null) {
             return index;
@@ -785,23 +1076,36 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public Optional<UUID> getUniqueIdForIndex(int index) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getUniqueIdForIndex(index);
+        }
         return Optional.ofNullable(this.playerUniqueIdMap.get(index));
     }
 
     @Override
     public NBTTagCompound getSpongeRootLevelNbt() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getSpongeRootLevelNbt();
+        }
         this.writeSpongeNbt();
         return this.spongeRootLevelNbt;
     }
 
     @Override
     public NBTTagCompound getSpongeNbt() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getMixinDelegate().getSpongeNbt();
+        }
         this.writeSpongeNbt();
         return this.spongeNbt;
     }
 
     @Override
     public void setSpongeRootLevelNBT(NBTTagCompound nbt) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().setSpongeRootLevelNBT(nbt);
+            return;
+        }
         this.spongeRootLevelNbt = nbt;
         if (nbt.hasKey(NbtDataUtil.SPONGE_DATA)) {
             this.spongeNbt = nbt.getCompoundTag(NbtDataUtil.SPONGE_DATA);
@@ -810,6 +1114,10 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public void readSpongeNbt(NBTTagCompound nbt) {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            ((IMixinDerivedWorldInfo) this).getMixinDelegate().readSpongeNbt(nbt);
+            return;
+        }
         final UUID nbtUniqueId = nbt.getUniqueId(NbtDataUtil.UUID);
         if (UUID.fromString("00000000-0000-0000-0000-000000000000").equals(nbtUniqueId)) {
             return;
@@ -901,6 +1209,9 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
     @Override
     @Overwrite
     public String getWorldName() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getDelegate().getWorldName();
+        }
         if (this.levelName == null) {
             this.levelName = "";
         }
@@ -909,6 +1220,9 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public DataContainer getAdditionalProperties() {
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getAPIDelegate().getAdditionalProperties();
+        }
         NBTTagCompound additionalProperties = this.spongeRootLevelNbt.copy();
         additionalProperties.removeTag(SpongeImpl.ECOSYSTEM_NAME);
         return NbtTranslator.getInstance().translateFrom(additionalProperties);
@@ -920,6 +1234,11 @@ public abstract class MixinWorldInfo implements WorldProperties, IMixinWorldInfo
 
     @Override
     public String toString() {
+        // TODO May not delegate this call out
+        if (this instanceof IMixinDerivedWorldInfo) {
+            return ((IMixinDerivedWorldInfo) this).getDelegate().toString();
+        }
+
         return MoreObjects.toStringHelper(this)
             .add("levelName", this.levelName)
             .add("terrainType", this.terrainType)
