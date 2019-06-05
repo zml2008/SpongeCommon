@@ -84,6 +84,14 @@ public final class NbtDataUtil {
         public static final String BLOCK_ENTITY_TAG = "BlockEntityTag";
     }
 
+    public static final class TileEntity {
+
+        public static final String ID = "id";
+        public static final String POSITION_X = "x";
+        public static final String POSITION_Y = "y";
+        public static final String POSITION_Z = "z";
+    }
+
     public static final class Schematic {
         public static final String TILE_ENTITY_ID = "Id";
         public static final String ENTITY_ID = "Id";
@@ -93,10 +101,6 @@ public final class NbtDataUtil {
     public static final String BLOCK_ENTITY_TAG = "BlockEntityTag";
     public static final String BLOCK_ENTITY_ID = "id";
     public static final String SIGN = "Sign";
-
-    public static final String TILE_ENTITY_POSITION_X = "x";
-    public static final String TILE_ENTITY_POSITION_Y = "y";
-    public static final String TILE_ENTITY_POSITION_Z = "z";
 
     public static final String ITEM_ENCHANTMENT_LIST = "ench";
     public static final String ITEM_STORED_ENCHANTMENTS_LIST = "StoredEnchantments";

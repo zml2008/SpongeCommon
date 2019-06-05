@@ -52,11 +52,12 @@ import org.spongepowered.common.data.util.NbtDataUtil;
 
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 public class SpongeEntityArchetypeBuilder extends AbstractDataBuilder<EntityArchetype> implements EntityArchetype.Builder {
 
     EntityType entityType = UNKNOWN;
-    DataContainer entityData;
-    NBTTagCompound compound;
+    @Nullable NBTTagCompound compound;
 
     public SpongeEntityArchetypeBuilder() {
         super(EntityArchetype.class, DataVersions.EntityArchetype.BASE_VERSION);
@@ -65,14 +66,14 @@ public class SpongeEntityArchetypeBuilder extends AbstractDataBuilder<EntityArch
     @Override
     public EntityArchetype.Builder reset() {
         this.entityType = UNKNOWN;
-        this.entityData = null;
+        this.compound = null;
         return this;
     }
 
     @Override
     public EntityArchetype.Builder from(EntityArchetype value) {
         this.entityType = value.getType();
-        this.entityData = value.getEntityData();
+        this.compound = ((SpongeEntityArchetype) value).getData();
         return this;
     }
 
@@ -100,7 +101,7 @@ public class SpongeEntityArchetypeBuilder extends AbstractDataBuilder<EntityArch
         checkNotNull(type, "EntityType cannot be null!");
         checkArgument(type != UNKNOWN, "EntityType cannot be set to UNKNOWN!");
         if (this.entityType != type) {
-            this.entityData = null;
+            this.compound = null;
         }
         this.entityType = type;
         return this;
@@ -124,47 +125,42 @@ public class SpongeEntityArchetypeBuilder extends AbstractDataBuilder<EntityArch
     @Override
     public EntityArchetype.Builder entityData(DataView view) {
         checkNotNull(view, "Provided DataView cannot be null!");
-        final DataContainer copy = view.copy();
-        DataUtil.getValidators(Validations.ENTITY).validate(copy);
-        this.entityData = copy;
-        this.compound = null;
+        this.compound = NbtTranslator.getInstance().translate(view);
         return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public EntityArchetype.Builder setData(DataManipulator<?, ?> manipulator) {
-        if (this.entityData == null) {
-            this.entityData = DataContainer.createNew();
-            this.compound = null;
+        if (this.compound == null) {
+            this.compound = new NBTTagCompound();
         }
         DataUtil.getRawNbtProcessor(NbtDataTypes.ENTITY, manipulator.getClass())
-                .ifPresent(processor -> processor.storeToView(this.entityData, manipulator));
+                .ifPresent(processor -> processor.storeToCompound(this.compound, manipulator));
         return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <E, V extends BaseValue<E>> EntityArchetype.Builder set(V value) {
-        if (this.entityData == null) {
-            this.entityData = DataContainer.createNew();
-            this.compound = null;
+        if (this.compound == null) {
+            this.compound = new NBTTagCompound();
         }
         this.compound = null;
         DataUtil.getRawNbtProcessor(NbtDataTypes.ENTITY, value.getKey())
-                .ifPresent(processor -> processor.offer(this.entityData, value));
+                .ifPresent(processor -> processor.setValue(this.compound, value));
         return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <E, V extends BaseValue<E>> EntityArchetype.Builder set(Key<V> key, E value) {
-        if (this.entityData == null) {
-            this.entityData = DataContainer.createNew();
+        if (this.compound == null) {
+            this.compound = new NBTTagCompound();
         }
         this.compound = null;
         DataUtil.getRawNbtProcessor(NbtDataTypes.ENTITY, key)
-                .ifPresent(processor -> processor.offer(this.entityData, value));
+                .ifPresent(processor -> processor.setValue(this.compound, value));
         return this;
     }
 
@@ -172,8 +168,8 @@ public class SpongeEntityArchetypeBuilder extends AbstractDataBuilder<EntityArch
     public EntityArchetype build() {
         checkNotNull(this.entityType);
         checkState(this.entityType != UNKNOWN);
-        if (this.entityData != null) {
-            this.entityData.remove(DataQueries.USER_UUID);
+        if (this.compound != null) {
+            this.compound.removeTag(NbtDataUtil.UUID);
         }
         return new SpongeEntityArchetype(this);
     }

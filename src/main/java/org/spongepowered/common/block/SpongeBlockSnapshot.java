@@ -63,6 +63,7 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.data.nbt.NbtDataTypes;
 import org.spongepowered.common.data.persistence.NbtTranslator;
 import org.spongepowered.common.data.util.DataQueries;
 import org.spongepowered.common.data.util.DataUtil;
@@ -347,6 +348,11 @@ public class SpongeBlockSnapshot implements BlockSnapshot {
         Optional<BlockState> optional = this.blockState.with(key, value);
         if (optional.isPresent()) {
             return Optional.of(withState(optional.get()));
+        }
+        if (this.compound != null) {
+
+            DataUtil.getNbtProcessor(NbtDataTypes.TILE_ENTITY, key)
+                .map(processor -> processor.offer(this.compound.copy(), value)
         }
         return Optional.empty();
     }

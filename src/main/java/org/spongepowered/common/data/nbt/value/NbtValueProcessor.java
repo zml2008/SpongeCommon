@@ -28,11 +28,15 @@ import net.minecraft.nbt.NBTTagCompound;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.immutable.ImmutableValue;
+import org.spongepowered.api.data.value.mutable.Value;
 import org.spongepowered.common.data.nbt.NbtDataType;
+import org.spongepowered.common.data.value.immutable.ImmutableSpongeValue;
 
+import java.util.Collection;
 import java.util.Optional;
 
-public interface NbtValueProcessor<E, V extends BaseValue<E>> {
+public interface NbtValueProcessor<E, V extends Value<E>> {
 
     int getPriority();
 
@@ -42,18 +46,30 @@ public interface NbtValueProcessor<E, V extends BaseValue<E>> {
 
     Optional<V> readFrom(NBTTagCompound compound);
 
-    Optional<V> readFrom(DataView view);
-
     Optional<E> readValue(NBTTagCompound compound);
 
-    Optional<E> readValue(DataView view);
+    NBTTagCompound setValue(NBTTagCompound NBTTagCompound, E value);
 
-    DataTransactionResult offer(NBTTagCompound NBTTagCompound, E value);
+    default DataTransactionResult offer(NBTTagCompound compound, E value) {
+        final ImmutableValue<E> old = readFrom(compound).map(Value::asImmutable).orElse(null);
+        setValue(compound, value);
+        final ImmutableValue<E> newValue = readFrom(compound).map(Value::asImmutable).orElse(null);
+        final DataTransactionResult.Builder builder = DataTransactionResult.builder();
+        if (old != null) {
+            builder.replace(old);
+        }
+        if (newValue != null) {
+            if (old != null && newValue.equals(old)) {
+                builder.reject(newValue);
+            } else {
+                builder.success(newValue);
+            }
+        } else {
+            builder.reject(new ImmutableSpongeValue<>(this.getKey(), value));
+        }
 
-    DataTransactionResult offer(DataView view, E value);
+    }
 
     DataTransactionResult remove(NBTTagCompound compound);
-
-    DataTransactionResult remove(DataView view);
 
 }

@@ -118,7 +118,7 @@ public abstract class AbstractArchetype<C extends CatalogType, S extends Locatab
     @Override
     public <R> DataTransactionResult offer(Key<? extends BaseValue<R>> key, R value) {
         return DataUtil.getNbtProcessor(this.getDataType(), key)
-                .map(processor -> processor.offer(this.data, value))
+                .map(processor -> processor.setValue(this.data, value))
                 .orElseGet(DataTransactionResult::failNoData);
     }
 

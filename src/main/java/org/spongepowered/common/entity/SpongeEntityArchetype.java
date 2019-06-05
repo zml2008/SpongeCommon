@@ -66,7 +66,7 @@ public class SpongeEntityArchetype extends AbstractArchetype<EntityType, EntityS
     private Vector3d position;
 
     SpongeEntityArchetype(SpongeEntityArchetypeBuilder builder) {
-        super(builder.entityType, builder.compound != null ? builder.compound : builder.entityData == null ? new NBTTagCompound() : NbtTranslator.getInstance().translateData(builder.entityData));
+        super(builder.entityType, builder.compound != null ? builder.compound : new NBTTagCompound());
     }
 
     @Override

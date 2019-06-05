@@ -60,11 +60,6 @@ public class IsFlyingNbtProcessor extends AbstractSpongeNbtProcessor<FlyingData,
     }
 
     @Override
-    public Optional<FlyingData> readFrom(DataView view) {
-        return view.getBoolean(Keys.IS_FLYING.getQuery()).map(SpongeFlyingData::new);
-    }
-
-    @Override
     public Optional<NBTTagCompound> storeToCompound(NBTTagCompound compound, FlyingData manipulator) {
         compound.setBoolean(NbtDataUtil.Minecraft.IS_FLYING, manipulator.flying().get());
         return Optional.of(compound);
@@ -81,8 +76,4 @@ public class IsFlyingNbtProcessor extends AbstractSpongeNbtProcessor<FlyingData,
         return null;
     }
 
-    @Override
-    public DataTransactionResult remove(DataView data) {
-        return null;
-    }
 }

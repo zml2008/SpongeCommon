@@ -76,17 +76,6 @@ public class SpongeNbtProcessorDelegate<M extends DataManipulator<M, I>, I exten
     }
 
     @Override
-    public Optional<M> readFrom(DataView view) {
-        for (NbtDataProcessor<M, I> processor : this.processors) {
-            final Optional<M> returnVal = processor.readFrom(view);
-            if (returnVal.isPresent()) {
-                return returnVal;
-            }
-        }
-        return Optional.empty();
-    }
-
-    @Override
     public Optional<NBTTagCompound> storeToCompound(NBTTagCompound compound, M manipulator) {
         for (NbtDataProcessor<M, I> processor : this.processors) {
             final Optional<NBTTagCompound> returnVal = processor.storeToCompound(compound, manipulator);
@@ -113,8 +102,4 @@ public class SpongeNbtProcessorDelegate<M extends DataManipulator<M, I>, I exten
         return DataTransactionResult.failNoData();
     }
 
-    @Override
-    public DataTransactionResult remove(DataView data) {
-        return DataTransactionResult.failNoData();
-    }
 }
