@@ -44,6 +44,7 @@ import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.TrackingUtil;
 import org.spongepowered.common.event.tracking.phase.TrackingPhase;
 import org.spongepowered.common.event.tracking.phase.TrackingPhases;
+import org.spongepowered.common.interfaces.IMixinChunk;
 import org.spongepowered.common.interfaces.block.tile.IMixinTileEntity;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 import org.spongepowered.common.util.SpongeHooks;
@@ -649,7 +650,8 @@ public abstract class BlockTransaction {
         }
 
         @Override
-        public boolean shouldCaptureBlockChangeOrSkip(TransactionContext phaseContext, BlockPos pos, IBlockState currentState, IBlockState newState,
+        public boolean shouldCaptureBlockChangeOrSkip(TransactionContext phaseContext, IMixinChunk mixinChunk,
+            BlockPos pos, IBlockState currentState, IBlockState newState,
             BlockChangeFlag flags) {
             return false;
         }

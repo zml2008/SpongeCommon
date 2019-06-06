@@ -582,20 +582,19 @@ public interface IPhaseState<C extends PhaseContext<C>> {
     }
 
     /**
-     * Gets whether this state will capture the provided position block change, or not.
-     * This does not bypass the creation of the block changes, it just bypasses whether
-     * the block change is going to be captured. May be qualified for removal pending some
-     * cleanup with block captures and method duplications.
+     * Gets whether this state wishes to create a {@link SpongeBlockSnapshot}
      *
-     * @param phaseContext
-     * @param pos
-     * @param currentState
-     * @param newState
-     * @param flags
-     * @return
+     * @param phaseContext The current phase context, paired to this state
+     * @param mixinChunk The chunk being modified, saves lookups
+     * @param pos The block position being changed
+     * @param currentState The current state in the chunk
+     * @param newState The new state to be set in the chunk
+     * @param flags The block change flag for physics etc.
+     * @return True if the block change should be captured as a {@link SpongeBlockSnapshot},
+     * this does not control whether bulk captures exist, this is simply to determine if
      */
-    default boolean shouldCaptureBlockChangeOrSkip(C phaseContext, BlockPos pos, IBlockState currentState,
-        IBlockState newState, BlockChangeFlag flags) {
+    default boolean shouldCaptureBlockChangeOrSkip(C phaseContext, IMixinChunk mixinChunk, BlockPos pos,
+        IBlockState currentState, IBlockState newState, BlockChangeFlag flags) {
         return true;
     }
 

@@ -28,12 +28,14 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.common.event.tracking.context.GeneralizedContext;
+import org.spongepowered.common.interfaces.IMixinChunk;
 
 public class WorldUnload extends GeneralState<GeneralizedContext> {
 
 
     @Override
-    public boolean shouldCaptureBlockChangeOrSkip(GeneralizedContext phaseContext, BlockPos pos, IBlockState currentState,
+    public boolean shouldCaptureBlockChangeOrSkip(GeneralizedContext phaseContext, IMixinChunk mixinChunk,
+        BlockPos pos, IBlockState currentState,
         IBlockState newState, BlockChangeFlag flags) {
         return false;
     }

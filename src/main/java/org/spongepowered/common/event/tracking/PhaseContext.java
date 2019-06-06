@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -429,7 +428,7 @@ public class PhaseContext<P extends PhaseContext<P>> implements AutoCloseable {
      * </ul>
      * Provided functionality through the supplier is aimed for common manipulation in
      * {@link IPhaseState}s and for the obvious reasons of capturing block changes, as long
-     * as {@link IPhaseState#shouldCaptureBlockChangeOrSkip(PhaseContext, BlockPos, IBlockState, IBlockState, org.spongepowered.api.world.BlockChangeFlag)} returns
+     * as {@link IPhaseState#shouldCaptureBlockChangeOrSkip(PhaseContext, org.spongepowered.common.interfaces.IMixinChunk, BlockPos, IBlockState, IBlockState, org.spongepowered.api.world.BlockChangeFlag)} returns
      * {@code true}.
      * </p>
      *

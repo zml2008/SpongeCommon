@@ -37,6 +37,7 @@ import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.phase.TrackingPhase;
 import org.spongepowered.common.event.tracking.phase.TrackingPhases;
 import org.spongepowered.common.event.tracking.phase.tick.BlockTickContext;
+import org.spongepowered.common.interfaces.IMixinChunk;
 import org.spongepowered.common.interfaces.world.IMixinWorldServer;
 
 import java.util.ArrayList;
@@ -129,7 +130,8 @@ abstract class GeneralGenerationPhaseState<G extends GenerationContext<G>> imple
     }
 
     @Override
-    public boolean shouldCaptureBlockChangeOrSkip(G phaseContext, BlockPos pos, IBlockState currentState, IBlockState newState,
+    public boolean shouldCaptureBlockChangeOrSkip(G phaseContext, IMixinChunk mixinChunk, BlockPos pos,
+        IBlockState currentState, IBlockState newState,
         BlockChangeFlag flags) {
         return false;
     }

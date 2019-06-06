@@ -24,14 +24,18 @@
  */
 package org.spongepowered.common.event.tracking.phase.plugin;
 
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.event.CauseStackManager;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
+import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.TrackingUtil;
+import org.spongepowered.common.interfaces.IMixinChunk;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +51,13 @@ final class ServerTickPhaseState extends ListenerPhaseState<ServerTickContext> {
     @Override
     public ServerTickContext createPhaseContext() {
         return new ServerTickContext(this).addCaptures().player();
+    }
+
+    @Override
+    public boolean shouldCaptureBlockChangeOrSkip(ServerTickContext phaseContext, IMixinChunk mixinChunk,
+        BlockPos pos, IBlockState currentState, IBlockState newState,
+        BlockChangeFlag flags) {
+        return false;
     }
 
     @Override

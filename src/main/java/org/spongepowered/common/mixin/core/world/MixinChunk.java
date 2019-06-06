@@ -663,7 +663,7 @@ public abstract class MixinChunk implements Chunk, IMixinChunk, IMixinCachable {
         final TileEntity existing = this.getTileEntity(pos, EnumCreateEntityType.CHECK);
         final PhaseContext<?> peek = isFake ? null : PhaseTracker.getInstance().getCurrentContext();
         final IPhaseState state = isFake ? null : peek.state;
-        final SpongeBlockSnapshot snapshot = (isFake || (!ShouldFire.CHANGE_BLOCK_EVENT || !state.shouldCaptureBlockChangeOrSkip(peek, pos, currentState, newState, flag))) ? null : createSpongeBlockSnapshot(currentState, currentState, pos, flag, existing);
+        final SpongeBlockSnapshot snapshot = (isFake || (!ShouldFire.CHANGE_BLOCK_EVENT || !state.shouldCaptureBlockChangeOrSkip(peek, this, pos, currentState, newState, flag))) ? null : createSpongeBlockSnapshot(currentState, currentState, pos, flag, existing);
         final BlockTransaction.ChangeBlock transaction;
         final IMixinWorldServer mixinWorld = isFake ? null : (IMixinWorldServer) this.world;
 

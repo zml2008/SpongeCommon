@@ -35,6 +35,7 @@ import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.context.GeneralizedContext;
+import org.spongepowered.common.interfaces.IMixinChunk;
 
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
@@ -61,7 +62,8 @@ final class RestoringBlockPhaseState extends BlockPhaseState {
     }
 
     @Override
-    public boolean shouldCaptureBlockChangeOrSkip(GeneralizedContext phaseContext, BlockPos pos, IBlockState currentState, IBlockState newState,
+    public boolean shouldCaptureBlockChangeOrSkip(GeneralizedContext phaseContext, IMixinChunk mixinChunk,
+        BlockPos pos, IBlockState currentState, IBlockState newState,
         BlockChangeFlag flags) {
         return false;
     }
