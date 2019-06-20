@@ -208,7 +208,7 @@ public abstract class MixinMapData_MapOptimization extends WorldSavedData implem
     // sent to them for each map in their inventory.
     // In this method, we send map data packets to players in the same world
     // as an ItemFrame containing a map. In Vanilla, this is done in EntityTrackerEntry,
-    // for every single ItemFrame in the game. This is completely unecessary - we only
+    // for every single ItemFrame in the game. This is completely unnecessary - we only
     // need to send update packets once per player per unique MapData.
 
     // To further improve performance, we skip sending map update packets
