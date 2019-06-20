@@ -39,15 +39,17 @@ import org.spongepowered.common.item.inventory.lens.impl.RealLens;
 import org.spongepowered.common.item.inventory.lens.impl.comp.EquipmentInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.ContainerFabric;
+import org.spongepowered.common.item.inventory.lens.slots.SlotLens;
 
 import java.util.Optional;
 
-public class LivingInventoryLens  extends RealLens {
+public class LivingInventoryLens extends RealLens {
 
     private static final int EQUIPMENT = 4;
 
     private EquipmentInventoryLensImpl equipment;
-    private EquipmentInventoryLensImpl hands;
+    private SlotLens mainHand;
+    private SlotLens offHand;
     private final boolean isContainer;
 
     public LivingInventoryLens(InventoryAdapter adapter, SlotProvider slots) {
@@ -77,32 +79,18 @@ public class LivingInventoryLens  extends RealLens {
         }
 
         int base = this.base;
-        if (this.isContainer) {
-            this.equipment = new EquipmentInventoryLensImpl(base, EQUIPMENT, 1, slots, false);
-            this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.HEADWEAR));
-            this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.CHESTPLATE));
-            this.addChild(slots.getSlot(base + 2), new EquipmentSlotType(EquipmentTypes.LEGGINGS));
-            this.addChild(slots.getSlot(base + 3), new EquipmentSlotType(EquipmentTypes.BOOTS));
-            base += EQUIPMENT; // 4
-            this.hands = new EquipmentInventoryLensImpl(base, 2, 1, slots, false);
-            this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.HELD));
-            this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.HELD));
-            base += this.hands.slotCount();
-        } else {
-            this.hands = new EquipmentInventoryLensImpl(base, 2, 1, slots, false);
-            base += this.hands.slotCount();
-            this.equipment = new EquipmentInventoryLensImpl(base, EQUIPMENT, 1, slots, false);
+        this.equipment = new EquipmentInventoryLensImpl(base, EQUIPMENT, 1, slots, false);
+        this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.BOOTS));
+        this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.LEGGINGS));
+        this.addChild(slots.getSlot(base + 2), new EquipmentSlotType(EquipmentTypes.CHESTPLATE));
+        this.addChild(slots.getSlot(base + 3), new EquipmentSlotType(EquipmentTypes.HEADWEAR));
+        base += EQUIPMENT;
 
-            this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.BOOTS));
-            this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.LEGGINGS));
-            this.addChild(slots.getSlot(base + 2), new EquipmentSlotType(EquipmentTypes.CHESTPLATE));
-            this.addChild(slots.getSlot(base + 3), new EquipmentSlotType(EquipmentTypes.HEADWEAR));
-
-            base += EQUIPMENT;
-            this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.HELD));
-            this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.HELD));
-            base += this.hands.slotCount();
-        }
+        this.mainHand = slots.getSlot(base +0 );
+        this.offHand = slots.getSlot(base + 1);
+        this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.MAIN_HAND));
+        this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.OFF_HAND));
+        base += 2;
 
         finishInit(slots, base);
 
@@ -124,7 +112,8 @@ public class LivingInventoryLens  extends RealLens {
 
     private void finishInit(SlotProvider slots, int base) {
         this.addSpanningChild(this.equipment);
-        this.addSpanningChild(this.hands);
+        this.addSpanningChild(this.mainHand);
+        this.addSpanningChild(this.offHand);
 
         // Additional Slots for bigger modded inventories
         int additionalSlots = this.size - base;

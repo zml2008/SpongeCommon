@@ -25,11 +25,11 @@
 package org.spongepowered.common.mixin.core.common.item.inventory.custom;
 
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.Inventory;
-import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.asm.mixin.Final;
@@ -39,13 +39,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
-import org.spongepowered.common.item.inventory.adapter.impl.slots.EquipmentSlotAdapter;
 import org.spongepowered.common.item.inventory.custom.LivingInventory;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
+import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
 import org.spongepowered.common.item.inventory.lens.impl.minecraft.LivingInventoryLens;
-import org.spongepowered.common.item.inventory.lens.impl.slots.EquipmentSlotLensImpl;
 import org.spongepowered.common.item.inventory.util.InventoryUtil;
 
 import java.util.Iterator;
@@ -62,10 +62,12 @@ public abstract class MixinLivingInventory implements MinecraftInventoryAdapter,
 
     private SlotCollection slots;
     private LivingInventoryLens lens;
+    protected Fabric inventory;
 
     @Inject(method = "<init>*", at = @At("RETURN"), remap = false)
-    private void onConstructed(final NonNullList<ItemStack> armor, final NonNullList<ItemStack> hands, final EntityLiving entityLiving,
-        final CallbackInfo ci) {
+    private void onConstructed(final NonNullList<ItemStack> armor, final NonNullList<ItemStack> hands, final EntityLiving entityLiving, final CallbackInfo ci) {
+        this.inventory = new IInventoryFabric(((IInventory) this));
+
         final Iterator<ItemStack> iterator = this.carrier.getEquipmentAndArmor().iterator();
         int size = 0;
         while (iterator.hasNext()) {
@@ -75,14 +77,8 @@ public abstract class MixinLivingInventory implements MinecraftInventoryAdapter,
         this.slots = new SlotCollection.Builder()
             .add(this.armor.size())
             .add(this.hands.size())
-            // TODO predicates for ItemStack/ItemType?
-            .add(EquipmentSlotAdapter.class, index -> new EquipmentSlotLensImpl(index, i -> true, t -> true, e -> e == EquipmentTypes.BOOTS))
-            .add(EquipmentSlotAdapter.class, index -> new EquipmentSlotLensImpl(index, i -> true, t -> true, e -> e == EquipmentTypes.LEGGINGS))
-            .add(EquipmentSlotAdapter.class, index -> new EquipmentSlotLensImpl(index, i -> true, t -> true, e -> e == EquipmentTypes.CHESTPLATE))
-            .add(EquipmentSlotAdapter.class, index -> new EquipmentSlotLensImpl(index, i -> true, t -> true, e -> e == EquipmentTypes.HEADWEAR))
             // for mods providing bigger inventories
-            .add(this.armor.size() - 4, EquipmentSlotAdapter.class)
-            .add(size - this.armor.size() - 4 - this.hands.size(), EquipmentSlotAdapter.class)
+            .add(size - this.armor.size() - this.hands.size())
             .build();
         this.lens = new LivingInventoryLens(this, this.slots);
     }
@@ -111,5 +107,10 @@ public abstract class MixinLivingInventory implements MinecraftInventoryAdapter,
     @Override
     public SlotProvider getSlotProvider() {
         return this.slots;
+    }
+
+    @Override
+    public Fabric getFabric() {
+        return this.inventory;
     }
 }
