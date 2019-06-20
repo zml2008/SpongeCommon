@@ -27,8 +27,12 @@ package org.spongepowered.common.mixin.core.entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.api.Sponge;
@@ -44,6 +48,9 @@ import org.spongepowered.api.event.entity.LeashEntityEvent;
 import org.spongepowered.api.event.entity.UnleashEntityEvent;
 import org.spongepowered.api.event.entity.ai.AITaskEvent;
 import org.spongepowered.api.event.entity.ai.SetAITargetEvent;
+import org.spongepowered.api.item.inventory.Carrier;
+import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -57,7 +64,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.data.VanishingBridge;
-import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.entity.GrieferBridge;
 import org.spongepowered.common.bridge.entity.ai.EntityGoalBridge;
 import org.spongepowered.common.bridge.world.WorldBridge;
@@ -65,6 +71,12 @@ import org.spongepowered.common.bridge.world.WorldInfoBridge;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.interfaces.ai.IMixinEntityAITasks;
+import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.slots.EquipmentSlotAdapter;
+import org.spongepowered.common.item.inventory.custom.LivingInventory;
+import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
+import org.spongepowered.common.item.inventory.lens.impl.minecraft.LivingInventoryLens;
+import org.spongepowered.common.item.inventory.lens.impl.slots.EquipmentSlotLensImpl;
 
 import java.util.Iterator;
 
@@ -76,10 +88,15 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase {
     @Shadow @Final protected EntityAITasks tasks;
     @Shadow @Final protected EntityAITasks targetTasks;
     @Shadow @Nullable private EntityLivingBase attackTarget;
+    @Shadow @Final private NonNullList<ItemStack> inventoryArmor;
+    @Shadow @Final private NonNullList<ItemStack> inventoryHands;
 
     @Shadow public abstract boolean isAIDisabled();
     @Shadow @Nullable public abstract net.minecraft.entity.Entity getLeashHolder();
     @Shadow protected abstract void initEntityAI();
+    @Shadow public abstract void setItemStackToSlot(EntityEquipmentSlot slotIn, net.minecraft.item.ItemStack stack);
+
+    @Nullable private Inventory impl$inventoryAdapter = null;
 
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;initEntityAI()V"))
     private void spongeImpl$initializeAI(final EntityLiving this$0) {
@@ -257,6 +274,23 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase {
     @Override
     public void onJoinWorld() {
         this.initSpongeAI();
+    }
+
+    @Inject(method = "updateEquipmentIfNeeded", cancellable = true, at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/EntityEquipmentSlot;getSlotType()Lnet/minecraft/inventory/EntityEquipmentSlot$Type;"))
+    private void onUpdateEquipmentIfNeeded(final EntityItem itemEntity, final CallbackInfo ci) {
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupPreEvent(((EntityLiving)(Object) this), itemEntity)) {
+            ci.cancel();
+        }
+    }
+
+    @Redirect(method = "updateEquipmentIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;setItemStackToSlot(Lnet/minecraft/inventory/EntityEquipmentSlot;Lnet/minecraft/item/ItemStack;)V"))
+    private void onSetItemStackToSlot(final EntityLiving thisEntity, final EntityEquipmentSlot slotIn, final net.minecraft.item.ItemStack stack) {
+        final int prev = stack.getCount();
+        thisEntity.setItemStackToSlot(slotIn, stack);
+        // TODO capture pickupevent transaction
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(thisEntity, ((MinecraftInventoryAdapter) ((Carrier) this).getInventory()))) {
+            stack.setCount(prev);
+        }
     }
 
 }

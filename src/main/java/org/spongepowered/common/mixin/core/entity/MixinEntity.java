@@ -204,6 +204,8 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
 
     // @formatter:on
 
+    @Shadow public abstract Iterable<ItemStack> getEquipmentAndArmor();
+
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;dimension:I", opcode = Opcodes.PUTFIELD))
     private void impl$UpdateDimension(final Entity self, final int dimensionId, final net.minecraft.world.World worldIn) {
         if (worldIn instanceof ServerWorldBridge) {

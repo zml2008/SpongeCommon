@@ -45,6 +45,7 @@ import net.minecraft.util.CombatTracker;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -181,6 +182,7 @@ public abstract class MixinEntityLivingBase extends MixinEntity implements IMixi
         return false; // SHADOWED
     }
 
+    @Shadow public NonNullList<ItemStack> armorArray;
     private int deathEventsPosted;
     private int maxAir = 300;
     @Nullable private ItemStack activeItemStackCopy;

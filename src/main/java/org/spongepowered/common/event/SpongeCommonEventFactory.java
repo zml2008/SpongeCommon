@@ -33,6 +33,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirectional;
 import net.minecraft.block.state.BlockPistonStructureHelper;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.item.EntityItem;
@@ -135,6 +136,7 @@ import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.inventory.UpdateAnvilEventCost;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseTracker;
+import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.general.GeneralPhase;
 import org.spongepowered.common.event.tracking.phase.packet.PacketPhaseUtil;
 import org.spongepowered.common.event.tracking.phase.tick.EntityTickContext;
@@ -144,6 +146,7 @@ import org.spongepowered.common.bridge.entity.player.ServerPlayerEntityBridge;
 import org.spongepowered.common.interfaces.entity.player.IMixinInventoryPlayer;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.slots.SlotAdapter;
 import org.spongepowered.common.item.inventory.custom.CustomInventory;
 import org.spongepowered.common.item.inventory.util.ContainerUtil;
@@ -305,6 +308,33 @@ public class SpongeCommonEventFactory {
     }
 
 
+
+    public static boolean callChangeInventoryPickupPreEvent(EntityLiving entity, EntityItem itemToPickup) {
+        ItemStack stack = itemToPickup.getItem();
+        Sponge.getCauseStackManager().pushCause(entity);
+        ChangeInventoryEvent.Pickup.Pre event =
+                SpongeEventFactory.createChangeInventoryEventPickupPre(Sponge.getCauseStackManager().getCurrentCause(),
+                        Optional.empty(), Collections.singletonList(stack), ItemStackUtil.snapshotOf(stack), ((Item) itemToPickup),
+                        entity.getInventory());
+        SpongeImpl.postEvent(event);
+        Sponge.getCauseStackManager().popCause();
+        if (event.isCancelled() || event.getCustom().isPresent()) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean callChangeInventoryPickupEvent(EntityLiving entity, TrackedInventoryBridge inventory) {
+        if (inventory.bridge$getCapturedSlotTransactions().isEmpty()) {
+            return true;
+        }
+        ChangeInventoryEvent.Pickup event = SpongeEventFactory.createChangeInventoryEventPickup(Sponge.getCauseStackManager().getCurrentCause(), (Inventory) inventory,
+                inventory.bridge$getCapturedSlotTransactions());
+        SpongeImpl.postEvent(event);
+        applyTransactions(event);
+        inventory.bridge$getCapturedSlotTransactions().clear();
+        return !event.isCancelled();
+    }
 
     public static boolean callPlayerChangeInventoryPickupPreEvent(final EntityPlayer player, final EntityItem itemToPickup, final int pickupDelay) {
         final ItemStack stack = itemToPickup.getItem();

@@ -27,9 +27,13 @@ package org.spongepowered.common.mixin.core.entity.passive;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryBasic;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.village.MerchantRecipeList;
 import org.spongepowered.api.data.type.Career;
 import org.spongepowered.api.data.type.Profession;
@@ -43,12 +47,14 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeImplHooks;
-import org.spongepowered.common.mixin.core.entity.MixinEntityAgeable;
+import org.spongepowered.common.bridge.entity.EntityVillagerBridge;
+import org.spongepowered.common.bridge.inventory.TrackedInventoryBridge;
 import org.spongepowered.common.entity.SpongeCareer;
 import org.spongepowered.common.entity.SpongeEntityMeta;
-import org.spongepowered.common.bridge.entity.EntityVillagerBridge;
+import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
@@ -56,6 +62,7 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
+import org.spongepowered.common.mixin.core.entity.MixinEntityAgeable;
 import org.spongepowered.common.registry.SpongeVillagerRegistry;
 
 import java.util.List;
@@ -76,6 +83,9 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
 
     @Shadow public abstract void setProfession(int professionId); // setProfession
     @Shadow public abstract MerchantRecipeList getRecipes(EntityPlayer player);
+    @Shadow private boolean canVillagerPickupItem(final Item itemIn) {
+        throw new UnsupportedOperationException("Shadowed");
+    }
 
     private Fabric fabric = new IInventoryFabric(this.villagerInventory);
     private SlotCollection slots = new SlotCollection.Builder().add(8).build();
@@ -84,7 +94,7 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
     @Nullable private Profession profession;
 
     @Inject(method = "setProfession(I)V", at = @At("RETURN"))
-    private void onSetProfession(int professionId, CallbackInfo ci) {
+    private void onSetProfession(final int professionId, final CallbackInfo ci) {
         this.profession = SpongeImplHooks.validateProfession(professionId);
     }
 
@@ -106,7 +116,7 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
 
     @Override
     public Career bridge$getCareer() {
-        List<Career> careers = (List<Career>) this.profession.getCareers();
+        final List<Career> careers = (List<Career>) this.profession.getCareers();
         if (this.careerId == 0 || this.careerId > careers.size()) {
             this.careerId = new Random().nextInt(careers.size()) + 1;
         }
@@ -126,12 +136,12 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
     }
 
     @Override
-    public void bridge$setProfession(Profession profession) {
+    public void bridge$setProfession(final Profession profession) {
         this.profession = checkNotNull(profession, "VillagerProfession cannot be null!");
     }
 
     @Override
-    public void bridge$setCareer(Career career) {
+    public void bridge$setCareer(final Career career) {
         setProfession(((SpongeEntityMeta) career.getProfession()).type);
         this.buyingList = null;
         this.careerId = ((SpongeCareer) career).type + 1;
@@ -151,7 +161,7 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
     @Overwrite
     public void populateBuyingList() { // populateBuyingList
         // Sponge
-        List<Career> careers = (List<Career>) this.profession.getCareers();
+        final List<Career> careers = (List<Career>) this.profession.getCareers();
 
         // EntityVillager.ITradeList[][][] aentityvillager$itradelist = DEFAULT_TRADE_LIST_MAP[this.getProfession()];
 
@@ -173,6 +183,28 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
         final Career careerLevel = careers.get(this.careerId - 1);
         SpongeVillagerRegistry.getInstance().populateOffers((Villager) this, (List<TradeOffer>) (List<?>) this.buyingList, careerLevel, this.careerLevel, this.rand);
         // Sponge end
+    }
+
+
+    @Redirect(method = "updateEquipmentIfNeeded",  at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/EntityVillager;canVillagerPickupItem(Lnet/minecraft/item/Item;)Z"))
+    private boolean onCanVillagerPickUpItem(final EntityVillager villager, final Item item, final EntityItem itemEntity) {
+        final boolean result = this.canVillagerPickupItem(item);
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupPreEvent(((EntityLiving)(Object) this), itemEntity)) {
+            return false;
+        }
+        return result;
+    }
+
+    @Redirect(method = "updateEquipmentIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/InventoryBasic;addItem(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/ItemStack;"))
+    private ItemStack onSetItemStackToSlot(final InventoryBasic inventory, final net.minecraft.item.ItemStack stack) {
+        final int prev = stack.getCount();
+        final ItemStack result = inventory.addItem(stack);
+        // TODO capture pickupevent transaction
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(((EntityLiving)(Object) this), ((TrackedInventoryBridge) inventory))) {
+            stack.setCount(prev);
+            return stack;
+        }
+        return result;
     }
 
 }

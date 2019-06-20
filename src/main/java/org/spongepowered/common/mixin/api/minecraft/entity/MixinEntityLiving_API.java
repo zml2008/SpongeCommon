@@ -27,6 +27,8 @@ package org.spongepowered.common.mixin.api.minecraft.entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.DataManipulator;
 import org.spongepowered.api.data.manipulator.mutable.entity.AgentData;
@@ -36,11 +38,15 @@ import org.spongepowered.api.entity.ai.Goal;
 import org.spongepowered.api.entity.ai.GoalType;
 import org.spongepowered.api.entity.ai.GoalTypes;
 import org.spongepowered.api.entity.living.Agent;
+import org.spongepowered.api.item.inventory.Carrier;
+import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.data.manipulator.mutable.entity.SpongeAgentData;
 import org.spongepowered.common.data.value.mutable.SpongeValue;
+import org.spongepowered.common.item.inventory.custom.LivingInventory;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,13 +54,17 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 @Mixin(EntityLiving.class)
-public abstract class MixinEntityLiving_API extends MixinEntityLivingBase_API implements Agent {
+public abstract class MixinEntityLiving_API extends MixinEntityLivingBase_API implements Agent, Carrier {
 
     @Shadow @Final protected EntityAITasks tasks;
     @Shadow @Final protected EntityAITasks targetTasks;
     @Shadow @Nullable private EntityLivingBase attackTarget;
 
     @Shadow public abstract boolean isAIDisabled();
+
+    @Shadow @Final private NonNullList<ItemStack> inventoryArmor;
+    @Shadow @Final private NonNullList<ItemStack> inventoryHands;
+    @Nullable private CarriedInventory<? extends Agent> api$LivingInventory = null;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -99,4 +109,12 @@ public abstract class MixinEntityLiving_API extends MixinEntityLivingBase_API im
         manipulators.add(getAgentData());
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public CarriedInventory<? extends Carrier> getInventory() {
+        if (this.api$LivingInventory == null) {
+            this.api$LivingInventory = (CarriedInventory) new LivingInventory(this.inventoryArmor, this.inventoryHands, (EntityLiving) (Object) this);
+        }
+        return this.api$LivingInventory;
+    }
 }
