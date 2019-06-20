@@ -325,15 +325,14 @@ public class SpongeCommonEventFactory {
         return true;
     }
 
-    public static boolean callChangeInventoryPickupEvent(EntityLiving entity, TrackedInventoryBridge inventory) {
-        if (inventory.bridge$getCapturedSlotTransactions().isEmpty()) {
+    public static boolean callChangeInventoryPickupEvent(EntityLiving entity, Inventory inventory, List<SlotTransaction> transactions) {
+        if (transactions.isEmpty()) {
             return true;
         }
-        ChangeInventoryEvent.Pickup event = SpongeEventFactory.createChangeInventoryEventPickup(Sponge.getCauseStackManager().getCurrentCause(), (Inventory) inventory,
-                inventory.bridge$getCapturedSlotTransactions());
+        ChangeInventoryEvent.Pickup event = SpongeEventFactory.createChangeInventoryEventPickup(Sponge.getCauseStackManager().getCurrentCause(), inventory, transactions);
         SpongeImpl.postEvent(event);
         applyTransactions(event);
-        inventory.bridge$getCapturedSlotTransactions().clear();
+        transactions.clear();
         return !event.isCancelled();
     }
 

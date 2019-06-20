@@ -37,7 +37,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.village.MerchantRecipeList;
 import org.spongepowered.api.data.type.Career;
 import org.spongepowered.api.data.type.Profession;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.Villager;
+import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.item.merchant.TradeOffer;
 import org.spongepowered.api.item.merchant.TradeOfferGenerator;
 import org.spongepowered.api.item.merchant.VillagerRegistry;
@@ -55,6 +59,7 @@ import org.spongepowered.common.bridge.inventory.TrackedInventoryBridge;
 import org.spongepowered.common.entity.SpongeCareer;
 import org.spongepowered.common.entity.SpongeEntityMeta;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
+import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
@@ -62,9 +67,12 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
+import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 import org.spongepowered.common.mixin.core.entity.MixinEntityAgeable;
 import org.spongepowered.common.registry.SpongeVillagerRegistry;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -195,12 +203,37 @@ public abstract class MixinEntityVillager extends MixinEntityAgeable implements 
         return result;
     }
 
+    private InventoryBasic inventoryTracker;
+
     @Redirect(method = "updateEquipmentIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/InventoryBasic;addItem(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/ItemStack;"))
     private ItemStack onSetItemStackToSlot(final InventoryBasic inventory, final net.minecraft.item.ItemStack stack) {
         final int prev = stack.getCount();
+
+        if (this.inventoryTracker == null) {
+             this.inventoryTracker = new InventoryBasic(this.villagerInventory.getName(), this.villagerInventory.hasCustomName(), this.villagerInventory.getSizeInventory());
+        }
+
+        // Prepare tracker inventory
+        for (int i = 0; i < inventory.getSizeInventory(); i++) {
+            ItemStack stack1 = inventory.getStackInSlot(i);
+            this.inventoryTracker.setInventorySlotContents(i, stack1.copy());
+        }
+
+        // Modify inventory
         final ItemStack result = inventory.addItem(stack);
-        // TODO capture pickupevent transaction
-        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(((EntityLiving)(Object) this), ((TrackedInventoryBridge) inventory))) {
+
+        // Compare with tracker inventory
+        List<SlotTransaction> transactions = new ArrayList<>();
+        for (int i = 0; i < inventory.getSizeInventory(); i++) {
+            ItemStack stackNew = inventory.getStackInSlot(i);
+            ItemStack stackOld = this.inventoryTracker.getStackInSlot(i);
+            if (!ItemStack.areItemStacksEqual(stackNew, stackOld)) {
+                Slot slot = ((InventoryAdapter) inventory).getSlot(i).get();
+                transactions.add(new SlotTransaction(slot, ItemStackUtil.snapshotOf(stackOld), ItemStackUtil.snapshotOf(stackNew)));
+            }
+        }
+
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(((EntityLiving) (Object) this), this, transactions)) {
             stack.setCount(prev);
             return stack;
         }

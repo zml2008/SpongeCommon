@@ -50,6 +50,8 @@ import org.spongepowered.api.event.entity.ai.AITaskEvent;
 import org.spongepowered.api.event.entity.ai.SetAITargetEvent;
 import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -71,8 +73,13 @@ import org.spongepowered.common.bridge.world.WorldInfoBridge;
 import org.spongepowered.common.event.ShouldFire;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
 import org.spongepowered.common.interfaces.ai.IMixinEntityAITasks;
+import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
+import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -280,9 +287,14 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase {
     @Redirect(method = "updateEquipmentIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLiving;setItemStackToSlot(Lnet/minecraft/inventory/EntityEquipmentSlot;Lnet/minecraft/item/ItemStack;)V"))
     private void onSetItemStackToSlot(final EntityLiving thisEntity, final EntityEquipmentSlot slotIn, final net.minecraft.item.ItemStack stack) {
         final int prev = stack.getCount();
+
+        ItemStack stackOld = thisEntity.getItemStackFromSlot(slotIn).copy();
         thisEntity.setItemStackToSlot(slotIn, stack);
-        // TODO capture pickupevent transaction
-        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(thisEntity, (TrackedInventoryBridge) ((Carrier) this).getInventory())) {
+        ItemStack stackNew = thisEntity.getItemStackFromSlot(slotIn).copy();
+        List<SlotTransaction> transactions = new ArrayList<>();
+        Slot slot = ((InventoryAdapter) thisEntity).getSlot(slotIn.getSlotIndex()).get();
+        transactions.add(new SlotTransaction(slot, ItemStackUtil.snapshotOf(stackOld), ItemStackUtil.snapshotOf(stackNew)));
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(thisEntity, ((Inventory) thisEntity), transactions)) {
             stack.setCount(prev);
         }
     }
