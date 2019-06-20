@@ -66,6 +66,7 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.data.VanishingBridge;
 import org.spongepowered.common.bridge.entity.GrieferBridge;
 import org.spongepowered.common.bridge.entity.ai.EntityGoalBridge;
+import org.spongepowered.common.bridge.inventory.TrackedInventoryBridge;
 import org.spongepowered.common.bridge.world.WorldBridge;
 import org.spongepowered.common.bridge.world.WorldInfoBridge;
 import org.spongepowered.common.event.ShouldFire;
@@ -288,7 +289,7 @@ public abstract class MixinEntityLiving extends MixinEntityLivingBase {
         final int prev = stack.getCount();
         thisEntity.setItemStackToSlot(slotIn, stack);
         // TODO capture pickupevent transaction
-        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(thisEntity, ((MinecraftInventoryAdapter) ((Carrier) this).getInventory()))) {
+        if (!SpongeCommonEventFactory.callChangeInventoryPickupEvent(thisEntity, (TrackedInventoryBridge) ((Carrier) this).getInventory())) {
             stack.setCount(prev);
         }
     }
