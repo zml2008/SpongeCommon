@@ -64,7 +64,6 @@ public abstract class MixinEntityLiving_API extends MixinEntityLivingBase_API im
 
     @Shadow @Final private NonNullList<ItemStack> inventoryArmor;
     @Shadow @Final private NonNullList<ItemStack> inventoryHands;
-    @Nullable private CarriedInventory<? extends Agent> api$LivingInventory = null;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -112,9 +111,6 @@ public abstract class MixinEntityLiving_API extends MixinEntityLivingBase_API im
     @SuppressWarnings("unchecked")
     @Override
     public CarriedInventory<? extends Carrier> getInventory() {
-        if (this.api$LivingInventory == null) {
-            this.api$LivingInventory = (CarriedInventory) new LivingInventory(this.inventoryArmor, this.inventoryHands, (EntityLiving) (Object) this);
-        }
-        return this.api$LivingInventory;
+        return (CarriedInventory<? extends Carrier>) this;
     }
 }

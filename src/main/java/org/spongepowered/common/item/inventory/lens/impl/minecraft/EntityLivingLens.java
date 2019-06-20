@@ -24,102 +24,76 @@
  */
 package org.spongepowered.common.item.inventory.lens.impl.minecraft;
 
-import net.minecraft.inventory.Container;
-import org.spongepowered.api.entity.living.player.Player;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.entity.PlayerInventory;
+import org.spongepowered.api.item.inventory.equipment.EquipmentInventory;
 import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.api.item.inventory.property.EquipmentSlotType;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
-import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.VanillaAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
-import org.spongepowered.common.item.inventory.lens.impl.RealLens;
+import org.spongepowered.common.item.inventory.lens.impl.AbstractLens;
 import org.spongepowered.common.item.inventory.lens.impl.comp.EquipmentInventoryLensImpl;
-import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.ContainerFabric;
+import org.spongepowered.common.item.inventory.lens.impl.fabric.EquipmentSlotsFabric;
 import org.spongepowered.common.item.inventory.lens.slots.SlotLens;
 
-import java.util.Optional;
-
-public class LivingInventoryLens extends RealLens {
+public class EntityLivingLens extends AbstractLens {
 
     private static final int EQUIPMENT = 4;
 
     private EquipmentInventoryLensImpl equipment;
     private SlotLens mainHand;
     private SlotLens offHand;
-    private final boolean isContainer;
 
-    public LivingInventoryLens(InventoryAdapter adapter, SlotProvider slots) {
-        super(0, adapter.getFabric().getSize(), adapter, slots);
-        this.isContainer = false;
+    public EntityLivingLens(InventoryAdapter adapter, SlotProvider slots) {
+        super(0, adapter.getFabric().getSize(), EquipmentInventory.class, slots);
         this.init(slots);
     }
 
     /**
-     * Constructor for ContainerPlayer Inventory
-     *
-     * @param base The base index
-     * @param size The size
-     * @param slots The slots
+     * See {@link EntityEquipmentSlot}.
      */
-    public LivingInventoryLens(int base, int size, SlotProvider slots) {
-        super(base, size, PlayerInventory.class, slots);
-        this.isContainer = true;
-        this.init(slots);
-    }
-
     @Override
     protected void init(SlotProvider slots) {
-        // Adding slots
+        // Adding basic slots
         for (int ord = 0, slot = this.base; ord < this.size; ord++, slot++) {
             this.addChild(slots.getSlot(slot), new SlotIndex(ord));
         }
 
+        // Fabric ordering is based on EntityEquipmentSlot.slotIndex
         int base = this.base;
+        this.mainHand = slots.getSlot(base);
+        this.addChild(slots.getSlot(base), new EquipmentSlotType(EquipmentTypes.MAIN_HAND));
+        base += 1;
         this.equipment = new EquipmentInventoryLensImpl(base, EQUIPMENT, 1, slots, false);
         this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.BOOTS));
         this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.LEGGINGS));
         this.addChild(slots.getSlot(base + 2), new EquipmentSlotType(EquipmentTypes.CHESTPLATE));
         this.addChild(slots.getSlot(base + 3), new EquipmentSlotType(EquipmentTypes.HEADWEAR));
         base += EQUIPMENT;
+        this.offHand = slots.getSlot(base);
+        this.addChild(slots.getSlot(base), new EquipmentSlotType(EquipmentTypes.OFF_HAND));
 
-        this.mainHand = slots.getSlot(base +0 );
-        this.offHand = slots.getSlot(base + 1);
-        this.addChild(slots.getSlot(base + 0), new EquipmentSlotType(EquipmentTypes.MAIN_HAND));
-        this.addChild(slots.getSlot(base + 1), new EquipmentSlotType(EquipmentTypes.OFF_HAND));
-        base += 2;
-
-        finishInit(slots, base);
-
+        // Spanning childs
+        this.addSpanningChild(this.mainHand);
+        this.addSpanningChild(this.equipment);
+        this.addSpanningChild(this.offHand);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public InventoryAdapter getAdapter(Fabric inv, Inventory parent) {
-        if (this.isContainer && inv instanceof ContainerFabric) {
-            // If Lens is for Container extract the PlayerInventory
-            Container container = ((ContainerFabric) inv).getContainer();
-            Optional carrier = ((CarriedInventory) container).getCarrier();
-            if (carrier.isPresent() && carrier.get() instanceof Player) {
-                return ((InventoryAdapter) ((Player) carrier.get()).getInventory());
+    public InventoryAdapter getAdapter(Fabric inventory, Inventory parent) {
+        if (inventory instanceof EquipmentSlotsFabric) {
+            Object entity = inventory.get(0);
+            if (entity instanceof InventoryAdapter) {
+                // return the Entity when it also is a InventoryAdapter
+                return ((InventoryAdapter) entity);
             }
         }
-        return super.getAdapter(inv, parent);
+        // fallback to vanilla adapter
+        return new VanillaAdapter(inventory, this, parent);
     }
-
-    private void finishInit(SlotProvider slots, int base) {
-        this.addSpanningChild(this.equipment);
-        this.addSpanningChild(this.mainHand);
-        this.addSpanningChild(this.offHand);
-
-        // Additional Slots for bigger modded inventories
-        int additionalSlots = this.size - base;
-        if (additionalSlots > 0) {
-            this.addSpanningChild(new OrderedInventoryLensImpl(base, additionalSlots, 1, slots));
-        }
-    }
-
 }

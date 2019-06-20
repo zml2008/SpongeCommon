@@ -30,12 +30,14 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.inventory.Slot;
+import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.UnsupportedFabricException;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.CompoundFabric;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.ContainerFabric;
+import org.spongepowered.common.item.inventory.lens.impl.fabric.EquipmentSlotsFabric;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
 import org.spongepowered.common.item.inventory.lens.impl.fabric.SlotFabric;
 
@@ -58,6 +60,8 @@ public abstract class MinecraftFabric implements Fabric {
             return new CompoundFabric(new IInventoryFabric(((InventoryLargeChest) target).upperChest), new IInventoryFabric(((InventoryLargeChest) target).lowerChest));
         } else if (target instanceof IInventory) {
             return new IInventoryFabric((IInventory) target);
+        } else if (target instanceof Living) {
+            return new EquipmentSlotsFabric(((Living) target));
         }
         throw new UnsupportedFabricException("Container of type %s could not be used as an inventory fabric", target.getClass());
     }

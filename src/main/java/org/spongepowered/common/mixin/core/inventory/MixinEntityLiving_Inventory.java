@@ -22,29 +22,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.mixin.core.tileentity;
+package org.spongepowered.common.mixin.core.inventory;
 
-import net.minecraft.tileentity.TileEntityLockable;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
+import net.minecraft.entity.EntityLiving;
+import org.spongepowered.api.item.inventory.Carrier;
+import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.MinecraftInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
+import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.ReusableLensProvider;
 import org.spongepowered.common.item.inventory.lens.impl.ReusableLens;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
-import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
+import org.spongepowered.common.item.inventory.lens.impl.minecraft.EntityLivingLens;
 
-@SuppressWarnings("rawtypes")
-@NonnullByDefault
-@Mixin(TileEntityLockable.class)
-public abstract class MixinTileEntityLockable extends MixinTileEntity implements ReusableLensProvider, MinecraftInventoryAdapter {
+import java.util.Optional;
+
+@Mixin(EntityLiving.class)
+public abstract class MixinEntityLiving_Inventory implements MinecraftInventoryAdapter, ReusableLensProvider, CarriedInventory<Carrier> {
 
     @Override
     public ReusableLens<?> generateLens(Fabric fabric, InventoryAdapter adapter) {
-        SlotCollection slots = new SlotCollection.Builder().add(((TileEntityLockable) (Object) this).getSizeInventory()).build();
-        OrderedInventoryLensImpl lens = new OrderedInventoryLensImpl(0, ((TileEntityLockable) (Object) this).getSizeInventory(), 1, slots);
+        SlotCollection slots = new SlotCollection.Builder().add(fabric.getSize()).build();
+        Lens lens = new EntityLivingLens(adapter, slots);
         return new ReusableLens<>(slots, lens);
     }
 
+    @Override
+    public Optional<Carrier> getCarrier() {
+        return Optional.of((Carrier) this);
+    }
 }

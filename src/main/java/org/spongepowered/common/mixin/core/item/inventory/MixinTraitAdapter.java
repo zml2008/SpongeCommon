@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.item.inventory;
 
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.InventoryCraftResult;
 import net.minecraft.inventory.InventoryLargeChest;
@@ -49,7 +50,8 @@ import javax.annotation.Nullable;
         TileEntityLockable.class,
         InventoryBasic.class,
         InventoryCraftResult.class,
-        InventoryLargeChest.class
+        InventoryLargeChest.class,
+        EntityLiving.class
 }, priority = 999)
 public abstract class MixinTraitAdapter implements MinecraftInventoryAdapter {
 

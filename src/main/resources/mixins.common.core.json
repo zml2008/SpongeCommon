@@ -171,6 +171,7 @@
         "command.server.MixinCommandTP",
         "common.item.inventory.custom.MixinCustomContainer",
         "common.item.inventory.custom.MixinCustomInventory",
+        "inventory.MixinEntityLiving_Inventory",
         "data.MixinCustomDataHolder",
         "data.types.MixinArtType",
         "data.types.MixinBlockDirtDirtType",

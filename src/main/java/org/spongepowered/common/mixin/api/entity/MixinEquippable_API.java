@@ -24,10 +24,8 @@
  */
 package org.spongepowered.common.mixin.api.entity;
 
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
-import net.minecraft.entity.monster.AbstractSkeleton;
-import net.minecraft.entity.monster.EntityGiantZombie;
-import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import org.spongepowered.api.entity.Equipable;
@@ -44,7 +42,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 // All living implementors of ArmorEquipable
-@Mixin({EntityArmorStand.class, EntityGiantZombie.class, EntityPlayerMP.class, AbstractSkeleton.class, EntityZombie.class, EntityHuman.class})
+@Mixin({EntityArmorStand.class, EntityPlayerMP.class, EntityLiving.class, EntityHuman.class})
 public abstract class MixinEquippable_API extends MixinEntityLivingBase_API implements Equipable {
 
     @Override
