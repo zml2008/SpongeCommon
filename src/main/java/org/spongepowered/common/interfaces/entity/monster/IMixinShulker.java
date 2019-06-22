@@ -32,8 +32,4 @@ public interface IMixinShulker {
     DyeColor getColor();
 
     void setColor(DyeColor color);
-
-    Direction getDirection();
-
-    void setDirection(Direction direction);
 }

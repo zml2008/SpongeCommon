@@ -33,6 +33,7 @@ import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.entity.dismount.DismountType;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.common.bridge.OwnershipTrackedBridge;
@@ -111,4 +112,8 @@ public interface EntityBridge {
     default void onCancelledBlockChange(EntityTickContext phaseContext) {
 
     }
+
+    Direction bridge$getDirection();
+
+    void bridge$setDirection(Direction direction);
 }

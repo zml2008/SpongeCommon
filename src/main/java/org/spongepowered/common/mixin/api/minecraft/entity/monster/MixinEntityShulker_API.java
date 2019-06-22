@@ -56,8 +56,6 @@ public abstract class MixinEntityShulker_API extends MixinEntityGolem_API implem
 
     @Shadow @Final protected static DataParameter<Byte> COLOR;
 
-    @Shadow @Final protected static DataParameter<EnumFacing> ATTACHED_FACE;
-
     @Override
     public DyeColor getColor() {
         return (DyeColor) (Object) EnumDyeColor.byMetadata(this.dataManager.get(COLOR) & 15);
@@ -66,16 +64,6 @@ public abstract class MixinEntityShulker_API extends MixinEntityGolem_API implem
     @Override
     public void setColor(DyeColor color) {
         this.dataManager.set(COLOR, (byte) (this.dataManager.get(COLOR) & 240 | ((EnumDyeColor) (Object) color).getMetadata() & 15));
-    }
-
-    @Override
-    public Direction getDirection() {
-        return DirectionResolver.getFor(this.dataManager.get(ATTACHED_FACE));
-    }
-
-    @Override
-    public void setDirection(Direction direction) {
-        this.dataManager.set(ATTACHED_FACE, DirectionResolver.getFor(direction));
     }
 
     @Override
@@ -89,16 +77,6 @@ public abstract class MixinEntityShulker_API extends MixinEntityGolem_API implem
     }
 
     @Override
-    public DirectionalData getDirectionalData() {
-        return new SpongeDirectionalData(DirectionResolver.getFor(this.dataManager.get(ATTACHED_FACE)));
-    }
-
-    @Override
-    public Value<Direction> direction() {
-        return new SpongeValue<>(Keys.DIRECTION, DirectionResolver.getFor(this.dataManager.get(ATTACHED_FACE)));
-    }
-
-    @Override
     public <P extends EntityTargetingProjectile> Optional<P> launchWithTarget(Class<P> projectileClass, org.spongepowered.api.entity.Entity target) {
         return ProjectileLauncher.launchWithArgs(projectileClass, Shulker.class, this, null, target);
     }
@@ -107,6 +85,5 @@ public abstract class MixinEntityShulker_API extends MixinEntityGolem_API implem
     public void spongeApi$supplyVanillaManipulators(List<? super DataManipulator<?, ?>> manipulators) {
         super.spongeApi$supplyVanillaManipulators(manipulators);
         manipulators.add(getDyeData());
-        manipulators.add(getDirectionalData());
     }
 }

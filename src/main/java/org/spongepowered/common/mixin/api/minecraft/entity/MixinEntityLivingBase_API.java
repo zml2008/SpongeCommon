@@ -117,6 +117,7 @@ public abstract class MixinEntityLivingBase_API extends MixinEntity_API implemen
 
     @Shadow public abstract boolean attemptTeleport(double x, double y, double z);
 
+    @Shadow public int maxHurtResistantTime;
     private int deathEventsPosted;
     private int maxAir = 300;
     @Nullable private ItemStack activeItemStackCopy;

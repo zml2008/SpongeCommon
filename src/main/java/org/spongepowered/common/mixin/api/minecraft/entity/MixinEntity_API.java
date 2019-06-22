@@ -48,6 +48,8 @@ import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.Queries;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.mutable.block.DirectionalData;
+import org.spongepowered.api.data.manipulator.mutable.entity.GravityData;
 import org.spongepowered.api.data.manipulator.mutable.entity.IgniteableData;
 import org.spongepowered.api.data.manipulator.mutable.entity.VehicleData;
 import org.spongepowered.api.data.persistence.InvalidDataException;
@@ -63,6 +65,7 @@ import org.spongepowered.api.event.cause.entity.teleport.TeleportTypes;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.api.util.AABB;
+import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.RelativePositions;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -74,14 +77,19 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.data.CustomDataHolderBridge;
 import org.spongepowered.common.bridge.data.VanishingBridge;
+import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.world.ServerChunkProviderBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.TeleporterBridge;
+import org.spongepowered.common.data.manipulator.mutable.block.SpongeDirectionalData;
 import org.spongepowered.common.data.manipulator.mutable.entity.SpongeGravityData;
 import org.spongepowered.common.data.persistence.NbtTranslator;
+import org.spongepowered.common.data.processor.data.entity.EntityDirectionalDataProcessor;
 import org.spongepowered.common.data.util.DataQueries;
 import org.spongepowered.common.data.util.DataUtil;
+import org.spongepowered.common.data.util.DirectionResolver;
 import org.spongepowered.common.data.util.NbtDataUtil;
+import org.spongepowered.common.data.value.mutable.SpongeValue;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.SpongeEntityArchetypeBuilder;
 import org.spongepowered.common.entity.SpongeEntitySnapshotBuilder;
@@ -642,17 +650,12 @@ public abstract class MixinEntity_API implements org.spongepowered.api.entity.En
         return new SpongeEntityArchetypeBuilder().from(this).build();
     }
 
-    @Override
-    public Value<Boolean> gravity() {
-        return this.getValue(Keys.HAS_GRAVITY).get();
-    }
-
     protected void spongeApi$supplyVanillaManipulators(final List<? super DataManipulator<?, ?>> manipulators) {
         this.get(VehicleData.class).ifPresent(manipulators::add);
         if (this.fire > 0) {
             manipulators.add(this.get(IgniteableData.class).get());
         }
-        manipulators.add(new SpongeGravityData(!this.hasNoGravity()));
+        manipulators.add(this.get(GravityData.class).get());
+        manipulators.add(this.get(DirectionalData.class).get());
     }
-
 }

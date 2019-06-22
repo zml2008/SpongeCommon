@@ -24,7 +24,7 @@
  */
 package org.spongepowered.common.data.processor.data.entity;
 
-import net.minecraft.entity.monster.EntityShulker;
+import net.minecraft.entity.Entity;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.immutable.block.ImmutableDirectionalData;
@@ -33,30 +33,30 @@ import org.spongepowered.api.data.value.ValueContainer;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
 import org.spongepowered.api.data.value.mutable.Value;
 import org.spongepowered.api.util.Direction;
+import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.data.manipulator.mutable.block.SpongeDirectionalData;
 import org.spongepowered.common.data.processor.common.AbstractEntitySingleDataProcessor;
 import org.spongepowered.common.data.value.immutable.ImmutableSpongeValue;
 import org.spongepowered.common.data.value.mutable.SpongeValue;
-import org.spongepowered.common.interfaces.entity.monster.IMixinShulker;
 
 import java.util.Optional;
 
-public class ShulkerDirectionalDataProcessor extends AbstractEntitySingleDataProcessor<EntityShulker, Direction, Value<Direction>,
+public class EntityDirectionalDataProcessor extends AbstractEntitySingleDataProcessor<Entity, Direction, Value<Direction>,
         DirectionalData, ImmutableDirectionalData> {
 
-    public ShulkerDirectionalDataProcessor() {
-        super(EntityShulker.class, Keys.DIRECTION);
+    public EntityDirectionalDataProcessor() {
+        super(Entity.class, Keys.DIRECTION);
     }
 
     @Override
-    protected boolean set(EntityShulker dataHolder, Direction value) {
-        ((IMixinShulker) dataHolder).setDirection(value);
+    protected boolean set(Entity dataHolder, Direction value) {
+        ((EntityBridge) dataHolder).bridge$setDirection(value);
         return true;
     }
 
     @Override
-    protected Optional<Direction> getVal(EntityShulker dataHolder) {
-        return Optional.ofNullable(((IMixinShulker) dataHolder).getDirection());
+    protected Optional<Direction> getVal(Entity dataHolder) {
+        return Optional.ofNullable(((EntityBridge) dataHolder).bridge$getDirection());
     }
 
     @Override
@@ -65,8 +65,8 @@ public class ShulkerDirectionalDataProcessor extends AbstractEntitySingleDataPro
     }
 
     @Override
-    public boolean supports(EntityShulker dataHolder) {
-        return dataHolder instanceof IMixinShulker;
+    public boolean supports(Entity dataHolder) {
+        return true;
     }
 
     @Override

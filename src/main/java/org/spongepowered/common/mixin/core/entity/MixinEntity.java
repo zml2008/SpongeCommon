@@ -50,6 +50,7 @@ import net.minecraft.network.play.server.SPacketDestroyEntities;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -95,6 +96,7 @@ import org.spongepowered.common.bridge.world.WorldBridge;
 import org.spongepowered.common.bridge.world.chunk.ActiveChunkReferantBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.data.nbt.CustomDataNbtUtil;
+import org.spongepowered.common.data.util.DirectionResolver;
 import org.spongepowered.common.data.util.NbtDataUtil;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.SpongeEntityType;
@@ -195,6 +197,14 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
     @Shadow public abstract Entity getLowestRidingEntity();
 
     // @formatter:on
+
+    @Shadow public abstract EnumFacing getHorizontalFacing();
+
+    @Shadow public abstract EnumFacing getAdjustedHorizontalFacing();
+
+    @Shadow protected abstract void setRotation(float yaw, float pitch);
+
+    @Shadow private boolean isPositionDirty;
 
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;dimension:I", opcode = Opcodes.PUTFIELD))
     private void impl$UpdateDimension(final Entity self, final int dimensionId, final net.minecraft.world.World worldIn) {
@@ -724,10 +734,6 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
      * 1) If we are in a forge environment, we do NOT want forge to be capturing the item entities, because we handle them ourselves
      * 2) If we are in a client environment, we should not perform any sort of processing whatsoever.
      * 3) This method is entirely managed from the standpoint where our events have final say, as per usual.
-     *
-     * @param stack
-     * @param offsetY
-     * @return
      */
     @Overwrite
     @Nullable
@@ -784,6 +790,19 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
         // Don't tick if chunk is queued for unload or is in progress of being scheduled for unload
         // See https://github.com/SpongePowered/SpongeVanilla/issues/344
         return chunk == null || chunk.isActive();
+    }
+
+    @Override
+    public Direction bridge$getDirection() {
+        return DirectionResolver.getFor(this.getAdjustedHorizontalFacing());
+    }
+
+    @Override
+    public void bridge$setDirection(Direction direction) {
+        final Vector3d offset = direction.asOffset();
+        this.setRotation((float) (this.rotationYaw + offset.getX()), (float) (this.rotationPitch + offset.getX()));
+        this.isPositionDirty = true;
+        this.world.updateEntityWithOptionalForce((Entity) (Object) this, false);
     }
 
     @Override
