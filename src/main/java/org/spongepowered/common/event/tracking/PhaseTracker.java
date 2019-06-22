@@ -789,6 +789,8 @@ public final class PhaseTracker {
         if (chunk.isEmpty()) {
             return false;
         }
+        // Forge hooks
+        SpongeImplHooks.captureBlockChangeForMods(minecraftWorld, pos, spongeFlag.getRawFlag());
         // Sponge End
         final IBlockState currentState = chunk.getBlockState(pos);
         // Forge patches - allows getting the light changes to check for relighting.

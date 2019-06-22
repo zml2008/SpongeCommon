@@ -71,8 +71,13 @@ final class ServerTickPhaseState extends ListenerPhaseState<ServerTickContext> {
     }
 
     @Override
-    public boolean doesBulkBlockCapture(ServerTickContext context) {
-        return false;
+    public boolean spawnEntityOrCapture(ServerTickContext context, Entity entity, int chunkX, int chunkZ) {
+        if (context.getBlockPosition().isPresent()) {
+            // Still want to capture block drops.
+            return context.captureEntity(entity);
+        }
+        // We don't currently care about other entities.
+        return super.spawnEntityOrCapture(context, entity, chunkX, chunkZ);
     }
 
     @Override
