@@ -30,6 +30,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
+import org.spongepowered.common.bridge.world.WorldBridge;
 import org.spongepowered.common.bridge.world.chunk.ActiveChunkReferantBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.event.tracking.PhaseTracker;
@@ -42,7 +43,7 @@ public abstract class MixinWorldServer_UseActiveChunkForCollisions extends Mixin
 
     @Override
     public boolean isFlammableWithin(AxisAlignedBB bb) {
-        if (((ServerWorldBridge) this).isFake()) {
+        if (((WorldBridge) this).isFake()) {
             return super.isFlammableWithin(bb);
         }
         final Optional<ActiveChunkReferantBridge> source = PhaseTracker.getInstance().getCurrentContext().getSource(Entity.class)

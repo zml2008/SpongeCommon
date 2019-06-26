@@ -2451,16 +2451,6 @@ public abstract class WorldServerMixin extends WorldMixin implements ServerWorld
     }
 
     @Override
-    public long bridge$getWeatherStartTime() {
-        return this.weatherStartTime;
-    }
-
-    @Override
-    public void setWeatherStartTime(final long weatherStartTime) {
-        this.weatherStartTime = weatherStartTime;
-    }
-
-    @Override
     public Weather bridge$getPreviousWeather() {
         return this.prevWeather;
     }
