@@ -58,8 +58,6 @@ import javax.annotation.Nullable;
 
 public interface ServerWorldBridge extends WorldBridge {
 
-    int bridge$getDimensionId();
-
     Weather bridge$getPreviousWeather();
 
     void bridge$setPreviousWeather(Weather weather);

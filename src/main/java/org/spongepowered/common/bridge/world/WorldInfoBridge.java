@@ -27,6 +27,7 @@ package org.spongepowered.common.bridge.world;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.world.EnumDifficulty;
+import net.minecraft.world.storage.WorldInfo;
 import org.spongepowered.api.world.DimensionType;
 import org.spongepowered.api.world.PortalAgentType;
 import org.spongepowered.common.config.SpongeConfig;
@@ -85,4 +86,11 @@ public interface WorldInfoBridge {
      * Sets the difficulty without marking it as custom
      */
     void forceSetDifficulty(EnumDifficulty difficulty);
+
+    /**
+     * Triggers the {@link WorldInfo} to save.
+     *
+     * @return True if save successful, false if not.
+     */
+    boolean bridge$save();
 }

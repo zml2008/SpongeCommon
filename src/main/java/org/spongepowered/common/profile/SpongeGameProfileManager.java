@@ -48,14 +48,14 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Nullable;
 
-public final class SpongeProfileManager implements GameProfileManager {
+public final class SpongeGameProfileManager implements GameProfileManager {
 
     private static final int LOOKUP_INTERVAL = SpongeImpl.getGlobalConfigAdapter().getConfig().getWorld().getGameProfileQueryTaskInterval();
     private final GameProfileCache defaultCache = (GameProfileCache) SpongeImpl.getServer().getPlayerProfileCache();
     private GameProfileCache cache = this.defaultCache;
     private ExecutorService gameLookupExecutorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Sponge - Async User Lookup Thread").build());
 
-    public SpongeProfileManager() {
+    public SpongeGameProfileManager() {
     }
 
     public void lookupUserAsync(UUID uuid) {

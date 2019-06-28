@@ -22,33 +22,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.bridge.world;
+package org.spongepowered.common.bridge.server.integrated;
 
-import org.spongepowered.api.service.context.Context;
-import org.spongepowered.common.config.SpongeConfig;
-import org.spongepowered.common.config.type.DimensionConfig;
+public interface IntegratedServerBridge {
 
-import java.nio.file.Path;
+    void bridge$markNewSave();
 
-public interface DimensionTypeBridge {
-
-    SpongeConfig<DimensionConfig> bridge$getDimensionConfig();
-
-    Context bridge$getContext();
-
-    String bridge$getEnumName();
-
-    String bridge$getModId();
-
-    Path bridge$getConfigPath();
-
-    boolean bridge$shouldGenerateSpawnOnLoad();
-
-    boolean bridge$shouldLoadSpawn();
-
-    boolean bridge$shouldKeepSpawnLoaded();
-
-    void bridge$setShouldLoadSpawn(boolean keepSpawnLoaded);
-
-    String bridge$getProperId();
+    boolean bridge$isNewSave();
 }

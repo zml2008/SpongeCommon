@@ -140,6 +140,7 @@ import org.spongepowered.common.bridge.block.BlockBridge;
 import org.spongepowered.common.bridge.block.BlockEventDataBridge;
 import org.spongepowered.common.bridge.data.CustomDataHolderBridge;
 import org.spongepowered.common.bridge.entity.EntityBridge;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.bridge.server.management.PlayerChunkMapBridge;
 import org.spongepowered.common.bridge.tileentity.TileEntityBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
@@ -287,13 +288,13 @@ public abstract class MixinWorldServer extends MixinWorld implements ServerWorld
 
     @Redirect(method = "init", at = @At(value = "NEW", target = "net/minecraft/world/storage/MapStorage"))
     private MapStorage onCreateMapStorage(final ISaveHandler saveHandler) {
-        final WorldServer overWorld = WorldManager.getWorldByDimensionId(0).orElse(null);
-        // if overworld has loaded, use its mapstorage
+        final WorldServer overWorld = SpongeImpl.getWorldManager().getDefaultWorld();
+        // if overworld has loaded, use its map storage
         if (this.dimensionId != 0 && overWorld != null) {
             return overWorld.getMapStorage();
         }
 
-        // if we are loading overworld, create a new mapstorage
+        // if we are loading overworld, create a new map storage
         return new MapStorage(saveHandler);
     }
 
@@ -723,7 +724,7 @@ public abstract class MixinWorldServer extends MixinWorld implements ServerWorld
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/storage/WorldInfo;setDifficulty(Lnet/minecraft/world/EnumDifficulty;)V"))
     private void syncDifficultyDueToHardcore(final WorldInfo worldInfo, final EnumDifficulty newDifficulty) {
-        WorldManager.adjustWorldForDifficulty((WorldServer) (Object) this, newDifficulty, false);
+        ((MinecraftServerBridge) SpongeImpl.getServer()).bridge$updateWorldForDifficulty((WorldServer) (Object) this, newDifficulty, false);
     }
 
     @Redirect(method = "updateBlockTick", at = @At(value = "INVOKE", target= "Lnet/minecraft/world/WorldServer;isAreaLoaded(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Z"))
@@ -1184,7 +1185,7 @@ public abstract class MixinWorldServer extends MixinWorld implements ServerWorld
 
     @Redirect(method = "sendQueuedBlockEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/DimensionType;getId()I"), expect = 0, require = 0)
     private int onGetDimensionIdForBlockEvents(final DimensionType dimensionType) {
-        return this.bridge$getDimensionId();
+        return ((WorldProviderBridge) this.provider).bridge$getDimensionId();
     }
 
 
@@ -1228,7 +1229,7 @@ public abstract class MixinWorldServer extends MixinWorld implements ServerWorld
     // We expect 0 because forge patches it correctly
     @Redirect(method = "addWeatherEffect", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/DimensionType;getId()I"), expect = 0, require = 0)
     private int getDimensionIdForWeatherEffect(final DimensionType id) {
-        return this.bridge$getDimensionId();
+        return ((WorldProviderBridge) this.provider).bridge$getDimensionId();
     }
 
     /**
@@ -2542,7 +2543,7 @@ public abstract class MixinWorldServer extends MixinWorld implements ServerWorld
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("Name", this.worldInfo.getWorldName())
-                .add("DimensionId", this.bridge$getDimensionId())
+                .add("DimensionId", ((WorldProviderBridge) this.provider).bridge$getDimensionId())
                 .add("DimensionType", ((org.spongepowered.api.world.DimensionType) (Object) this.provider.getDimensionType()).getId())
                 .toString();
     }

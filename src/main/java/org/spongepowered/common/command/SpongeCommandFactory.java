@@ -86,6 +86,7 @@ import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.bridge.OwnershipTrackedBridge;
 import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.server.MinecraftServerBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.WorldBridge;
@@ -267,8 +268,7 @@ public class SpongeCommandFactory {
             }
             if (args.hasAny("dimension")) {
                 for (DimensionType dimensionType : args.<DimensionType>getAll("dimension")) {
-                    src.sendMessage(Text.of("Dimension ", dimensionType.getName(), ": ", processDimension(((DimensionTypeBridge) dimensionType).
-                        getDimensionConfig(), dimensionType, src, args)));
+                    src.sendMessage(Text.of("Dimension ", dimensionType.getName(), ": ", processDimension(((DimensionTypeBridge) dimensionType).bridge$getDimensionConfig(), dimensionType, src, args)));
                     ++successes;
                 }
             }
@@ -387,17 +387,18 @@ public class SpongeCommandFactory {
                     return Text.of(TextColors.GRAY, text);
                 }
 
-                protected Text getChunksInfo(WorldServer worldserver) {
-                    if (((WorldBridge) worldserver).isFake() || worldserver.getWorldInfo() == null) {
+                protected Text getChunksInfo(WorldServer worldServer) {
+                    if (((WorldBridge) worldServer).isFake() || worldServer.getWorldInfo() == null) {
                         return Text.of(NEWLINE_TEXT, "Fake world");
                     }
-                    return Text.of(NEWLINE_TEXT, key("DimensionId: "), value(((ServerWorldBridge) worldserver).bridge$getDimensionId()), NEWLINE_TEXT,
-                        key("Loaded chunks: "), value(worldserver.getChunkProvider().getLoadedChunkCount()), NEWLINE_TEXT,
-                        key("Active chunks: "), value(worldserver.getChunkProvider().getLoadedChunks().size()), NEWLINE_TEXT,
-                        key("Entities: "), value(worldserver.loadedEntityList.size()), NEWLINE_TEXT,
-                        key("Tile Entities: "), value(worldserver.loadedTileEntityList.size()), NEWLINE_TEXT,
-                        key("Removed Entities:"), value(worldserver.unloadedEntityList.size()), NEWLINE_TEXT,
-                        key("Removed Tile Entities: "), value(worldserver.tileEntitiesToBeRemoved), NEWLINE_TEXT
+                    return Text.of(NEWLINE_TEXT, key("DimensionId: "), value(((WorldProviderBridge) worldServer.provider).bridge$getDimensionId()),
+                        NEWLINE_TEXT,
+                        key("Loaded chunks: "), value(worldServer.getChunkProvider().getLoadedChunkCount()), NEWLINE_TEXT,
+                        key("Active chunks: "), value(worldServer.getChunkProvider().getLoadedChunks().size()), NEWLINE_TEXT,
+                        key("Entities: "), value(worldServer.loadedEntityList.size()), NEWLINE_TEXT,
+                        key("Tile Entities: "), value(worldServer.loadedTileEntityList.size()), NEWLINE_TEXT,
+                        key("Removed Entities:"), value(worldServer.unloadedEntityList.size()), NEWLINE_TEXT,
+                        key("Removed Tile Entities: "), value(worldServer.tileEntitiesToBeRemoved), NEWLINE_TEXT
                     );
                 }
             })
@@ -843,11 +844,13 @@ public class SpongeCommandFactory {
     }
 
     private static void printWorldTickTime(CommandSource src, World world) {
-        final long[] worldTickTimes = ((MinecraftServerBridge) SpongeImpl.getServer()).bridge$getWorldTickTimes(((ServerWorldBridge) world).bridge$getDimensionId());
+        final WorldServer worldServer = (WorldServer) world;
+        final long[] worldTickTimes =
+            ((MinecraftServerBridge) SpongeImpl.getServer()).bridge$getWorldTickTimes(((WorldProviderBridge) worldServer.provider).bridge$getDimensionId());
         final double worldMeanTickTime = mean(worldTickTimes) * 1.0e-6d;
         final double worldTps = Math.min(1000.0 / worldMeanTickTime, 20);
         src.sendMessage(Text.of("World [", TextColors.DARK_GREEN, world.getName(), TextColors.RESET, "] (",
-            ((ServerWorldBridge) world).bridge$getDimensionId(),
+            ((WorldProviderBridge) worldServer.provider).bridge$getDimensionId(),
             ") TPS: ", TextColors.LIGHT_PURPLE,
             THREE_DECIMAL_DIGITS_FORMATTER.format(worldTps), TextColors.RESET,  ", Mean: ", TextColors.RED,
             THREE_DECIMAL_DIGITS_FORMATTER.format(worldMeanTickTime), "ms"));

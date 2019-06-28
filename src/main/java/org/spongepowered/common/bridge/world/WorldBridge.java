@@ -27,6 +27,7 @@ package org.spongepowered.common.bridge.world;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.MinecraftException;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldInfo;
 import org.spongepowered.api.world.Dimension;
@@ -66,5 +67,8 @@ public interface WorldBridge {
 
     void clearFakeCheck();
 
-    Dimension bridge$getDimensionWrapper();
+    /**
+     * Triggers this {@link World} to perform a save.
+     */
+    boolean bridge$save() throws MinecraftException;
 }

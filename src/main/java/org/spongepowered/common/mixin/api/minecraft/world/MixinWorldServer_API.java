@@ -73,6 +73,7 @@ import org.spongepowered.api.world.BlockChangeFlag;
 import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.ChunkRegenerateFlag;
 import org.spongepowered.api.world.PortalAgent;
+import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.gen.WorldGenerator;
 import org.spongepowered.api.world.storage.WorldStorage;
 import org.spongepowered.api.world.weather.Weather;
@@ -87,7 +88,9 @@ import org.spongepowered.common.block.SpongeBlockSnapshotBuilder;
 import org.spongepowered.common.bridge.data.CustomDataHolderBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.ServerWorldEventHandlerBridge;
+import org.spongepowered.common.bridge.world.WorldBridge;
 import org.spongepowered.common.bridge.world.WorldInfoBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkProviderBridge;
 import org.spongepowered.common.bridge.world.chunk.ServerChunkProviderBridge;
@@ -150,7 +153,7 @@ public abstract class MixinWorldServer_API extends MixinWorld_API {
 
     @Override
     public boolean isLoaded() {
-        return WorldManager.isKnownWorld((WorldServer) (Object) this);
+        return !((WorldBridge) this).isFake();
     }
 
     @Override
@@ -190,15 +193,14 @@ public abstract class MixinWorldServer_API extends MixinWorld_API {
 
     @Override
     public boolean save() throws IOException {
-        if (!getChunkProvider().canSave()) {
+        if (!this.getChunkProvider().canSave()) {
             return false;
         }
 
-        // TODO: Expose flush parameter in SpongeAPI?
         try {
-            WorldManager.saveWorld((WorldServer) (Object) this, true);
+            ((WorldBridge) this).bridge$save();
         } catch (MinecraftException e) {
-            throw new RuntimeException(e);
+            throw new IOException(e);
         }
         return true;
     }
@@ -531,7 +533,7 @@ public abstract class MixinWorldServer_API extends MixinWorld_API {
 
     private void apiImpl$stopSounds(@Nullable SoundType sound, @Nullable SoundCategory category) {
         this.server.getPlayerList().sendPacketToAllPlayersInDimension(
-                SoundEffectHelper.createStopSoundPacket(sound, category), ((ServerWorldBridge) this).bridge$getDimensionId());
+                SoundEffectHelper.createStopSoundPacket(sound, category), ((WorldProviderBridge) this.provider).bridge$getDimensionId());
     }
 
     @Override
@@ -555,7 +557,7 @@ public abstract class MixinWorldServer_API extends MixinWorld_API {
             double z = position.getZ();
 
             for (Packet<?> packet : packets) {
-                playerList.sendToAllNearExcept(null, x, y, z, radius, ((ServerWorldBridge) this).bridge$getDimensionId(), packet);
+                playerList.sendToAllNearExcept(null, x, y, z, radius, ((WorldProviderBridge) this.provider).bridge$getDimensionId(), packet);
             }
         }
     }
@@ -572,7 +574,7 @@ public abstract class MixinWorldServer_API extends MixinWorld_API {
 
     private void api$playRecord(Vector3i position, @Nullable RecordType recordType) {
         this.server.getPlayerList().sendPacketToAllPlayersInDimension(
-                SpongeRecordType.createPacket(position, recordType), ((ServerWorldBridge) this).bridge$getDimensionId());
+                SpongeRecordType.createPacket(position, recordType), ((WorldProviderBridge) this.provider).bridge$getDimensionId());
     }
 
     @Override

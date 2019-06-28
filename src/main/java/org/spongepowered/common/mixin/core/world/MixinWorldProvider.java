@@ -26,64 +26,21 @@ package org.spongepowered.common.mixin.core.world;
 
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
-import net.minecraft.world.WorldType;
 import net.minecraft.world.border.WorldBorder;
-import org.spongepowered.api.service.context.Context;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.world.Dimension;
-import org.spongepowered.api.world.DimensionType;
-import org.spongepowered.api.world.GeneratorType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImplHooks;
-import org.spongepowered.common.bridge.world.DimensionTypeBridge;
 import org.spongepowered.common.bridge.world.WorldProviderBridge;
-import org.spongepowered.common.bridge.world.ServerWorldBridge;
 
-@NonnullByDefault
 @Mixin(WorldProvider.class)
-public abstract class MixinWorldProvider implements Dimension, WorldProviderBridge {
+public abstract class MixinWorldProvider implements WorldProviderBridge {
 
-    @Shadow public WorldType terrainType;
     @Shadow protected World world;
     @Shadow public abstract net.minecraft.world.DimensionType getDimensionType();
-    @Shadow public abstract boolean canRespawnHere();
-    @Shadow public abstract int getAverageGroundLevel();
-    @Shadow public abstract boolean doesWaterVaporize();
     @Shadow public abstract WorldBorder createWorldBorder();
     @Shadow public abstract boolean isNether();
     @Shadow private String generatorSettings;
-
-    @Override
-    public DimensionType getType() {
-        return (DimensionType) (Object) this.getDimensionType();
-    }
-
-    @Override
-    public GeneratorType getGeneratorType() {
-        return (GeneratorType) this.terrainType;
-    }
-
-    @Override
-    public boolean allowsPlayerRespawns() {
-        return this.canRespawnHere();
-    }
-
-    @Override
-    public int getMinimumSpawnHeight() {
-        return this.getAverageGroundLevel();
-    }
-
-    @Override
-    public boolean doesWaterEvaporate() {
-        return this.doesWaterVaporize();
-    }
-
-    @Override
-    public boolean hasSky() {
-        return !isNether();
-    }
 
     @Override
     public void bridge$setGeneratorSettings(String generatorSettings) {
@@ -96,13 +53,8 @@ public abstract class MixinWorldProvider implements Dimension, WorldProviderBrid
     }
 
     @Override
-    public Context getContext() {
-        return ((DimensionTypeBridge) (Object) getDimensionType()).getContext();
-    }
-
-    @Override
     public WorldBorder bridge$createServerWorldBorder() {
-        return createWorldBorder();
+        return this.createWorldBorder();
     }
 
     /**
@@ -113,7 +65,6 @@ public abstract class MixinWorldProvider implements Dimension, WorldProviderBrid
     public boolean canDropChunk(int x, int z) {
         final boolean isSpawnChunk = this.world.isSpawnChunk(x, z);
 
-        return !isSpawnChunk || !SpongeImplHooks.shouldKeepSpawnLoaded(this.world.provider.getDimensionType(), ((ServerWorldBridge) this.world)
-                .bridge$getDimensionId());
+        return !isSpawnChunk || !SpongeImplHooks.shouldKeepSpawnLoaded(this.world.provider.getDimensionType());
     }
 }

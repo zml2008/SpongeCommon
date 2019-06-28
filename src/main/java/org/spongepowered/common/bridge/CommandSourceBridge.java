@@ -22,33 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.bridge.world;
+package org.spongepowered.common.bridge;
 
-import org.spongepowered.api.service.context.Context;
-import org.spongepowered.common.config.SpongeConfig;
-import org.spongepowered.common.config.type.DimensionConfig;
+import net.minecraft.command.ICommandSender;
 
-import java.nio.file.Path;
+public interface CommandSourceBridge {
 
-public interface DimensionTypeBridge {
+    String bridge$getIdentifier();
 
-    SpongeConfig<DimensionConfig> bridge$getDimensionConfig();
-
-    Context bridge$getContext();
-
-    String bridge$getEnumName();
-
-    String bridge$getModId();
-
-    Path bridge$getConfigPath();
-
-    boolean bridge$shouldGenerateSpawnOnLoad();
-
-    boolean bridge$shouldLoadSpawn();
-
-    boolean bridge$shouldKeepSpawnLoaded();
-
-    void bridge$setShouldLoadSpawn(boolean keepSpawnLoaded);
-
-    String bridge$getProperId();
+    ICommandSender bridge$asMinecraftCommandSender();
 }

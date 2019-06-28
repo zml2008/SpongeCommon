@@ -33,6 +33,7 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataQuery;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.data.persistence.NbtTranslator;
 import org.spongepowered.common.world.WorldManager;
 
@@ -69,8 +70,7 @@ public final class SpongePlayerDataHandler {
             return;
         }
         handlerInstance.playerDataMap = new ConcurrentHashMap<>();
-        final Path filePath = WorldManager.getCurrentSavesDirectory().get().resolve("data").resolve
-                (SPONGE_DATA);
+        final Path filePath = SpongeImpl.getWorldManager().getSavesDirectory().resolve("data").resolve(SPONGE_DATA);
 
         try {
             handlerInstance.playerDir = filePath;

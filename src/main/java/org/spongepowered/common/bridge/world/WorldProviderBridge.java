@@ -24,9 +24,19 @@
  */
 package org.spongepowered.common.bridge.world;
 
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.border.WorldBorder;
 
+import javax.annotation.Nullable;
+
 public interface WorldProviderBridge {
+
+    @Nullable
+    String bridge$getSaveFolder();
+
+    int bridge$getDimensionId();
+
+    int bridge$getClientDimensionId(EntityPlayerMP player);
 
     WorldBorder bridge$createServerWorldBorder();
 

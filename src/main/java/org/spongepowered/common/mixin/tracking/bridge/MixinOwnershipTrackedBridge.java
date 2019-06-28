@@ -39,7 +39,7 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.OwnershipTrackedBridge;
 import org.spongepowered.common.bridge.data.DataCompoundHolder;
 import org.spongepowered.common.entity.PlayerTracker;
-import org.spongepowered.common.profile.SpongeProfileManager;
+import org.spongepowered.common.profile.SpongeGameProfileManager;
 import org.spongepowered.common.util.Constants;
 import org.spongepowered.common.util.SpongeUsernameCache;
 
@@ -56,7 +56,7 @@ public class MixinOwnershipTrackedBridge implements OwnershipTrackedBridge {
     @Nullable private UUID tracked$notifier;
     @Nullable private WeakReference<User> tracked$ownerUser;
     @Nullable private WeakReference<User> tracked$notifierUser;
-    @Nullable private SpongeProfileManager tracked$profileManager;
+    @Nullable private SpongeGameProfileManager tracked$profileManager;
     @Nullable private UserStorageService tracked$userService;
 
     @Override
@@ -121,7 +121,7 @@ public class MixinOwnershipTrackedBridge implements OwnershipTrackedBridge {
         }
         // player is not online, get user from storage if one exists
         if (this.tracked$profileManager == null) {
-            this.tracked$profileManager = ((SpongeProfileManager) Sponge.getServer().getGameProfileManager());
+            this.tracked$profileManager = ((SpongeGameProfileManager) Sponge.getServer().getGameProfileManager());
         }
         if (this.tracked$userService == null) {
             this.tracked$userService = SpongeImpl.getGame().getServiceManager().provide(UserStorageService.class).get();

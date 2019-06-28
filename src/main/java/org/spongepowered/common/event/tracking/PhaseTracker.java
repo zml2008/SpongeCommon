@@ -71,6 +71,7 @@ import org.spongepowered.common.block.SpongeBlockSnapshot;
 import org.spongepowered.common.bridge.OwnershipTrackedBridge;
 import org.spongepowered.common.bridge.block.BlockBridge;
 import org.spongepowered.common.bridge.entity.EntityBridge;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.config.SpongeConfig;
@@ -321,9 +322,9 @@ public final class PhaseTracker {
         this.stack.pop();
 
         if (this.stack.isEmpty()) {
-            for (final WorldServer world : WorldManager.getWorlds()) {
-                final ServerWorldBridge mixinWorld = (ServerWorldBridge) world;
-                if (mixinWorld.bridge$getProxyAccess().hasProxy()) {
+            for (final WorldServer worldServer : SpongeImpl.getWorldManager().getWorlds()) {
+                final ServerWorldBridge bridgeWorld = (ServerWorldBridge) worldServer;
+                if (bridgeWorld.bridge$getProxyAccess().hasProxy()) {
                     new PrettyPrinter().add("BlockPRoxy has extra proxies not pruned!").centre().hr()
                         .add("When completing the Phase: %s, some foreign BlockProxy was pushed, but never pruned.", state)
                         .add()

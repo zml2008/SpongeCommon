@@ -57,6 +57,7 @@ import org.spongepowered.common.event.SpongeEventManager;
 import org.spongepowered.common.launch.SpongeLaunch;
 import org.spongepowered.common.registry.SpongeGameRegistry;
 import org.spongepowered.common.scheduler.SpongeScheduler;
+import org.spongepowered.common.world.WorldManager;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -97,6 +98,7 @@ public final class SpongeImpl {
     @Inject @Nullable private static SpongePropertyRegistry propertyRegistry;
     @Inject @Nullable private static SpongeScheduler scheduler;
     @Inject @Nullable private static SpongeCauseStackManager causeStackManager;
+    @Inject @Nullable private static WorldManager worldManager;
 
     private static final List<PluginContainer> internalPlugins = new ArrayList<>();
 
@@ -158,6 +160,10 @@ public final class SpongeImpl {
 
     public static SpongeCauseStackManager getCauseStackManager() {
         return check(causeStackManager);
+    }
+
+    public static WorldManager getWorldManager() {
+        return check(worldManager);
     }
 
     public static PluginContainer getPlugin() {

@@ -433,8 +433,8 @@ public final class EntityUtil {
             toWorld = (WorldServer) toTransform.getExtent();
         }
 
-        final int fromClientDimId = WorldManager.getClientDimensionId(player, fromWorld);
-        final int toClientDimId = WorldManager.getClientDimensionId(player, toWorld);
+        final int fromClientDimId = ((WorldProviderBridge) fromWorld.provider).bridge$getClientDimensionId(player);
+        final int toClientDimId = ((WorldProviderBridge) toWorld.provider).bridge$getClientDimensionId(player);
 
         if (fromClientDimId == toClientDimId) {
             int fakeDimId;
@@ -472,7 +472,7 @@ public final class EntityUtil {
             toWorld.updateEntityWithOptionalForce(player, false);
         }
 
-        player.dimension = ((ServerWorldBridge) toWorld).bridge$getDimensionId();
+        player.dimension = ((WorldProviderBridge) toWorld.provider).bridge$getDimensionId();
         player.setWorld(toWorld);
 
         // preparePlayer
@@ -533,7 +533,7 @@ public final class EntityUtil {
         final Transform<World> fromTransform = sEntity.getTransform();
         final WorldServer fromWorld = ((WorldServer) entity.world);
 
-        int toDimensionId = ((ServerWorldBridge) toWorld).bridge$getDimensionId();
+        int toDimensionId = ((WorldProviderBridge) toWorld.provider).bridge$getDimensionId();
 
         // Entering End Portal in End goes to Overworld in Vanilla
         if (toDimensionId == 1 && fromWorld.provider instanceof WorldProviderEnd) {
@@ -927,7 +927,7 @@ public final class EntityUtil {
         }
 
         final Dimension toDimension = (Dimension) targetWorld.provider;
-        int toDimensionId = ((ServerWorldBridge) targetWorld).bridge$getDimensionId();
+        int toDimensionId = ((WorldProviderBridge) targetWorld.provider).bridge$getDimensionId();
         // Cannot respawn in requested world, use the fallback dimension for
         // that world. (Usually overworld unless a mod says otherwise).
         if (!toDimension.allowsPlayerRespawns()) {

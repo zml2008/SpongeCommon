@@ -87,6 +87,7 @@ import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.entity.player.ServerPlayerEntityBridge;
 import org.spongepowered.common.bridge.packet.WorldBorderPacketBridge;
 import org.spongepowered.common.bridge.server.management.PlayerListBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.player.SpongeUser;
 import org.spongepowered.common.event.SpongeCommonEventFactory;
@@ -202,7 +203,7 @@ public abstract class MixinPlayerList implements PlayerListBridge {
         final Transform<World> fromTransform = player.getTransform();
         WorldServer worldServer = this.server.getWorld(targetDimension);
         Transform<World> toTransform = new Transform<>(EntityUtil.getPlayerRespawnLocation(playerIn, worldServer), Vector3d.ZERO, Vector3d.ZERO);
-        targetDimension = ((ServerWorldBridge) toTransform.getExtent()).bridge$getDimensionId();
+        targetDimension = ((WorldProviderBridge) ((WorldServer) toTransform.getExtent()).provider).bridge$getDimensionId();
         Location<World> location = toTransform.getLocation();
 
         // If coming from end, fire a teleport event for plugins
@@ -220,7 +221,8 @@ public abstract class MixinPlayerList implements PlayerListBridge {
         // Keep players out of blocks
         Vector3d tempPos = player.getLocation().getPosition();
         playerIn.setPosition(location.getX(), location.getY(), location.getZ());
-        while (!((WorldServer) location.getExtent()).getCollisionBoxes(playerIn, playerIn.getEntityBoundingBox()).isEmpty() && location.getPosition().getY() < 256.0D) {
+        while (!((WorldServer) location.getExtent()).getCollisionBoxes(playerIn, playerIn.getEntityBoundingBox()).isEmpty()
+            && location.getPosition().getY() < 256.0D) {
             playerIn.setPosition(playerIn.posX, playerIn.posY + 1.0D, playerIn.posZ);
             location = location.add(0, 1, 0);
         }
@@ -277,24 +279,18 @@ public abstract class MixinPlayerList implements PlayerListBridge {
 
         // ### PHASE 4 ### Fire event and set new location on the player
         Sponge.getCauseStackManager().pushCause(newPlayer);
-        final RespawnPlayerEvent event = SpongeEventFactory.createRespawnPlayerEvent(Sponge.getCauseStackManager().getCurrentCause(), fromTransform,
-                toTransform, (Player) playerIn, (Player) newPlayer, EntityUtil.tempIsBedSpawn, !conqueredEnd);
+        final RespawnPlayerEvent event = SpongeEventFactory.createRespawnPlayerEvent(Sponge.getCauseStackManager().getCurrentCause(), fromTransform, toTransform, (Player) playerIn, (Player) newPlayer, EntityUtil.tempIsBedSpawn, !conqueredEnd);
         EntityUtil.tempIsBedSpawn = false;
         SpongeImpl.postEvent(event);
         Sponge.getCauseStackManager().popCause();
         ((EntityBridge) player).bridge$setLocationAndAngles(event.getToTransform());
         toTransform = event.getToTransform();
         location = toTransform.getLocation();
-
-        if (!(location.getExtent() instanceof WorldServer)) {
-            SpongeImpl.getLogger().warn("LocationBridge set in PlayerRespawnEvent was invalid, using original location instead");
-            location = event.getFromTransform().getLocation();
-        }
         worldServer = (WorldServer) location.getExtent();
 
-        final ServerWorldBridge mixinWorldServer = (ServerWorldBridge) worldServer;
+        final ServerWorldBridge bridgeWorld = (ServerWorldBridge) worldServer;
         // Set the dimension again in case a plugin changed the target world during RespawnPlayerEvent
-        newPlayer.dimension = mixinWorldServer.bridge$getDimensionId();
+        newPlayer.dimension = ((WorldProviderBridge) bridgeWorld).bridge$getDimensionId();
         newPlayer.setWorld(worldServer);
         newPlayer.interactionManager.setWorld(worldServer);
 
@@ -302,30 +298,35 @@ public abstract class MixinPlayerList implements PlayerListBridge {
 
         // ### PHASE 5 ### Respawn player in new world
 
-        // Support vanilla clients logging into custom dimensions
-        final int dimensionId = WorldManager.getClientDimensionId(newPlayer, worldServer);
+        // Force client to refresh its chunk cache if same dimension type
 
-        // Send dimension registration
-        if (((ServerPlayerEntityBridge) newPlayer).bridge$usesCustomClient()) {
-            WorldManager.sendDimensionRegistration(newPlayer, worldServer.provider);
-        } else {
-            // Force vanilla client to refresh its chunk cache if same dimension type
-            if (fromTransform.getExtent().getUniqueId() != ((World) worldServer).getUniqueId() && fromTransform.getExtent().getDimension().getType() ==
-              toTransform.getExtent().getDimension().getType()) {
-                newPlayer.connection.sendPacket(new SPacketRespawn((dimensionId >= 0 ? -1 : 0), worldServer.getDifficulty(), worldServer
-                        .getWorldInfo().getTerrainType(), newPlayer.interactionManager.getGameType()));
+        final int fromClientDimId = ((WorldProviderBridge) ((WorldServer) fromTransform.getExtent()).provider).bridge$getClientDimensionId(playerIn);
+        final int toClientDimId = ((WorldProviderBridge) worldServer.provider).bridge$getClientDimensionId(playerIn);
+
+        if (fromClientDimId == toClientDimId) {
+            int fakeDimId;
+            switch (fromClientDimId) {
+                case 1:
+                    fakeDimId = -1;
+                    break;
+                case 0:
+                    fakeDimId = 1;
+                    break;
+                default:
+                    fakeDimId = 0;
+                    break;
             }
+
+            playerIn.connection.sendPacket(new SPacketRespawn(fakeDimId, worldServer.getDifficulty(), worldServer.getWorldType(), playerIn.interactionManager.getGameType()));
         }
-        newPlayer.connection.sendPacket(new SPacketRespawn(dimensionId, worldServer.getDifficulty(), worldServer
-                .getWorldInfo().getTerrainType(), newPlayer.interactionManager.getGameType()));
+
+        newPlayer.connection.sendPacket(new SPacketRespawn(toClientDimId, worldServer.getDifficulty(), worldServer.getWorldInfo().getTerrainType(), newPlayer.interactionManager.getGameType()));
         newPlayer.connection.sendPacket(new SPacketServerDifficulty(worldServer.getDifficulty(), worldServer.getWorldInfo().isDifficultyLocked()));
-        newPlayer.connection.setPlayerLocation(location.getX(), location.getY(), location.getZ(),
-                (float) toTransform.getYaw(), (float) toTransform.getPitch());
+        newPlayer.connection.setPlayerLocation(location.getX(), location.getY(), location.getZ(), (float) toTransform.getYaw(), (float) toTransform.getPitch());
 
         final BlockPos spawnLocation = worldServer.getSpawnPoint();
         newPlayer.connection.sendPacket(new SPacketSpawnPosition(spawnLocation));
-        newPlayer.connection.sendPacket(new SPacketSetExperience(newPlayer.experience, newPlayer.experienceTotal,
-                newPlayer.experienceLevel));
+        newPlayer.connection.sendPacket(new SPacketSetExperience(newPlayer.experience, newPlayer.experienceTotal, newPlayer.experienceLevel));
         this.updateTimeAndWeatherForPlayer(newPlayer, worldServer);
         this.updatePermissionLevel(newPlayer);
         worldServer.getPlayerChunkMap().addPlayer(newPlayer);
@@ -337,12 +338,12 @@ public abstract class MixinPlayerList implements PlayerListBridge {
         newPlayer.addSelfToInternalCraftingInventory();
 
         // Update reducedDebugInfo game rule
-        newPlayer.connection.sendPacket(new SPacketEntityStatus(newPlayer,
-                worldServer.getGameRules().getBoolean(DefaultGameRules.REDUCED_DEBUG_INFO) ? (byte) 22 : 23));
+        newPlayer.connection.sendPacket(new SPacketEntityStatus(newPlayer, worldServer.getGameRules().getBoolean(DefaultGameRules.REDUCED_DEBUG_INFO) ? (byte) 22 : 23));
 
         for (PotionEffect potioneffect : newPlayer.getActivePotionEffects()) {
             newPlayer.connection.sendPacket(new SPacketEntityEffect(newPlayer.getEntityId(), potioneffect));
         }
+
         ((ServerPlayerEntityBridge) newPlayer).refreshScaledHealth();
         newPlayer.connection.sendPacket(new SPacketHeldItemChange(playerIn.inventory.currentItem));
         SpongeCommonEventFactory.callPostPlayerRespawnEvent(newPlayer, conqueredEnd);

@@ -41,6 +41,7 @@ import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.GameType;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.storage.WorldInfo;
@@ -75,6 +76,7 @@ import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.bridge.world.GameRulesBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.bridge.world.WorldSettingsBridge;
 import org.spongepowered.common.config.SpongeConfig;
 import org.spongepowered.common.config.type.WorldConfig;
@@ -88,7 +90,6 @@ import org.spongepowered.common.registry.type.world.PortalAgentRegistryModule;
 import org.spongepowered.common.registry.type.world.WorldGeneratorModifierRegistryModule;
 import org.spongepowered.common.util.Constants;
 import org.spongepowered.common.util.FunctionalUtil;
-import org.spongepowered.common.world.WorldManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -230,8 +231,16 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
             return;
         }
 
-        final String name = WorldManager.getWorldFolderByDimensionId(this.dimensionId).orElse(this.levelName);
-        if (!this.levelName.equalsIgnoreCase(name)) {
+        final WorldServer worldServer = SpongeImpl.getWorldManager().getWorld(this.dimensionId);
+
+        String name;
+        if (worldServer == null) {
+            name = this.levelName;
+        } else {
+            name = ((WorldProviderBridge) worldServer.provider).bridge$getSaveFolder();
+        }
+
+        if (name != null) {
             this.levelName = name;
         }
     }
@@ -244,11 +253,11 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
 
         if (this.isValid()) {
             this.worldConfig =
-                    new SpongeConfig<>(SpongeConfig.Type.WORLD, ((DimensionTypeBridge) this.dimensionType).getConfigPath()
+                    new SpongeConfig<>(SpongeConfig.Type.WORLD, ((DimensionTypeBridge) this.dimensionType).bridge$getConfigPath()
                             .resolve(this.levelName)
                             .resolve("world.conf"),
                             SpongeImpl.ECOSYSTEM_ID,
-                            ((DimensionTypeBridge) getDimensionType()).getDimensionConfig(),
+                            ((DimensionTypeBridge) getDimensionType()).bridge$getDimensionConfig(),
                             false);
         } else {
             this.worldConfig = SpongeConfig.newDummyConfig(SpongeConfig.Type.WORLD);
@@ -443,8 +452,8 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
             return;
         }
 
-        // If the difficulty is set, we need to sync it to the players in the world attached to the worldinfo (if any)
-        WorldManager.getWorlds()
+        // If the difficulty is set, we need to sync it to the players in the world (if any)
+        SpongeImpl.getWorldManager().getWorlds()
           .stream()
           .filter(world -> world.getWorldInfo() == (WorldInfo) (Object) this)
           .flatMap(world -> world.playerEntities.stream())
@@ -639,7 +648,7 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
     public boolean loadOnStartup() {
         Boolean loadOnStartup = this.getConfigAdapter().getConfig().getWorld().loadOnStartup();
         if (loadOnStartup == null) {
-           loadOnStartup = ((DimensionTypeBridge) this.dimensionType).shouldGenerateSpawnOnLoad();
+           loadOnStartup = ((DimensionTypeBridge) this.dimensionType).bridge$shouldGenerateSpawnOnLoad();
            this.setLoadOnStartup(loadOnStartup);
         }
         return loadOnStartup;
@@ -655,10 +664,10 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
     public boolean doesKeepSpawnLoaded() {
         Boolean keepSpawnLoaded = this.getConfigAdapter().getConfig().getWorld().getKeepSpawnLoaded();
         if (keepSpawnLoaded == null) {
-            keepSpawnLoaded = ((DimensionTypeBridge) this.dimensionType).shouldLoadSpawn();
+            keepSpawnLoaded = ((DimensionTypeBridge) this.dimensionType).bridge$shouldLoadSpawn();
         } else if (this.isMod && !keepSpawnLoaded) { // If disabled and a mod dimension, validate
             if (this.dimensionId == ((net.minecraft.world.DimensionType)(Object) this.dimensionType).getId()) {
-                keepSpawnLoaded = ((DimensionTypeBridge) this.dimensionType).shouldKeepSpawnLoaded();
+                keepSpawnLoaded = ((DimensionTypeBridge) this.dimensionType).bridge$shouldKeepSpawnLoaded();
                 this.setKeepSpawnLoaded(keepSpawnLoaded);
             }
         }
@@ -675,7 +684,7 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
     public boolean doesGenerateSpawnOnLoad() {
         Boolean shouldGenerateSpawn = this.getConfigAdapter().getConfig().getWorld().getGenerateSpawnOnLoad();
         if (shouldGenerateSpawn == null) {
-            shouldGenerateSpawn = ((DimensionTypeBridge) this.dimensionType).shouldGenerateSpawnOnLoad();
+            shouldGenerateSpawn = ((DimensionTypeBridge) this.dimensionType).bridge$shouldGenerateSpawnOnLoad();
             this.setGenerateSpawnOnLoad(shouldGenerateSpawn);
         }
         return shouldGenerateSpawn;
@@ -809,7 +818,7 @@ public abstract class MixinWorldInfo implements WorldProperties, WorldInfoBridge
         this.uuid = nbtUniqueId;
         this.dimensionId = nbt.getInteger(Constants.Sponge.World.DIMENSION_ID);
         final String dimensionTypeId = nbt.getString(Constants.Sponge.World.DIMENSION_TYPE);
-        final DimensionType dimensionType = (org.spongepowered.api.world.DimensionType)(Object) WorldManager.getDimensionType(this.dimensionId).orElse(null);
+        final DimensionType dimensionType = (org.spongepowered.api.world.DimensionType) (Object) SpongeImpl.getWorldManager().getRegisteredDimension(this.dimensionId);
         this.setDimensionType(dimensionType != null ? dimensionType : DimensionTypeRegistryModule.getInstance().getById(dimensionTypeId)
                 .orElseThrow(FunctionalUtil.invalidArgument("Could not find a DimensionType registered for world '" + this.getWorldName() + "' with dim id: " + this.dimensionId)));
         this.generateBonusChest = nbt.getBoolean(Constants.World.GENERATE_BONUS_CHEST);

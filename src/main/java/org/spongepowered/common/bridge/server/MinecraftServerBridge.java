@@ -24,7 +24,12 @@
  */
 package org.spongepowered.common.bridge.server;
 
+import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.WorldServer;
+import org.spongepowered.api.resourcepack.ResourcePack;
+import org.spongepowered.common.world.WorldManager;
+
+import javax.annotation.Nullable;
 
 public interface MinecraftServerBridge {
 
@@ -37,4 +42,9 @@ public interface MinecraftServerBridge {
     void bridge$prepareSpawnArea(WorldServer worldServer);
 
     void bridge$setSaveEnabled(boolean enabled);
+
+    @Nullable
+    ResourcePack bridge$getSpongeResourcePack();
+
+    void bridge$updateWorldForDifficulty(WorldServer worldServer, EnumDifficulty difficulty, boolean isCustom);
 }

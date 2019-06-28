@@ -91,6 +91,7 @@ import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.entity.GrieferBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.WorldBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.bridge.world.chunk.ActiveChunkReferantBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.data.nbt.CustomDataNbtUtil;
@@ -197,7 +198,7 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;dimension:I", opcode = Opcodes.PUTFIELD))
     private void impl$UpdateDimension(final Entity self, final int dimensionId, final net.minecraft.world.World worldIn) {
         if (worldIn instanceof ServerWorldBridge) {
-            self.dimension = ((ServerWorldBridge) worldIn).bridge$getDimensionId();
+            self.dimension = ((WorldProviderBridge) worldIn.provider).bridge$getDimensionId();
         } else {
             self.dimension = dimensionId;
         }
@@ -379,7 +380,7 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
         }
         if (this.world != location.getExtent()) {
             this.world = (net.minecraft.world.World) location.getExtent();
-            this.dimension = ((ServerWorldBridge) this.world).bridge$getDimensionId();
+            this.dimension = ((WorldProviderBridge) world.provider).bridge$getDimensionId();
         }
     }
 
@@ -398,7 +399,7 @@ public abstract class MixinEntity implements EntityBridge, TrackableBridge, Vani
         }
         if (this.world != transform.getExtent()) {
             this.world = (net.minecraft.world.World) transform.getExtent();
-            this.dimension = ((ServerWorldBridge) this.world).bridge$getDimensionId();
+            this.dimension = ((WorldProviderBridge) world.provider).bridge$getDimensionId();
         }
     }
 

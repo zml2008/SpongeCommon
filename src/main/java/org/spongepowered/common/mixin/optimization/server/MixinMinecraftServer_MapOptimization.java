@@ -25,14 +25,17 @@
 package org.spongepowered.common.mixin.optimization.server;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.MapData;
 import net.minecraft.world.storage.WorldSavedData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.bridge.optimization.OptimizedMapDataBridge;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.mixin.core.world.storage.AccessorMapStorage;
 import org.spongepowered.common.world.WorldManager;
 
@@ -49,13 +52,15 @@ public abstract class MixinMinecraftServer_MapOptimization {
 
         final List<WorldSavedData> data;
 
+        final WorldServer defaultWorld = SpongeImpl.getWorldManager().getDefaultWorld();
+
         // Mods, such as TwilightForest, may add themselves to this list when ticking which will cause a CME.
         if (!SpongeImplHooks.isVanilla()) {
             data = new ArrayList<>(
-                ((AccessorMapStorage) (WorldManager.getWorldByDimensionId(0).orElse(null).getMapStorage())).getLoadedDataList());
+                ((AccessorMapStorage) (defaultWorld.getMapStorage())).getLoadedDataList());
         }
         else {
-            data = ((AccessorMapStorage) (WorldManager.getWorldByDimensionId(0).orElse(null).getMapStorage())).getLoadedDataList();
+            data = ((AccessorMapStorage) (defaultWorld.getMapStorage())).getLoadedDataList();
         }
 
         data

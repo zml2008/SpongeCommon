@@ -29,7 +29,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.flowpowered.math.vector.Vector3d;
 import com.google.common.base.MoreObjects;
 import net.minecraft.inventory.InventoryEnderChest;
+import net.minecraft.world.storage.WorldInfo;
 import org.spongepowered.api.data.DataView;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.api.data.persistence.InvalidDataException;
@@ -45,11 +47,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.data.InvulnerableTrackedBridge;
 import org.spongepowered.common.bridge.data.VanishingBridge;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.entity.player.SpongeUser;
 import org.spongepowered.common.interfaces.IMixinSubject;
-import org.spongepowered.common.bridge.entity.EntityBridge;
 import org.spongepowered.common.bridge.world.WorldInfoBridge;
-import org.spongepowered.common.mixin.api.minecraft.entity.player.MixinEntityPlayerMP_API;
 import org.spongepowered.common.world.WorldManager;
 
 import java.util.Optional;
@@ -63,7 +64,7 @@ public abstract class MixinSpongeUser implements User, IMixinSubject, Invulnerab
     @Shadow private double posX;
     @Shadow private double posY;
     @Shadow private double posZ;
-    @Shadow private int dimension;
+    @Shadow private int dimensionId;
     @Shadow private float rotationPitch;
     @Shadow private float rotationYaw;
     @Shadow private boolean invulnerable;
@@ -122,22 +123,32 @@ public abstract class MixinSpongeUser implements User, IMixinSubject, Invulnerab
         if (playerOpt.isPresent()) {
             return playerOpt.get().getWorldUniqueId();
         }
-        Optional<String> folder = WorldManager.getWorldFolderByDimensionId(this.dimension);
-        return folder.map(WorldManager::getWorldProperties).flatMap(e -> e.map(WorldProperties::getUniqueId));
+        final WorldInfo worldInfo = SpongeImpl.getWorldManager().getWorldInfo(this.dimensionId);
+        if (worldInfo == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(((WorldProperties) worldInfo).getUniqueId());
     }
 
     @Override
     public boolean setLocation(Vector3d position, UUID world) {
-        Optional<Player> playerOpt = getPlayer();
-        if (playerOpt.isPresent()) {
-            return playerOpt.get().setLocation(position, world);
+        final Player player = this.getPlayer().orElse(null);
+        if (player != null) {
+            return player.setLocation(position, world);
         }
-        WorldProperties prop = WorldManager.getWorldProperties(world).orElseThrow(() -> new IllegalArgumentException("Invalid World: No world found for UUID"));
-        Integer dimensionId = ((WorldInfoBridge) prop).getDimensionId();
+
+        final WorldInfo worldInfo = SpongeImpl.getWorldManager().getWorldInfo(world);
+        if (worldInfo == null) {
+            throw new IllegalArgumentException("Invalid World: No world found for UUID.");
+        }
+
+        final Integer dimensionId = ((WorldInfoBridge) worldInfo).getDimensionId();
         if (dimensionId == null) {
-            throw new IllegalArgumentException("Invalid World: missing dimensionID)");
+            throw new IllegalArgumentException("Invalid World: Missing dimension id.");
         }
-        this.dimension = dimensionId;
+
+        this.dimensionId = dimensionId;
         this.posX = position.getX();
         this.posY = position.getY();
         this.posZ = position.getZ();
@@ -147,11 +158,8 @@ public abstract class MixinSpongeUser implements User, IMixinSubject, Invulnerab
 
     @Override
     public Vector3d getRotation() {
-        Optional<Player> playerOpt = getPlayer();
-        if (playerOpt.isPresent()) {
-            return playerOpt.get().getRotation();
-        }
-        return new Vector3d(this.rotationPitch, this.rotationYaw, 0);
+        Optional<Player> player = this.getPlayer();
+        return player.map(Entity::getRotation).orElseGet(() -> new Vector3d(this.rotationPitch, this.rotationYaw, 0));
     }
 
     @Override

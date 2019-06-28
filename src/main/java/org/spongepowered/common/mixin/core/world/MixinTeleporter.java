@@ -43,6 +43,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.entity.InvokingTeleporterContext;
 import org.spongepowered.common.bridge.world.TeleporterBridge;
@@ -220,7 +221,7 @@ public class MixinTeleporter implements TeleporterBridge {
             this.placeInPortal(entity, yaw);
             didPort = true;
         } else {
-            if (((ServerWorldBridge) this.world).bridge$getDimensionId() == 1) {
+            if (((WorldProviderBridge) this.world.provider).bridge$getDimensionId() == 1) {
                 didPort = true;
             } else {
                 didPort = this.placeInExistingPortal(entity, yaw);
@@ -246,7 +247,7 @@ public class MixinTeleporter implements TeleporterBridge {
                 .add("searchRadius", this.searchRadius)
                 .add("creationRadius", this.creationRadius)
                 .add("world", this.world.getWorldInfo().getWorldName())
-                .add("dimensionId", ((ServerWorldBridge) this.world).bridge$getDimensionId())
+                .add("dimensionId", ((WorldProviderBridge) this.world.provider).bridge$getDimensionId())
                 .toString();
     }
 }

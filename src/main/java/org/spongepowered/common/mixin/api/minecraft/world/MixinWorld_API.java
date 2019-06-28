@@ -67,6 +67,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
+import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockState;
@@ -114,6 +115,7 @@ import org.spongepowered.api.world.explosion.Explosion;
 import org.spongepowered.api.world.extent.Extent;
 import org.spongepowered.api.world.extent.worker.MutableBiomeVolumeWorker;
 import org.spongepowered.api.world.extent.worker.MutableBlockVolumeWorker;
+import org.spongepowered.api.world.storage.ChunkLayout;
 import org.spongepowered.api.world.storage.WorldProperties;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -127,7 +129,6 @@ import org.spongepowered.common.registry.provider.DirectionFacingProvider;
 import org.spongepowered.common.util.Constants;
 import org.spongepowered.common.bridge.data.CustomDataHolderBridge;
 import org.spongepowered.common.util.VecHelper;
-import org.spongepowered.common.world.SpongeDimension;
 import org.spongepowered.common.world.extent.ExtentViewDownsize;
 import org.spongepowered.common.world.extent.worker.SpongeMutableBiomeVolumeWorker;
 import org.spongepowered.common.world.extent.worker.SpongeMutableBlockVolumeWorker;
@@ -186,7 +187,6 @@ public abstract class MixinWorld_API implements World {
 
     @Nullable private Context worldContext;
     boolean processingExplosion = false;
-    @Nullable private SpongeDimension api$dimension;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -415,10 +415,7 @@ public abstract class MixinWorld_API implements World {
 
     @Override
     public Dimension getDimension() {
-        if (this.api$dimension == null) {
-            this.api$dimension = new SpongeDimension(this.provider);
-        }
-        return this.api$dimension;
+        return (Dimension) (Object) this.provider;
     }
 
     @Override
@@ -857,16 +854,17 @@ public abstract class MixinWorld_API implements World {
     }
 
     private Set<EntityHit> getIntersectingEntities(Vector3d start, double yDirection, double distance, Predicate<EntityHit> filter) {
+        final SpongeChunkLayout chunkLayout = SpongeChunkLayout.instance;
         final Set<EntityHit> intersecting = new HashSet<>();
         // Current chunk
         final Vector3d direction = yDirection < 0 ? Vector3d.UNIT_Y.negate() : Vector3d.UNIT_Y;
         final double endY = start.getY() + yDirection * distance;
-        final Vector3i chunkPos = SpongeChunkLayout.instance.forceToChunk(start.toInt());
+        final Vector3i chunkPos = chunkLayout.forceToChunk(start.toInt());
         ((ChunkBridge) getChunk(chunkPos).get()).getIntersectingEntities(start, direction, distance, filter, start.getY(), endY, intersecting);
         // Check adjacent chunks if near them
         final int nearDistance = 2;
         // Neighbour -x chunk
-        final Vector3i chunkBlockPos = SpongeChunkLayout.instance.forceToWorld(chunkPos);
+        final Vector3i chunkBlockPos = chunkLayout.forceToWorld(chunkPos);
         if (start.getX() - chunkBlockPos.getX() <= nearDistance) {
             ((ChunkBridge) getChunk(chunkPos.add(-1, 0, 0)).get())
                     .getIntersectingEntities(start, direction, distance, filter, start.getY(), endY, intersecting);

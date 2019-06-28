@@ -69,6 +69,7 @@ import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.SpongeImplHooks;
 import org.spongepowered.common.bridge.entity.player.ServerPlayerEntityBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 import org.spongepowered.common.entity.player.SpongeUser;
 import org.spongepowered.common.mixin.core.server.AccessorPlayerList;
 import org.spongepowered.common.mixin.core.server.MixinPlayerList;
@@ -163,7 +164,7 @@ public final class NetworkUtil {
 
         final NBTTagCompound nbttagcompound = playerList.readPlayerDataFromFile(playerIn);
         WorldServer worldServer = ((AccessorPlayerList) playerList).accessor$getPlayerListServer().getWorld(playerIn.dimension);
-        final int actualDimensionId = ((ServerWorldBridge) worldServer).bridge$getDimensionId();
+        final int actualDimensionId = ((WorldProviderBridge) worldServer.provider).bridge$getDimensionId();
         final BlockPos spawnPos;
         // Join data
         final Optional<Instant> firstJoined = SpongePlayerDataHandler.getFirstJoined(playerIn.getUniqueID());
@@ -236,7 +237,7 @@ public final class NetworkUtil {
         final float pitch = (float) loginEvent.getToTransform().getPitch();
         final float yaw = (float) loginEvent.getToTransform().getYaw();
 
-        playerIn.dimension = ((ServerWorldBridge) worldServer).bridge$getDimensionId();
+        playerIn.dimension = ((WorldProviderBridge) worldServer.provider).bridge$getDimensionId();
         playerIn.setWorld(worldServer);
         playerIn.interactionManager.setWorld((WorldServer) playerIn.world);
         playerIn.setPositionAndRotation(x, y, z, yaw, pitch);
@@ -264,10 +265,7 @@ public final class NetworkUtil {
         // Sponge end
 
         // Support vanilla clients logging into custom dimensions
-        final int dimensionId = WorldManager.getClientDimensionId(playerIn, worldServer);
-
-        // Send dimension registration
-        WorldManager.sendDimensionRegistration(playerIn, worldServer.provider);
+        final int dimensionId = ((WorldProviderBridge) worldServer.provider).bridge$getClientDimensionId(playerIn);
 
         handler.sendPacket(new SPacketJoinGame(playerIn.getEntityId(), playerIn.interactionManager.getGameType(), worldinfo
                 .isHardcoreModeEnabled(), dimensionId, worldServer.getDifficulty(), playerList.getMaxPlayers(), worldinfo
@@ -289,7 +287,7 @@ public final class NetworkUtil {
         // Sponge start - add world name to message
         ((AccessorPlayerList) playerList).accessor$getPlayerListLogger().info("{} [{}] logged in with entity id [{}] in {} ({}/{}) at ({}, {}, {}).", playerIn.getName(), s1, playerIn.getEntityId(),
             worldServer.getWorldInfo().getWorldName(), ((DimensionType) (Object) worldServer.provider.getDimensionType()).getId(),
-            ((ServerWorldBridge) worldServer).bridge$getDimensionId(), playerIn.posX, playerIn.posY, playerIn.posZ);
+            ((WorldProviderBridge) worldServer.provider).bridge$getDimensionId(), playerIn.posX, playerIn.posY, playerIn.posZ);
         // Sponge end
 
         playerList.updateTimeAndWeatherForPlayer(playerIn, worldServer);

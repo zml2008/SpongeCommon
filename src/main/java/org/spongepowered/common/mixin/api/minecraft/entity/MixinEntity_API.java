@@ -74,6 +74,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.data.CustomDataHolderBridge;
 import org.spongepowered.common.bridge.data.VanishingBridge;
+import org.spongepowered.common.bridge.world.WorldBridge;
 import org.spongepowered.common.bridge.world.chunk.ServerChunkProviderBridge;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
 import org.spongepowered.common.bridge.world.TeleporterBridge;
@@ -193,7 +194,7 @@ public abstract class MixinEntity_API implements org.spongepowered.api.entity.En
             return false;
         }
 
-        if (!WorldManager.isKnownWorld((WorldServer) location.getExtent())) {
+        if (((WorldBridge) location.getExtent()).isFake()) {
             return false;
         }
 

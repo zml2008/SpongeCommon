@@ -49,10 +49,8 @@ import org.spongepowered.common.world.WorldManager;
 import java.nio.file.Path;
 
 @Mixin(DimensionType.class)
-@Implements(value = @Interface(iface = org.spongepowered.api.world.DimensionType.class, prefix = "dimensionType$"))
 public abstract class MixinDimensionType implements DimensionTypeBridge {
 
-    @Shadow @Final private Class <? extends WorldProvider> clazz;
     @Shadow public abstract String getName();
 
     private String sanitizedId;
@@ -65,87 +63,62 @@ public abstract class MixinDimensionType implements DimensionTypeBridge {
     private boolean loadSpawn;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    public void onConstruct(String enumName, int ordinal, int idIn, String nameIn, String suffixIn, Class <? extends WorldProvider > clazzIn,
-            CallbackInfo ci) {
-        String dimName = enumName.toLowerCase().replace(" ", "_").replaceAll("[^A-Za-z0-9_]", "");
+    private void onConstruct(String enumName, int ordinal, int idIn, String nameIn, String suffixIn, Class<? extends WorldProvider> clazzIn, CallbackInfo ci) {
+        final String dimName = enumName.toLowerCase().replace(" ", "_").replaceAll("[^A-Za-z0-9_]", "");
         this.enumName = dimName;
         this.modId = SpongeImplHooks.getModIdFromClass(clazzIn);
         this.configPath = SpongeImpl.getSpongeConfigDir().resolve("worlds").resolve(this.modId).resolve(this.enumName);
-        this.config = new SpongeConfig<>(SpongeConfig.Type.DIMENSION, this.configPath.resolve("dimension.conf"), SpongeImpl.ECOSYSTEM_ID,
-            SpongeImpl.getGlobalConfigAdapter(), false);
+        this.config = new SpongeConfig<>(SpongeConfig.Type.DIMENSION, this.configPath.resolve("dimension.conf"), SpongeImpl.ECOSYSTEM_ID, SpongeImpl.getGlobalConfigAdapter(), false);
         this.generateSpawnOnLoad = idIn == 0;
         this.loadSpawn = this.generateSpawnOnLoad;
         this.config.getConfig().getWorld().setGenerateSpawnOnLoad(this.generateSpawnOnLoad);
         this.sanitizedId = this.modId + ":" + dimName;
-        String contextId = this.sanitizedId.replace(":", ".");
+        final String contextId = this.sanitizedId.replace(":", ".");
         this.context = new Context(Context.DIMENSION_KEY, contextId);
-        if (!WorldManager.isDimensionRegistered(idIn)) {
-            DimensionTypeRegistryModule.getInstance().registerAdditionalCatalog((org.spongepowered.api.world.DimensionType) this);
-        }
     }
 
     @Override
-    public boolean shouldGenerateSpawnOnLoad() {
+    public boolean bridge$shouldGenerateSpawnOnLoad() {
         return this.generateSpawnOnLoad;
     }
 
     @Override
-    public boolean shouldLoadSpawn() {
+    public boolean bridge$shouldLoadSpawn() {
         return this.loadSpawn;
     }
 
     @Override
-    public void setShouldLoadSpawn(boolean keepSpawnLoaded) {
+    public void bridge$setShouldLoadSpawn(boolean keepSpawnLoaded) {
         this.loadSpawn = keepSpawnLoaded;
     }
 
-    public String dimensionType$getId() {
-        return this.sanitizedId;
-    }
-
-    @Intrinsic
-    public String dimensionType$getName() {
-        return this.getName();
-    }
-
     @Override
-    public String getEnumName() {
+    public String bridge$getEnumName() {
         return this.enumName;
     }
 
     @Override
-    public String getModId() {
+    public String bridge$getModId() {
         return this.modId;
     }
 
     @Override
-    public Path getConfigPath() {
+    public Path bridge$getConfigPath() {
         return this.configPath;
     }
 
-    @SuppressWarnings("unchecked")
-    public Class<? extends Dimension> dimensionType$getDimensionClass() {
-        return (Class<? extends Dimension>) this.clazz;
-    }
-
     @Override
-    public SpongeConfig<DimensionConfig> getDimensionConfig() {
+    public SpongeConfig<DimensionConfig> bridge$getDimensionConfig() {
         return this.config;
     }
 
     @Override
-    public Context getContext() {
+    public Context bridge$getContext() {
         return this.context;
     }
 
-    /**
-     * @author Zidane - March 30th, 2016
-     * @reason This method generally checks dimension type ids (-1 | 0 | 1) in Vanilla. I change this assumption to dimension
-     * instance ids. Since the WorldManager tracks dimension instance ids by dimension type ids and Vanilla keeps
-     * their ids 1:1, this is a safe change that ensures a mixup can't happen.
-     */
-    @Overwrite
-    public static DimensionType getById(int dimensionTypeId) {
-        return WorldManager.getDimensionTypeByTypeId(dimensionTypeId).orElseThrow(() -> new IllegalArgumentException("Invalid dimension id " + dimensionTypeId));
+    @Override
+    public String bridge$getProperId() {
+        return this.sanitizedId;
     }
 }

@@ -51,6 +51,7 @@ import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.api.item.inventory.type.CarriedInventory;
 import org.spongepowered.api.util.RespawnLocation;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.data.nbt.CustomDataNbtUtil;
 import org.spongepowered.common.data.type.SpongeEquipmentType;
 import org.spongepowered.common.data.util.NbtDataUtil;
@@ -533,7 +534,7 @@ public class SpongeUser implements ArmorEquipable, Tamer, DataSerializable, Carr
     }
 
     public void save() {
-        SaveHandler saveHandler = (SaveHandler) WorldManager.getWorldByDimensionId(0).get().getSaveHandler();
+        final SaveHandler saveHandler = (SaveHandler) SpongeImpl.getWorldManager().getDefaultWorld().getSaveHandler();
         File dataFile = new File(saveHandler.playersDirectory, getUniqueId() + ".dat");
         NBTTagCompound tag;
         if (dataFile.isFile()) {

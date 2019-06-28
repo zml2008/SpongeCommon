@@ -45,6 +45,7 @@ import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.bridge.world.chunk.ChunkBridge;
 import org.spongepowered.common.entity.EntityUtil;
 import org.spongepowered.common.entity.PlayerTracker;
@@ -142,41 +143,35 @@ final class CommandState extends GeneralState<CommandPhaseContext> {
         phaseContext.getPerEntityItemDropSupplier()
             .acceptAndClearIfNotEmpty(uuidItemStackMultimap ->
             {
-                for (Map.Entry<UUID, Collection<ItemDropData>> entry : uuidItemStackMultimap.asMap().entrySet())
-                {
+                for (Map.Entry<UUID, Collection<ItemDropData>> entry : uuidItemStackMultimap.asMap().entrySet()) {
                     final UUID key = entry.getKey();
                     @Nullable
                     net.minecraft.entity.Entity foundEntity = null;
-                    for (WorldServer worldServer : WorldManager.getWorlds())
-                    {
+                    for (WorldServer worldServer : SpongeImpl.getWorldManager().getWorlds()) {
                         final net.minecraft.entity.Entity entityFromUuid = worldServer.getEntityFromUuid(key);
-                        if (entityFromUuid != null)
-                        {
+                        if (entityFromUuid != null) {
                             foundEntity = entityFromUuid;
                             break;
                         }
                     }
                     final Optional<Entity> affectedEntity = Optional.ofNullable((Entity) foundEntity);
-                    if (!affectedEntity.isPresent())
-                    {
+                    if (!affectedEntity.isPresent()) {
                         continue;
                     }
                     final Collection<ItemDropData> itemStacks = entry.getValue();
-                    if (itemStacks.isEmpty())
-                    {
+                    if (itemStacks.isEmpty()) {
                         return;
                     }
                     final List<ItemDropData> items = new ArrayList<>();
                     items.addAll(itemStacks);
                     itemStacks.clear();
 
-                    final WorldServer minecraftWorld = (WorldServer) affectedEntity.get().getWorld();
-                    if (!items.isEmpty())
-                    {
+                    final WorldServer worldServer = (WorldServer) affectedEntity.get().getWorld();
+                    if (!items.isEmpty()) {
                         csm.addContext(EventContextKeys.SPAWN_TYPE, SpawnTypes.DROPPED_ITEM);
 
                         final List<Entity> itemEntities = items.stream()
-                            .map(data -> data.create(minecraftWorld))
+                            .map(data -> data.create(worldServer))
                             .map(entity -> (Entity) entity)
                             .collect(Collectors.toList());
                         csm.pushCause(affectedEntity.get());
@@ -184,8 +179,7 @@ final class CommandState extends GeneralState<CommandPhaseContext> {
                             SpongeEventFactory.createDropItemEventDestruct(csm.getCurrentCause(), itemEntities);
                         SpongeImpl.postEvent(destruct);
                         csm.popCause();
-                        if (!destruct.isCancelled())
-                        {
+                        if (!destruct.isCancelled()) {
                             final boolean isPlayer = sender instanceof Player;
                             final Player player = isPlayer ? (Player) sender : null;
                             EntityUtil.processEntitySpawnsFromEvent(destruct, () -> Optional.ofNullable(isPlayer ? player : null));

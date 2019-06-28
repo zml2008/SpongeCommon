@@ -32,6 +32,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.storage.IChunkLoader;
 import net.minecraft.world.chunk.storage.RegionFile;
 import net.minecraft.world.chunk.storage.RegionFileCache;
+import org.spongepowered.api.Server;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.util.Functional;
 import org.spongepowered.common.SpongeImpl;

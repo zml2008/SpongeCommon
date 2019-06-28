@@ -56,7 +56,7 @@ import org.spongepowered.common.config.type.WorldConfig;
 import org.spongepowered.common.entity.PlayerTracker;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.phase.generation.GenerationPhase;
-import org.spongepowered.common.profile.SpongeProfileManager;
+import org.spongepowered.common.profile.SpongeGameProfileManager;
 import org.spongepowered.common.util.Constants;
 import org.spongepowered.common.util.SpongeHooks;
 import org.spongepowered.common.util.SpongeUsernameCache;
@@ -300,7 +300,7 @@ public abstract class MixinChunk_Tracker implements ChunkBridge {
         }
 
         // If we reach this point, queue UUID for async lookup and return empty
-        ((SpongeProfileManager) Sponge.getServer().getGameProfileManager()).lookupUserAsync(uuid);
+        ((SpongeGameProfileManager) Sponge.getServer().getGameProfileManager()).lookupUserAsync(uuid);
         return Optional.empty();
     }
 

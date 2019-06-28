@@ -22,33 +22,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.bridge.world;
+package org.spongepowered.common.bridge;
 
-import org.spongepowered.api.service.context.Context;
-import org.spongepowered.common.config.SpongeConfig;
-import org.spongepowered.common.config.type.DimensionConfig;
+import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.service.permission.SubjectReference;
+import org.spongepowered.api.util.Tristate;
 
-import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
-public interface DimensionTypeBridge {
+public interface SubjectBridge {
 
-    SpongeConfig<DimensionConfig> bridge$getDimensionConfig();
+    void bridge$setSubject(SubjectReference subj);
 
-    Context bridge$getContext();
+    CompletableFuture<Subject> bridge$loadInternalSubject();
 
-    String bridge$getEnumName();
+    String bridge$getSubjectCollectionIdentifier();
 
-    String bridge$getModId();
-
-    Path bridge$getConfigPath();
-
-    boolean bridge$shouldGenerateSpawnOnLoad();
-
-    boolean bridge$shouldLoadSpawn();
-
-    boolean bridge$shouldKeepSpawnLoaded();
-
-    void bridge$setShouldLoadSpawn(boolean keepSpawnLoaded);
-
-    String bridge$getProperId();
+    Tristate bridge$getPermissionDefault(String permission);
 }

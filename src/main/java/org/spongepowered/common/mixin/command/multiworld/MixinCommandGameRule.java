@@ -35,6 +35,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.common.bridge.world.ServerWorldBridge;
+import org.spongepowered.common.bridge.world.WorldProviderBridge;
 
 @Mixin(CommandGameRule.class)
 public abstract class MixinCommandGameRule {
@@ -45,7 +46,7 @@ public abstract class MixinCommandGameRule {
     private static int currentDimension;
 
     private static GameRules getGameRules(ICommandSender sender) {
-        currentDimension = ((ServerWorldBridge) sender.getEntityWorld()).bridge$getDimensionId();
+        currentDimension = ((WorldProviderBridge) sender.getEntityWorld().provider).bridge$getDimensionId();
         return sender.getEntityWorld().getGameRules();
     }
 

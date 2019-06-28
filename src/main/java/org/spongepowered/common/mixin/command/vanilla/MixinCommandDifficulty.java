@@ -33,22 +33,26 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.world.WorldManager;
 
 @Mixin(CommandDifficulty.class)
 public abstract class MixinCommandDifficulty {
 
-  /**
-   * @author Minecrell - September 28, 2016
-   * @author Zidane - January 31, 2018
-   * @reason Change difficulty only in the world the command was executed in
-   * @reason Redirect to the WorldManager
-   */
-  @Redirect(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;"
-    + "setDifficultyForAllWorlds(Lnet/minecraft/world/EnumDifficulty;)V"))
-  private void onSetDifficulty(MinecraftServer server, EnumDifficulty difficulty, MinecraftServer server2, ICommandSender sender, String[] args) {
-    for (final WorldServer world : SpongeImpl.getServer().worlds) {
-      WorldManager.adjustWorldForDifficulty(world, difficulty, true);
+    /**
+     * @author Minecrell - September 28, 2016
+     * @author Zidane - January 31, 2018
+     * @reason Change difficulty only in the world the command was executed in
+     * @reason Redirect to the WorldManager
+     */
+    @Redirect(method = "execute", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;"
+        + "setDifficultyForAllWorlds(Lnet/minecraft/world/EnumDifficulty;)V"))
+    private void onSetDifficulty(MinecraftServer server, EnumDifficulty difficulty, MinecraftServer server2, ICommandSender sender, String[] args) {
+        final MinecraftServerBridge bridgeServer = (MinecraftServerBridge) SpongeImpl.getServer();
+        final WorldManager worldManager = SpongeImpl.getWorldManager();
+
+        for (final WorldServer worldServer : worldManager.getWorlds()) {
+            bridgeServer.bridge$updateWorldForDifficulty(worldServer, difficulty, true);
+        }
     }
-  }
 }

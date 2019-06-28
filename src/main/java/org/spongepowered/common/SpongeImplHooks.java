@@ -85,6 +85,7 @@ import org.spongepowered.api.item.recipe.crafting.CraftingRecipe;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.storage.WorldProperties;
+import org.spongepowered.common.bridge.server.MinecraftServerBridge;
 import org.spongepowered.common.command.SpongeCommandFactory;
 import org.spongepowered.common.entity.SpongeProfession;
 import org.spongepowered.common.event.tracking.PhaseContext;
@@ -101,7 +102,6 @@ import org.spongepowered.common.mixin.plugin.tileentityactivation.TileEntityActi
 import org.spongepowered.common.registry.type.ItemTypeRegistryModule;
 import org.spongepowered.common.registry.type.entity.ProfessionRegistryModule;
 import org.spongepowered.common.util.SpawnerSpawnType;
-import org.spongepowered.common.world.WorldManager;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -418,8 +418,8 @@ public final class SpongeImplHooks {
         return entity.world.rayTraceBlocks(startPos, endPos);
     }
 
-    public static boolean shouldKeepSpawnLoaded(net.minecraft.world.DimensionType dimensionType, int dimensionId) {
-        final WorldServer worldServer = WorldManager.getWorldByDimensionId(dimensionId).orElse(null);
+    public static boolean shouldKeepSpawnLoaded(net.minecraft.world.DimensionType dimensionType) {
+        final WorldServer worldServer = SpongeImpl.getWorldManager().getWorld(dimensionType);
         return worldServer != null && ((WorldProperties) worldServer.getWorldInfo()).doesKeepSpawnLoaded();
 
     }

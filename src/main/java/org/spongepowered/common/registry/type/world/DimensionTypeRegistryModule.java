@@ -33,7 +33,6 @@ import org.spongepowered.api.world.DimensionType;
 import org.spongepowered.api.world.DimensionTypes;
 import org.spongepowered.common.registry.RegistryHelper;
 import org.spongepowered.common.registry.SpongeAdditionalCatalogRegistryModule;
-import org.spongepowered.common.world.WorldManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -51,8 +50,7 @@ public final class DimensionTypeRegistryModule implements SpongeAdditionalCatalo
 
     @Override
     public void registerDefaults() {
-        WorldManager.registerVanillaTypesAndDimensions();
-        for (net.minecraft.world.DimensionType dimensionType : WorldManager.getDimensionTypes()) {
+        for (net.minecraft.world.DimensionType dimensionType : net.minecraft.world.DimensionType.values()) {
             final DimensionType apiDimensionType = (DimensionType) (Object) dimensionType;
             this.dimensionTypeMappings.put(apiDimensionType.getId(), apiDimensionType);
         }
@@ -64,15 +62,13 @@ public final class DimensionTypeRegistryModule implements SpongeAdditionalCatalo
     }
 
     @Override
-    public void registerAdditionalCatalog(DimensionType dimType) {
-        this.dimensionTypeMappings.put(dimType.getId().toLowerCase(), dimType);
-        WorldManager.registerDimensionType((net.minecraft.world.DimensionType) (Object) dimType);
+    public void registerAdditionalCatalog(DimensionType dimensionType) {
+        this.dimensionTypeMappings.put(dimensionType.getId().toLowerCase(), dimensionType);
     }
 
     @Override
     public Optional<DimensionType> getById(String id) {
         checkNotNull(id);
-        id = WorldManager.fixDimensionTypeId(id);
         return Optional.ofNullable(this.dimensionTypeMappings.get(id.toLowerCase()));
     }
 
@@ -83,7 +79,6 @@ public final class DimensionTypeRegistryModule implements SpongeAdditionalCatalo
 
     @AdditionalRegistration
     public void reApplyDimensionTypes() {
-        // Re-map fields in case mods have changed vanilla providers
         RegistryHelper.mapFields(DimensionTypes.class, this.dimensionTypeMappings);
     }
 
