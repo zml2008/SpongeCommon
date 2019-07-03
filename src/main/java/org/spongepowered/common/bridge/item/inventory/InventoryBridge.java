@@ -22,47 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.item.inventory.lens;
+package org.spongepowered.common.bridge.item.inventory;
 
-import net.minecraft.item.ItemStack;
-import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
+import org.spongepowered.common.item.inventory.util.InventoryUtil;
 
-import java.util.Collection;
-
-/**
- * A fabric is an underlying view of an indexed container, this allows raw
- * inventories and containers to be handled the same via lenses, without the
- * lenses themselves having to care about the type of the target object.
- */
-public interface Fabric {
-
-    /**
-     * Return all inventories which compose this fabric, order is not guaranteed
-     * or enforced.
-     */
-    Collection<?> fabric$allInventories();
-
-    /**
-     * Return the inventory at the specified index in the fabric.
-     *
-     * @param index
-     * @return
-     */
-    @Deprecated // TODO get rid of this replace with fabric$allInventories if possible
-    <TInventory> TInventory fabric$get(int index);
-
-    ItemStack fabric$getStack(int index);
-
-    void fabric$setStack(int index, ItemStack stack);
-
-    int fabric$getMaxStackSize();
-
-    Translation fabric$getDisplayName();
-
-    int fabric$getSize();
-
-    void fabric$clear();
-
-    void fabric$markDirty();
-
+public interface InventoryBridge {
+    default InventoryAdapter bridge$getAdapter() {
+        return InventoryUtil.findAdapter(this);
+    }
 }

@@ -22,69 +22,66 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.item.inventory.lens.impl.fabric;
+package org.spongepowered.common.mixin.core.item.inventory;
 
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.FixedTranslation;
 import org.spongepowered.api.text.translation.Translation;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 
 import java.util.Collection;
 
-@SuppressWarnings("unchecked")
-public class IInventoryFabric extends MinecraftFabric {
+@Mixin(IInventory.class)
+public interface IInventoryFabricMixin extends Fabric, IInventory, InventoryBridge {
 
-    private final IInventory inventory;
-
-    public IInventoryFabric(IInventory inventory) {
-        this.inventory = inventory;
+    @Override
+    default Collection<?> fabric$allInventories() {
+        return ImmutableSet.of(this);
     }
 
     @Override
-    public Collection<?> allInventories() {
-        return ImmutableSet.of(this.inventory);
+    @SuppressWarnings("unchecked")
+    default IInventory fabric$get(int index) {
+        return this;
     }
 
     @Override
-    public IInventory get(int index) {
-        return this.inventory;
+    default ItemStack fabric$getStack(int index) {
+        return this.getStackInSlot(index);
     }
 
     @Override
-    public ItemStack getStack(int index) {
-        return this.inventory.getStackInSlot(index);
+    default void fabric$setStack(int index, ItemStack stack) {
+        this.setInventorySlotContents(index, stack);
     }
 
     @Override
-    public void setStack(int index, ItemStack stack) {
-        this.inventory.setInventorySlotContents(index, stack);
+    default int fabric$getMaxStackSize() {
+        return this.getInventoryStackLimit();
     }
 
     @Override
-    public int getMaxStackSize() {
-        return this.inventory.getInventoryStackLimit();
+    default Translation fabric$getDisplayName() {
+        return new FixedTranslation(this.getDisplayName().getUnformattedText());
     }
 
     @Override
-    public Translation getDisplayName() {
-        return new FixedTranslation(this.inventory.getDisplayName().getUnformattedText());
+    default int fabric$getSize() {
+        return this.getSizeInventory();
     }
 
     @Override
-    public int getSize() {
-        return this.inventory.getSizeInventory();
+    default void fabric$clear() {
+        this.clear();
     }
 
     @Override
-    public void clear() {
-        this.inventory.clear();
-    }
-
-    @Override
-    public void markDirty() {
-        this.inventory.markDirty();
+    default void fabric$markDirty() {
+        this.markDirty();
     }
 
 }

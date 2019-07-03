@@ -22,36 +22,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.mixin.core.inventory;
+package org.spongepowered.common.mixin.api.item.inventory;
 
-import net.minecraft.inventory.InventoryLargeChest;
+import net.minecraft.inventory.IInventory;
 import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
+import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
-import org.spongepowered.common.item.inventory.lens.Fabric;
-import org.spongepowered.common.item.inventory.lens.Lens;
-import org.spongepowered.common.item.inventory.lens.ReusableLensProvider;
-import org.spongepowered.common.item.inventory.lens.SlotProvider;
-import org.spongepowered.common.item.inventory.lens.impl.ReusableLens;
-import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
-import org.spongepowered.common.item.inventory.lens.impl.minecraft.LargeChestInventoryLens;
+import org.spongepowered.common.item.inventory.adapter.impl.DefaultImplementedAdapterInventory;
 
-@Mixin(InventoryLargeChest.class)
-public abstract class InventoryLargeChestMixin implements InventoryAdapter, ReusableLensProvider {
+@Mixin(IInventory.class)
+@Implements(@Interface(iface = Inventory.class, prefix = "inventory$"))
+public interface IInventoryMixin_API extends DefaultImplementedAdapterInventory {
 
-    // TODO maybe fabric override?
-
-    @Override
-    public ReusableLens<?> bridge$generateReusableLens(final Fabric fabric, final InventoryAdapter adapter) {
-        return ReusableLens.getLens(LargeChestInventoryLens.class, this, this::impl$generateSlotProvider, this::impl$generateInventoryLens);
-    }
-
-    private SlotProvider impl$generateSlotProvider() {
-        return new SlotCollection.Builder().add(this.bridge$getFabric().fabric$getSize()).build();
-    }
-
-    private LargeChestInventoryLens impl$generateInventoryLens(final SlotProvider slots) {
-        return new LargeChestInventoryLens(this, slots);
+    // Soft implemented in development since the targets have the same method from IInventory
+    @Intrinsic
+    default void inventory$clear() {
+        ((InventoryBridge) this).bridge$getAdapter().bridge$getFabric().fabric$clear();
     }
 
 }

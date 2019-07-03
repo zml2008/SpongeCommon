@@ -81,7 +81,6 @@ import org.spongepowered.common.item.inventory.lens.comp.GridInventoryLens;
 import org.spongepowered.common.item.inventory.lens.comp.Inventory2DLens;
 import org.spongepowered.common.item.inventory.lens.impl.DefaultEmptyLens;
 import org.spongepowered.common.item.inventory.lens.impl.DelegatingLens;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.comp.CraftingInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.GridInventoryLensImpl;
@@ -223,7 +222,7 @@ public final class ContainerUtil {
             Lens lens = generateAdapterLens(slots, index, crafting, slotList, subInventory);
             // Check if sub-inventory is LensProviderBridge
             if (lens == null && subInventory instanceof LensProviderBridge) {
-                final Fabric keyFabric = MinecraftFabric.of(subInventory);
+                final Fabric keyFabric = ((Fabric) subInventory);
                 lens = ((LensProviderBridge) subInventory).bridge$rootLens(keyFabric, new VanillaAdapter(keyFabric, container));
             }
             // Unknown Inventory or Inventory size <> Lens size

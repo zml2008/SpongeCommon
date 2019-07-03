@@ -22,77 +22,76 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.item.inventory.lens.impl.fabric;
+package org.spongepowered.common.mixin.core.item.inventory;
 
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.Translation;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.impl.slots.SlotLensImpl;
 
 import java.util.Collection;
 import java.util.Collections;
 
-@SuppressWarnings("unchecked")
-public class SlotFabric extends MinecraftFabric {
-
-    private final Slot slot;
-
-    public SlotFabric(final Slot inventory) {
-        this.slot = inventory;
-    }
+@Mixin(Slot.class)
+public abstract class SlotFabricMixin implements Fabric, InventoryBridge {
+    @Shadow @Final public IInventory inventory;
+    @Shadow public abstract ItemStack getStack();
+    @Shadow public abstract void putStack(ItemStack stack);
+    @Shadow public abstract int getSlotStackLimit();
+    @Shadow public abstract void onSlotChanged();
 
     @Override
-    public Collection<?> allInventories() {
+    public Collection<?> fabric$allInventories() {
         return Collections.emptyList();
     }
 
     @Override
-    public IInventory get(final int index) {
-        if (this.slot.inventory != null) {
-            return this.slot.inventory;
+    public IInventory fabric$get(final int index) {
+        if (this.inventory != null) {
+            return this.inventory;
         }
 
-        throw new UnsupportedOperationException("Unable to access slot at " + index + " for delegating fabric of " + this.slot.getClass());
+        throw new UnsupportedOperationException("Unable to access slot at " + index + " for delegating fabric of " + this.getClass());
     }
 
     @Override
-    public ItemStack getStack(final int index) {
-        return this.slot.getStack();
+    public ItemStack fabric$getStack(final int index) {
+        return this.getStack();
     }
 
     @Override
-    public void setStack(final int index, final ItemStack stack) {
-        this.slot.putStack(stack);
+    public void fabric$setStack(final int index, final ItemStack stack) {
+        this.putStack(stack);
     }
 
     @Override
-    public int getMaxStackSize() {
-        return this.slot.getSlotStackLimit();
+    public int fabric$getMaxStackSize() {
+        return this.getSlotStackLimit();
     }
 
     @Override
-    public Translation getDisplayName() {
+    public Translation fabric$getDisplayName() {
         return SlotLensImpl.SLOT_NAME;
     }
 
     @Override
-    public int getSize() {
-        return this.slot.getStack().getCount();
+    public int fabric$getSize() {
+        return 1;
     }
 
     @Override
-    public void clear() {
-        this.slot.putStack(ItemStack.EMPTY);
+    public void fabric$clear() {
+        this.putStack(ItemStack.EMPTY);
     }
 
     @Override
-    public void markDirty() {
-        this.slot.onSlotChanged();
-    }
-
-    public Slot getDelegate() {
-        return this.slot;
+    public void fabric$markDirty() {
+        this.onSlotChanged();
     }
 }

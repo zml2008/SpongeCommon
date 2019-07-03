@@ -32,13 +32,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.bridge.item.inventory.InventoryAdapterBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
-import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.DefaultEmptyLens;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
 
 import javax.annotation.Nullable;
 
@@ -81,8 +79,4 @@ public abstract class EntityMinecartContainerMixin extends EntityMinecartMixin i
         return createLensOnConstruct();
     }
 
-    @Override
-    public Fabric bridge$generateFabric() {
-        return new IInventoryFabric(this);
-    }
 }

@@ -25,6 +25,7 @@
 package org.spongepowered.common.item.inventory.adapter.impl.slots;
 
 import com.google.common.collect.ImmutableList;
+import net.minecraft.inventory.Container;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
@@ -33,8 +34,6 @@ import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
 import org.spongepowered.common.item.inventory.adapter.impl.AbstractInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.ContainerFabric;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.SlotFabric;
 import org.spongepowered.common.item.inventory.lens.slots.SlotLens;
 import org.spongepowered.common.item.inventory.util.ItemStackUtil;
 
@@ -90,11 +89,11 @@ public class SlotAdapter extends AbstractInventoryAdapter implements Slot {
 
     @Override
     public Optional<ItemStack> poll() {
-        final net.minecraft.item.ItemStack stack = this.inventory.getStack(this.ordinal);
+        final net.minecraft.item.ItemStack stack = this.inventory.fabric$getStack(this.ordinal);
         if (stack.isEmpty()) {
             return Optional.<ItemStack>empty();
         }
-        this.inventory.setStack(this.ordinal, net.minecraft.item.ItemStack.EMPTY);
+        this.inventory.fabric$setStack(this.ordinal, net.minecraft.item.ItemStack.EMPTY);
         return Optional.<ItemStack>of(ItemStackUtil.fromNative(stack));
     }
 
@@ -142,7 +141,7 @@ public class SlotAdapter extends AbstractInventoryAdapter implements Slot {
         if (old.isEmpty() && this.slot.setStack(this.inventory, ItemStackUtil.cloneDefensiveNative(nativeStack, push))) {
             remaining -= push;
         } else if (!old.isEmpty() && ItemStackUtil.compareIgnoreQuantity(old, stack)) {
-            this.inventory.markDirty();
+            this.inventory.fabric$markDirty();
             push = Math.max(Math.min(maxStackSize - old.getCount(), remaining), 0); // max() accounts for oversized stacks
             old.setCount(old.getCount() + push);
             remaining -= push;
@@ -242,11 +241,11 @@ public class SlotAdapter extends AbstractInventoryAdapter implements Slot {
     public Slot transform(final Slot.Type type) {
         switch (type) {
             case INVENTORY:
-                if (this.inventory instanceof SlotFabric) {
-                    return ((Slot) ((SlotFabric) this.inventory).getDelegate());
+                if (this.inventory instanceof net.minecraft.inventory.Slot) {
+                    return (Slot) this.inventory;
                 }
-                if (this.inventory instanceof ContainerFabric) {
-                    return ((Slot) ((ContainerFabric) this.inventory).getContainer().getSlot(this.slotNumber));
+                if (this.inventory instanceof Container) {
+                    return (Slot) ((Container) this.inventory).getSlot(this.slotNumber);
                 }
                 return this;
             default:

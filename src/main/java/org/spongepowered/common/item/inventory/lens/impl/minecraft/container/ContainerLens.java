@@ -56,7 +56,7 @@ public class ContainerLens extends RealLens {
      * Do not forget to call init when using this constructor!
      */
     public ContainerLens(InventoryAdapter adapter, SlotProvider slots) {
-        super(0, adapter.bridge$getFabric().getSize(), adapter, slots);
+        super(0, adapter.bridge$getFabric().fabric$getSize(), adapter, slots);
         this.additonal = Collections.emptyList();
     }
 

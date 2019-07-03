@@ -67,9 +67,4 @@ public abstract class CustomInventoryMixin implements InventoryAdapter, Inventor
         return  new CustomLens(this, this.bridge$getSlotProvider(), this.archetype, this.properties);
     }
 
-    @Override
-    public Inventory bridge$getChild(@Nonnull final Lens lens) {
-        return null; // TODO ?
-    }
-
 }

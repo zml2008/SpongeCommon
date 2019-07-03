@@ -41,6 +41,7 @@ import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.bridge.item.inventory.InventoryAdapterBridge;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.entity.player.SpongeUserInventory;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.custom.CustomInventory;
@@ -74,30 +75,12 @@ import javax.annotation.Nullable;
         EntityMinecartContainer.class
 }, priority = 999)
 @Implements(@Interface(iface = Inventory.class, prefix = "inventory$"))
-public abstract class InventoryTraitContainerAdapterMixin implements InventoryAdapter, InventoryAdapterBridge {
+public abstract class TraitInventoryAdapterMixin implements InventoryAdapter, InventoryAdapterBridge, InventoryBridge {
 
-    private List<Inventory> impl$children = new ArrayList<Inventory>();
     @Nullable private SlotProvider impl$provider;
     @Nullable private Lens impl$lens;
     @Nullable private Fabric impl$fabric;
     @Nullable private PluginContainer impl$PluginParent;
-
-    @Override
-    public Inventory bridge$getChild(final int index) {
-        if (index < 0 || index >= this.bridge$getRootLens().getChildren().size()) {
-            throw new IndexOutOfBoundsException("No child at index: " + index);
-        }
-        while (index >= this.impl$children.size()) {
-            this.impl$children.add(null);
-        }
-        Inventory child = this.impl$children.get(index);
-        if (child == null) {
-            child = (Inventory) this.bridge$getRootLens().getChildren().get(index).getAdapter(this.bridge$getFabric(), (Inventory) this);
-            this.impl$children.set(index, child);
-        }
-        return child;
-    }
-
 
     @Override
     public Fabric bridge$getFabric() {

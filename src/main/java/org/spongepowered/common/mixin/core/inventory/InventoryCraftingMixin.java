@@ -40,7 +40,6 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.DefaultEmptyLens;
 import org.spongepowered.common.item.inventory.lens.impl.collections.SlotCollection;
 import org.spongepowered.common.item.inventory.lens.impl.comp.CraftingGridInventoryLensImpl;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.IInventoryFabric;
 
 @Mixin(InventoryCrafting.class)
 public abstract class InventoryCraftingMixin implements IInventory, LensProviderBridge, InventoryAdapter, InventoryAdapterBridge {
@@ -55,11 +54,6 @@ public abstract class InventoryCraftingMixin implements IInventory, LensProvider
             return new DefaultEmptyLens(adapter);
         }
         return new CraftingGridInventoryLensImpl(0, this.inventoryWidth, this.inventoryHeight, this.inventoryWidth, this.bridge$getSlotProvider());
-    }
-
-    @Override
-    public Fabric bridge$generateFabric() {
-        return new IInventoryFabric(this);
     }
 
     @Override

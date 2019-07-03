@@ -43,13 +43,13 @@ public class BrewingStandInventoryLens extends RealLens {
 
     @SuppressWarnings("unchecked")
     public BrewingStandInventoryLens(final InventoryAdapter adapter, final SlotProvider slots) {
-        super(0, adapter.bridge$getFabric().getSize(), (Class<? extends Inventory>) adapter.getClass(), slots);
+        super(0, adapter.bridge$getFabric().fabric$getSize(), (Class<? extends Inventory>) adapter.getClass(), slots);
         this.init(slots);
     }
 
     @SuppressWarnings("unchecked")
     public BrewingStandInventoryLens(final int base, final InventoryAdapter adapter, final SlotProvider slots) {
-        super(base, adapter.bridge$getFabric().getSize(), (Class<? extends Inventory>) adapter.getClass(), slots);
+        super(base, adapter.bridge$getFabric().fabric$getSize(), (Class<? extends Inventory>) adapter.getClass(), slots);
         this.init(slots);
     }
 

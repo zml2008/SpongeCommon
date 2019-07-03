@@ -28,7 +28,6 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
 
 public interface InventoryAdapterBridge {
 
@@ -41,7 +40,10 @@ public interface InventoryAdapterBridge {
     void bridge$setLens(Lens lens);
 
     default Fabric bridge$generateFabric() {
-        return MinecraftFabric.of(this);
+        if (this instanceof Fabric) {
+            return (Fabric) this;
+        }
+        throw new IllegalStateException("Inventory is not a Fabric! " + this.getClass().getName());
     }
 
     void bridge$setFabric(Fabric fabric);

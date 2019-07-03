@@ -107,7 +107,7 @@ public class SlotLensImpl extends AbstractLens implements SlotLens {
 
     @Override
     public ItemStack getStack(Fabric inv) {
-        return checkNotNull(inv, "Target inventory").getStack(this.base);
+        return checkNotNull(inv, "Target inventory").fabric$getStack(this.base);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class SlotLensImpl extends AbstractLens implements SlotLens {
 
     @Override
     public boolean setStack(Fabric inv, ItemStack stack) {
-        checkNotNull(inv, "Target inventory").setStack(this.base, stack);
+        checkNotNull(inv, "Target inventory").fabric$setStack(this.base, stack);
         return true;
     }
 

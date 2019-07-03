@@ -27,84 +27,84 @@ package org.spongepowered.common.item.inventory.lens.impl.fabric;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.Translation;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 @SuppressWarnings("unchecked")
-public class CompoundFabric extends MinecraftFabric {
+public class CompoundFabric implements Fabric {
 
-    private final MinecraftFabric fabric1;
-    private final MinecraftFabric fabric2;
+    private final Fabric fabric1;
+    private final Fabric fabric2;
     private Translation displayName;
 
-    public CompoundFabric(MinecraftFabric fabric1, MinecraftFabric fabric2) {
+    public CompoundFabric(Fabric fabric1, Fabric fabric2) {
         this.fabric1 = fabric1;
         this.fabric2 = fabric2;
-        this.displayName = fabric1.getDisplayName();
+        this.displayName = fabric1.fabric$getDisplayName();
     }
 
     @Override
-    public Collection<?> allInventories() {
+    public Collection<?> fabric$allInventories() {
         Set<Object> inv = new HashSet<>();
-        inv.addAll(this.fabric1.allInventories());
-        inv.addAll(this.fabric2.allInventories());
+        inv.addAll(this.fabric1.fabric$allInventories());
+        inv.addAll(this.fabric2.fabric$allInventories());
         return inv;
     }
 
     @Override
-    public IInventory get(int index) {
+    public IInventory fabric$get(int index) {
 
-        if (index < this.fabric1.getSize()) {
-            return this.fabric1.get(index);
+        if (index < this.fabric1.fabric$getSize()) {
+            return this.fabric1.fabric$get(index);
         }
-        return this.fabric2.get(index - this.fabric1.getSize());
+        return this.fabric2.fabric$get(index - this.fabric1.fabric$getSize());
     }
 
     @Override
-    public ItemStack getStack(int index) {
-        if (index < this.fabric1.getSize()) {
-            return this.fabric1.getStack(index);
+    public ItemStack fabric$getStack(int index) {
+        if (index < this.fabric1.fabric$getSize()) {
+            return this.fabric1.fabric$getStack(index);
         }
-        return this.fabric2.getStack(index - this.fabric1.getSize());
+        return this.fabric2.fabric$getStack(index - this.fabric1.fabric$getSize());
     }
 
     @Override
-    public void setStack(int index, ItemStack stack) {
-        if (index < this.fabric1.getSize()) {
-            this.fabric1.setStack(index, stack);
+    public void fabric$setStack(int index, ItemStack stack) {
+        if (index < this.fabric1.fabric$getSize()) {
+            this.fabric1.fabric$setStack(index, stack);
         } else {
-            this.fabric2.setStack(index - this.fabric1.getSize(), stack);
+            this.fabric2.fabric$setStack(index - this.fabric1.fabric$getSize(), stack);
         }
     }
 
     @Override
-    public int getMaxStackSize() {
-        return Math.max(this.fabric1.getMaxStackSize(), this.fabric2.getMaxStackSize());
+    public int fabric$getMaxStackSize() {
+        return Math.max(this.fabric1.fabric$getMaxStackSize(), this.fabric2.fabric$getMaxStackSize());
     }
 
     @Override
-    public Translation getDisplayName() {
+    public Translation fabric$getDisplayName() {
         return this.displayName;
     }
 
     @Override
-    public int getSize() {
-        return this.fabric1.getSize() + this.fabric2.getSize();
+    public int fabric$getSize() {
+        return this.fabric1.fabric$getSize() + this.fabric2.fabric$getSize();
     }
 
     @Override
-    public void clear() {
-        this.fabric1.clear();
-        this.fabric2.clear();
+    public void fabric$clear() {
+        this.fabric1.fabric$clear();
+        this.fabric2.fabric$clear();
     }
 
     @Override
-    public void markDirty() {
-        this.fabric1.markDirty();
-        this.fabric2.markDirty();
+    public void fabric$markDirty() {
+        this.fabric1.fabric$markDirty();
+        this.fabric2.fabric$markDirty();
     }
 
 }

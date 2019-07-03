@@ -22,122 +22,115 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.item.inventory.lens.impl.fabric;
+package org.spongepowered.common.mixin.core.item.inventory;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.FixedTranslation;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImpl;
-import org.spongepowered.common.item.inventory.lens.impl.MinecraftFabric;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("unchecked")
-public class ContainerFabric extends MinecraftFabric {
+import javax.annotation.Nullable;
 
-    private Translation displayName;
-    private final Container container;
-    private final Set<IInventory> all;
+@Mixin(Container.class)
+public abstract class ContainerFabricMixin implements Fabric, InventoryBridge {
 
-    public ContainerFabric(Container container) {
-        this(ContainerFabric.getFirstDisplayName(container), container);
-    }
+    @Shadow public abstract Slot getSlot(int slotId);
+    @Shadow public List<Slot> inventorySlots;
+    @Shadow public abstract void detectAndSendChanges();
 
-    private ContainerFabric(Translation displayName, Container container) {
-        this.displayName = displayName;
-        this.container = container;
-
-        List<Slot> slots = this.container.inventorySlots;
-
-        Builder<IInventory> builder = ImmutableSet.<IInventory>builder();
-        for (Slot slot : slots) {
-            if (slot.inventory != null) {
-                builder.add(slot.inventory);
-            }
-        }
-        this.all = builder.build();
-    }
+    @Nullable private Translation displayName;
+    @Nullable private Set<IInventory> all;
 
     @Override
-    public Collection<?> allInventories() {
+    public Collection<IInventory> fabric$allInventories() {
+        if (this.all == null) {
+            ImmutableSet.Builder<IInventory> builder = ImmutableSet.builder();
+            for (Slot slot : inventorySlots) {
+                if (slot.inventory != null) {
+                    builder.add(slot.inventory);
+                }
+            }
+            this.all = builder.build();
+        }
         return this.all;
     }
 
     @Override
-    public IInventory get(int index) {
-        if (this.container.inventorySlots.isEmpty()) {
+    public IInventory fabric$get(int index) {
+        if (this.inventorySlots.isEmpty()) {
             return null; // Somehow we got an empty container
         }
-        return this.container.getSlot(index).inventory;
+        return this.getSlot(index).inventory;
     }
 
     @Override
-    public ItemStack getStack(int index) {
-        return this.container.getSlot(index).getStack();
+    public ItemStack fabric$getStack(int index) {
+        return this.getSlot(index).getStack();
     }
 
     @Override
-    public void setStack(int index, ItemStack stack) {
-        this.container.getSlot(index).putStack(stack);
+    public void fabric$setStack(int index, ItemStack stack) {
+        this.getSlot(index).putStack(stack);
     }
 
     @Override
-    public int getMaxStackSize() {
-        int max = 0;
-        for (IInventory inv : this.all) {
-            max = Math.max(max, inv.getInventoryStackLimit());
+    public int fabric$getMaxStackSize() {
+        return this.fabric$allInventories().stream().mapToInt(IInventory::getInventoryStackLimit).max().orElse(0);
+    }
+
+    @Override
+    public Translation fabric$getDisplayName() {
+        if (this.displayName == null) {
+            this.displayName = this.getFirstDisplayName();
         }
-        return max;
-    }
-
-    @Override
-    public Translation getDisplayName() {
         return this.displayName;
     }
 
     @Override
-    public int getSize() {
-        return this.container.inventorySlots.size();
+    public int fabric$getSize() {
+        return this.inventorySlots.size();
     }
 
     @Override
-    public void clear() {
-        this.all.forEach(IInventory::clear);
+    public void fabric$clear() {
+        this.fabric$allInventories().forEach(IInventory::clear);
     }
 
     @Override
-    public void markDirty() {
-        this.container.detectAndSendChanges();
+    public void fabric$markDirty() {
+        this.detectAndSendChanges();
     }
 
-    static Translation getFirstDisplayName(Container container) {
-        if (container.inventorySlots.size() == 0) {
+    private Translation getFirstDisplayName() {
+        if (this.inventorySlots.size() == 0) {
             return new FixedTranslation("Container");
         }
 
         try
         {
-            Slot slot = container.getSlot(0);
+            Slot slot = this.getSlot(0);
             return slot.inventory != null && slot.inventory.getDisplayName() != null ?
                     new FixedTranslation(slot.inventory.getDisplayName().getUnformattedText()) :
-                    new FixedTranslation("UNKNOWN: " + container.getClass().getName());
+                    new FixedTranslation("UNKNOWN: " + this.getClass().getName());
         }
         catch (AbstractMethodError e)
         {
             SpongeImpl.getLogger().warn("AbstractMethodError! Could not find displayName for " +
-                    container.getSlot(0).inventory.getClass().getName(), e);
-            return new FixedTranslation("UNKNOWN: " + container.getClass().getName());
+                    this.getSlot(0).inventory.getClass().getName(), e);
+            return new FixedTranslation("UNKNOWN: " + this.getClass().getName());
         }
     }
 
-    public Container getContainer() {
-        return this.container;
-    }
 }

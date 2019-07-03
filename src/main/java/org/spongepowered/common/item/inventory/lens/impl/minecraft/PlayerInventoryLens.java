@@ -41,7 +41,6 @@ import org.spongepowered.common.item.inventory.lens.impl.RealLens;
 import org.spongepowered.common.item.inventory.lens.impl.comp.EquipmentInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.MainPlayerInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
-import org.spongepowered.common.item.inventory.lens.impl.fabric.ContainerFabric;
 import org.spongepowered.common.item.inventory.lens.slots.SlotLens;
 
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class PlayerInventoryLens extends RealLens {
     private final boolean isContainer;
 
     public PlayerInventoryLens(InventoryAdapter adapter, SlotProvider slots) {
-        super(0, adapter.bridge$getFabric().getSize(), adapter, slots);
+        super(0, adapter.bridge$getFabric().fabric$getSize(), adapter, slots);
         this.isContainer = false;
         this.init(slots);
     }
@@ -120,9 +119,9 @@ public class PlayerInventoryLens extends RealLens {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public InventoryAdapter getAdapter(Fabric inv, Inventory parent) {
-        if (this.isContainer && inv instanceof ContainerFabric) {
+        if (this.isContainer && inv instanceof Container) {
             // If Lens is for Container extract the PlayerInventory
-            Container container = ((ContainerFabric) inv).getContainer();
+            Container container = (Container) inv;
             Optional carrier = ((CarriedInventory) container).getCarrier();
             if (carrier.isPresent() && carrier.get() instanceof Player) {
                 return ((InventoryAdapter) ((Player) carrier.get()).getInventory());

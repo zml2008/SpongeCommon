@@ -30,6 +30,7 @@ import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.tileentity.TileEntityLockable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.bridge.item.inventory.InventoryAdapterBridge;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.ReusableLensInventoryAdapaterBridge;
 import org.spongepowered.common.item.inventory.lens.Lens;
@@ -53,7 +54,7 @@ import javax.annotation.Nullable;
         InventoryCraftResult.class,
         InventoryLargeChest.class
 }, priority = 999)
-public abstract class ReusableLensInventoryAdapterMixin implements ReusableLensInventoryAdapaterBridge, InventoryAdapterBridge {
+public abstract class ReusableLensInventoryAdapterMixin implements ReusableLensInventoryAdapaterBridge, InventoryAdapterBridge, InventoryBridge {
 
     @Nullable private ReusableLens<?> impl$reusableLens = null;
 
@@ -74,12 +75,12 @@ public abstract class ReusableLensInventoryAdapterMixin implements ReusableLensI
             this.bridge$setLens(lens);
             return this.impl$reusableLens;
         }
-        final SlotCollection slots = new SlotCollection.Builder().add(this.bridge$getFabric().getSize()).build();
+        final SlotCollection slots = new SlotCollection.Builder().add(this.bridge$getFabric().fabric$getSize()).build();
         final Lens lens;
-        if (this.bridge$getFabric().getSize() == 0) {
+        if (this.bridge$getFabric().fabric$getSize() == 0) {
             lens = new DefaultEmptyLens(this);
         } else {
-            lens = new OrderedInventoryLensImpl(0, this.bridge$getFabric().getSize(), 1, slots);
+            lens = new OrderedInventoryLensImpl(0, this.bridge$getFabric().fabric$getSize(), 1, slots);
         }
         this.impl$reusableLens = new ReusableLens<>(slots, lens);
         this.bridge$setSlotProvider(slots);

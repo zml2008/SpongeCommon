@@ -22,21 +22,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.item.inventory.lens.impl.fabric;
+package org.spongepowered.common.mixin.core.item.inventory;
 
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
-import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.impl.slots.SlotLensImpl;
 
 import java.util.Collection;
 import java.util.Collections;
 
-@SuppressWarnings("unchecked")
-public class EquipmentSlotsFabric implements Fabric {
+@Mixin(EntityLiving.class)
+public abstract class EntityLivingEquipmentFabricMixin implements Fabric, InventoryBridge {
+
     private static final EntityEquipmentSlot[] SLOTS;
     private static final int MAX_STACK_SIZE = 64;
 
@@ -48,56 +51,50 @@ public class EquipmentSlotsFabric implements Fabric {
         }
     }
 
-    private final Living living;
-
-    public EquipmentSlotsFabric(Living living) {
-        this.living = living;
+    @Override
+    public Collection<EntityLiving> fabric$allInventories() {
+        return Collections.singleton((EntityLiving) (Object) this);
     }
 
     @Override
-    public Collection<Living> allInventories() {
-        return Collections.singleton(this.living);
+    public EntityLiving fabric$get(int index) {
+        return (EntityLiving) (Object) this;
     }
 
     @Override
-    public Living get(int index) {
-        return this.living;
+    public ItemStack fabric$getStack(int index) {
+        return ((EntityLivingBase) (Object) this).getItemStackFromSlot(SLOTS[index]);
     }
 
     @Override
-    public ItemStack getStack(int index) {
-        return ((EntityLivingBase) this.living).getItemStackFromSlot(SLOTS[index]);
+    public void fabric$setStack(int index, ItemStack stack) {
+        ((EntityLivingBase) (Object) this).setItemStackToSlot(SLOTS[index], stack);
     }
 
     @Override
-    public void setStack(int index, ItemStack stack) {
-        ((EntityLivingBase) this.living).setItemStackToSlot(SLOTS[index], stack);
-    }
-
-    @Override
-    public int getMaxStackSize() {
+    public int fabric$getMaxStackSize() {
         return MAX_STACK_SIZE;
     }
 
     @Override
-    public Translation getDisplayName() {
+    public Translation fabric$getDisplayName() {
         return SlotLensImpl.SLOT_NAME;
     }
 
     @Override
-    public int getSize() {
+    public int fabric$getSize() {
         return SLOTS.length;
     }
 
     @Override
-    public void clear() {
-        EntityLivingBase entity = (EntityLivingBase) this.living;
+    public void fabric$clear() {
+        EntityLivingBase entity = (EntityLivingBase) (Object) this;
         for (EntityEquipmentSlot slot : SLOTS) {
             entity.setItemStackToSlot(slot, ItemStack.EMPTY);
         }
     }
 
     @Override
-    public void markDirty() {
+    public void fabric$markDirty() {
     }
 }

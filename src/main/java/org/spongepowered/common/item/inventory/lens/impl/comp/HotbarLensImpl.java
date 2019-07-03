@@ -59,7 +59,7 @@ public class HotbarLensImpl extends InventoryRowLensImpl implements HotbarLens {
 
     @Override
     public int getSelectedSlotIndex(Fabric inv) {
-        for (Object inner : inv.allInventories()) {
+        for (Object inner : inv.fabric$allInventories()) {
             if (inner instanceof InventoryPlayer) {
                 return ((InventoryPlayer) inner).currentItem;
             }
@@ -69,7 +69,7 @@ public class HotbarLensImpl extends InventoryRowLensImpl implements HotbarLens {
 
     @Override
     public void setSelectedSlotIndex(Fabric inv, int index) {
-        inv.allInventories().stream().filter(inner -> inner instanceof InventoryPlayerBridge).forEach(inner -> {
+        inv.fabric$allInventories().stream().filter(inner -> inner instanceof InventoryPlayerBridge).forEach(inner -> {
             ((InventoryPlayerBridge) inner).bridge$setSelectedItem(index, true);
         });
     }

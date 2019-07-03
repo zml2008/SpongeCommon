@@ -50,7 +50,7 @@ public abstract class SlotMixin_API implements org.spongepowered.api.item.invent
             return ((Inventory) this.inventory);
         }
         if (this.api$parentAdapter == null) {
-            final int size = ((InventoryAdapter) this).bridge$getFabric().getSize();
+            final int size = ((InventoryAdapter) this).bridge$getFabric().fabric$getSize();
             final SlotCollection slots = new SlotCollection.Builder().add(size).build();
             final OrderedInventoryLensImpl lens = new OrderedInventoryLensImpl(0, size, 1, slots);
             this.api$parentAdapter = new OrderedInventoryAdapter(((InventoryAdapter) this).bridge$getFabric(), lens);

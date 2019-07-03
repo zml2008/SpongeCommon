@@ -77,12 +77,12 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     public <T extends Lens> AbstractInventoryAdapter(final Fabric inventory, final Class<T> lensType) {
         this.inventory = inventory;
         this.parent = this;
-        if (inventory.getSize() == 0) {
+        if (inventory.fabric$getSize() == 0) {
             this.slots = new SlotCollection(0);
             this.lens = new DefaultEmptyLens(this);
         } else {
             final ReusableLens<T> lens = ReusableLens.getLens(lensType, this, () -> this.initSlots(inventory, this.parent),
-                    (slots) -> (T) new DefaultIndexedLens(0, inventory.getSize(), this, ((SlotCollection) slots)));
+                    (slots) -> (T) new DefaultIndexedLens(0, inventory.fabric$getSize(), this, ((SlotCollection) slots)));
             this.slots = ((SlotCollection) lens.getSlots());
             this.lens = lens.getLens();
         }
@@ -102,7 +102,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
                 return ((SlotCollection) sp);
             }
         }
-        return new SlotCollection(inventory.getSize());
+        return new SlotCollection(inventory.fabric$getSize());
     }
 
     @Override
@@ -114,7 +114,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
         if (this instanceof LensProviderBridge) {
             return ((LensProviderBridge) this).bridge$rootLens(this.inventory, this);
         }
-        final int size = this.inventory.getSize();
+        final int size = this.inventory.fabric$getSize();
         if (size == 0) {
             return new DefaultEmptyLens(this);
         }
@@ -134,28 +134,6 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     @Override
     public Fabric bridge$getFabric() {
         return this.inventory;
-    }
-
-    @Override
-    public Inventory bridge$getChild(int index) {
-        if (index < 0 || index >= this.lens.getChildren().size()) {
-            throw new IndexOutOfBoundsException("No child at index: " + index);
-        }
-        while (index >= this.children.size()) {
-            this.children.add(null);
-        }
-        Inventory child = this.children.get(index);
-        if (child == null) {
-            child = (Inventory) this.lens.getChildren().get(index).getAdapter(this.inventory, this);
-            this.children.set(index, child);
-        }
-        return child;
-    }
-
-    @Override
-    public Inventory bridge$getChild(final Lens lens) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @SuppressWarnings("unchecked")
