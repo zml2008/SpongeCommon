@@ -29,7 +29,6 @@ import net.minecraft.tileentity.TileEntityLockable;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
-import org.spongepowered.common.item.inventory.lens.SlotProvider;
 
 /**
  * Lenses for real Inventories like {@link TileEntityLockable} and {@link Container}.
@@ -39,8 +38,8 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 @SuppressWarnings("rawtypes")
 public abstract class RealLens extends AbstractLens {
 
-    public RealLens(int base, int size, Class<? extends Inventory> adapterType, SlotProvider slots) {
-        super(base, size, adapterType, slots);
+    public RealLens(int base, int size, Class<? extends Inventory> adapterType) {
+        super(base, size, adapterType);
     }
 
     @SuppressWarnings("unchecked")

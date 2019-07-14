@@ -28,7 +28,6 @@ import net.minecraft.inventory.Slot;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.AbstractInventoryAdapter;
-import org.spongepowered.common.item.inventory.adapter.impl.VanillaContainerAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
@@ -48,13 +47,13 @@ public class DelegatingLens extends AbstractLens {
     private Lens delegate;
 
     public DelegatingLens(final int base, final Lens lens, final SlotProvider slots) {
-        super(base, lens.slotCount(), AbstractInventoryAdapter.class, slots);
+        super(base, lens.slotCount(), AbstractInventoryAdapter.class);
         this.delegate = lens;
         this.init(slots);
     }
 
     public DelegatingLens(final int base, final List<Slot> containerSlots, final Lens lens, final SlotProvider slots) {
-        super(base, containerSlots.size(), AbstractInventoryAdapter.class, slots);
+        super(base, containerSlots.size(), AbstractInventoryAdapter.class);
         this.delegate = lens;
         final CustomSlotProvider slotProvider = new CustomSlotProvider();
         for (final Slot slot : containerSlots) {
@@ -66,7 +65,6 @@ public class DelegatingLens extends AbstractLens {
         this.addChild(this.delegate);
     }
 
-    @Override
     protected void init(final SlotProvider slots) {
         this.addSpanningChild(new OrderedInventoryLensImpl(this.base, this.size, 1, slots));
         this.addChild(this.delegate);

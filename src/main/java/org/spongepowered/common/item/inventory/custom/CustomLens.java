@@ -30,7 +30,6 @@ import org.spongepowered.api.item.inventory.InventoryProperty;
 import org.spongepowered.api.item.inventory.property.InventoryCapacity;
 import org.spongepowered.api.item.inventory.property.InventoryDimension;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
-import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.impl.RealLens;
@@ -48,13 +47,12 @@ public class CustomLens extends RealLens {
 
     public CustomLens(int size, Class<? extends Inventory> adapter, SlotProvider slots, InventoryArchetype archetype,
             Map<String, InventoryProperty<?, ?>> properties) {
-        super(0, size, adapter, slots);
+        super(0, size, adapter);
         this.archetype = archetype;
         this.properties = properties;
         this.init(slots);
     }
 
-    @Override
     protected void init(SlotProvider slots) {
         // TODO this logic should not be done here (see PR #1010)
         // but for now this will have to do:

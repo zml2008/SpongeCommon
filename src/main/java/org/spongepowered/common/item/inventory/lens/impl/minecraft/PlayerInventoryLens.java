@@ -38,7 +38,6 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.lens.comp.EquipmentInventoryLens;
 import org.spongepowered.common.item.inventory.lens.comp.MainPlayerInventoryLens;
 import org.spongepowered.common.item.inventory.lens.impl.AbstractLens;
-import org.spongepowered.common.item.inventory.lens.impl.RealLens;
 import org.spongepowered.common.item.inventory.lens.impl.comp.EquipmentInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.MainPlayerInventoryLensImpl;
 import org.spongepowered.common.item.inventory.lens.impl.comp.OrderedInventoryLensImpl;
@@ -57,7 +56,7 @@ public class PlayerInventoryLens extends AbstractLens {
     private final boolean isContainer;
 
     public PlayerInventoryLens(int size, Class<? extends Inventory> adapter, SlotProvider slots) {
-        super(0, size, adapter, slots);
+        super(0, size, adapter);
         this.isContainer = false;
         this.init(slots);
     }
@@ -70,12 +69,11 @@ public class PlayerInventoryLens extends AbstractLens {
      * @param slots The slots
      */
     public PlayerInventoryLens(int base, int size, SlotProvider slots) {
-        super(base, size, PlayerInventory.class, slots);
+        super(base, size, PlayerInventory.class);
         this.isContainer = true;
         this.init(slots);
     }
 
-    @Override
     protected void init(SlotProvider slots) {
         // Adding slots
         for (int ord = 0, slot = this.base; ord < this.size; ord++, slot++) {

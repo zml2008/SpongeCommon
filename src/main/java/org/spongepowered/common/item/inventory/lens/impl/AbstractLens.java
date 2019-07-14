@@ -69,7 +69,7 @@ public abstract class AbstractLens implements Lens {
     
     private int maxOrdinal = 0;
 
-    public AbstractLens(final int base, final int size, final Class<? extends Inventory> adapterType, final SlotProvider slots) {
+    public AbstractLens(final int base, final int size, final Class<? extends Inventory> adapterType) {
         checkArgument(base >= 0, "Invalid offset: %s", base);
         checkArgument(size > 0, "Invalid size: %s", size);
         checkNotNull(adapterType, "adapterType");
@@ -78,21 +78,10 @@ public abstract class AbstractLens implements Lens {
         this.size = size;
         this.adapterType = adapterType;
 
-        this.prepare();
-    }
-
-    protected void prepare() {
         this.children = new MutableLensCollectionImpl(0, false);
         this.spanningChildren = new ArrayList<>();
     }
 
-    /**
-     * Initialise children
-     * 
-     * @param slots
-     */
-    protected abstract void init(SlotProvider slots);
-    
     protected void addChild(final Lens lens, final InventoryProperty<?, ?>... properties) {
         checkNotNull(lens, "Attempted to register a null lens");
         this.children.add(lens, properties);

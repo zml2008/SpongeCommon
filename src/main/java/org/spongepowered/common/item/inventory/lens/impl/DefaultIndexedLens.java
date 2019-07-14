@@ -34,11 +34,10 @@ import org.spongepowered.common.item.inventory.lens.SlotProvider;
 public class DefaultIndexedLens extends AbstractLens {
 
     public DefaultIndexedLens(int offset, int size, Class<? extends Inventory> adapterType, SlotProvider slots) {
-        super(offset, size, adapterType, slots);
+        super(offset, size, adapterType);
         this.init(slots);
     }
 
-    @Override
     protected void init(SlotProvider slots) {
         for (int slot = 0; slot < this.size; slot++) {
             this.addSpanningChild(slots.getSlot(slot), new SlotIndex(slot));

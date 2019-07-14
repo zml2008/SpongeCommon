@@ -58,13 +58,8 @@ public class SlotLensImpl extends AbstractLens implements SlotLens {
     }
 
     public SlotLensImpl(int index, Class<? extends Inventory> adapterType) {
-        super(index, 1, adapterType, null);
+        super(index, 1, adapterType);
         this.availableSlots.add(this.getOrdinal(null));
-    }
-
-    @Override
-    protected final void init(SlotProvider slots) {
-        // No children
     }
 
     @Override
