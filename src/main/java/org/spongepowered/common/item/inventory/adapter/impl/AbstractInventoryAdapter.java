@@ -55,7 +55,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
 
     public static final Translation DEFAULT_NAME = new SpongeTranslation("inventory.default.title");
 
-    protected final Fabric inventory;
+    private final Fabric inventory;
     protected final SlotProvider slots;
     protected final Lens lens;
     protected final List<Inventory> children = new ArrayList<>();
@@ -143,7 +143,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     }
 
     public static Optional<Slot> forSlot(final Fabric inv, final SlotLens slotLens, final Inventory parent) {
-        return slotLens == null ? Optional.<Slot>empty() : Optional.<Slot>ofNullable((Slot) slotLens.getAdapter(inv, parent));
+        return slotLens == null ? Optional.empty() : Optional.ofNullable((Slot) slotLens.getAdapter(inv, parent));
     }
 
     @Override

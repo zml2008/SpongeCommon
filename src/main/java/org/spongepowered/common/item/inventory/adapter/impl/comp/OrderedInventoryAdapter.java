@@ -61,53 +61,40 @@ public class OrderedInventoryAdapter extends VanillaAdapter implements OrderedIn
             return this.orderedLens.getSlot(index);
         }
         return null;
-        /*for (Lens<IInventory, net.minecraft.item.ItemStack> lens : orderedLens) {
-            if (lens.getSlots().contains(index)) {*/
-                /*
-                if (lens instanceof OrderedInventoryLens) {
-                    ((OrderedInventoryLens) lens).bridge$getSlot(orderedLens.)
-                }*/
-                // TODO getting OrderedInventoryLensImpl here instead of SlotLens
-                //return (SlotLens<IInventory, net.minecraft.item.ItemStack>) lens;
-                /*SlotAdapter adapter = lens.getAdapter(this.inventory, this).query(SlotAdapter.class).first();
-                return (SlotLens<IInventory, net.minecraft.item.ItemStack>) adapter.bridge$getRootLens();
-            }
-        }
-        return null;*/
     }
 
     protected SlotLens getSlotLens(SlotIndex index) {
-        return this.getSlotLens(index.getValue().intValue());
+        return this.getSlotLens(index.getValue());
     }
 
     @Override
     public Optional<Slot> getSlot(SlotIndex index) {
-        return VanillaAdapter.forSlot(this.inventory, this.getSlotLens(index), this);
+        return VanillaAdapter.forSlot(this.bridge$getFabric(), this.getSlotLens(index), this);
     }
 
     @Override
     public Optional<ItemStack> poll(SlotIndex index) {
-        return AdapterLogic.pollSequential(this.inventory, this.getSlotLens(index));
+        return AdapterLogic.pollSequential(this.bridge$getFabric(), this.getSlotLens(index));
     }
 
     @Override
     public Optional<org.spongepowered.api.item.inventory.ItemStack> poll(SlotIndex index, int limit) {
-        return AdapterLogic.pollSequential(this.inventory, this.getSlotLens(index), limit);
+        return AdapterLogic.pollSequential(this.bridge$getFabric(), this.getSlotLens(index), limit);
     }
 
     @Override
     public Optional<org.spongepowered.api.item.inventory.ItemStack> peek(SlotIndex index) {
-        return AdapterLogic.peekSequential(this.inventory, this.getSlotLens(index));
+        return AdapterLogic.peekSequential(this.bridge$getFabric(), this.getSlotLens(index));
     }
 
     @Override
     public Optional<org.spongepowered.api.item.inventory.ItemStack> peek(SlotIndex index, int limit) {
-        return AdapterLogic.peekSequential(this.inventory, this.getSlotLens(index), limit);
+        return AdapterLogic.peekSequential(this.bridge$getFabric(), this.getSlotLens(index), limit);
     }
 
     @Override
     public InventoryTransactionResult set(SlotIndex index, org.spongepowered.api.item.inventory.ItemStack stack) {
-        return AdapterLogic.insertSequential(this.inventory, this.getSlotLens(index), stack);
+        return AdapterLogic.insertSequential(this.bridge$getFabric(), this.getSlotLens(index), stack);
     }
 
 }

@@ -42,10 +42,6 @@ public class Inventory2DAdapter extends OrderedInventoryAdapter implements Inven
 
     protected Inventory2DLens lens2d;
 
-    public Inventory2DAdapter(Fabric inventory, Inventory2DLens root) {
-        this(inventory, root, null);
-    }
-
     public Inventory2DAdapter(Fabric inventory, Inventory2DLens root, Inventory parent) {
         super(inventory, root, parent);
         this.lens2d = root;
@@ -65,32 +61,32 @@ public class Inventory2DAdapter extends OrderedInventoryAdapter implements Inven
 
     @Override
     public Optional<Slot> getSlot(SlotPos pos) {
-        return VanillaAdapter.forSlot(this.inventory, this.getSlotLens(pos), this);
+        return VanillaAdapter.forSlot(this.bridge$getFabric(), this.getSlotLens(pos), this);
     }
 
     @Override
     public Optional<ItemStack> poll(SlotPos pos) {
-        return AdapterLogic.pollSequential(this.inventory, this.getSlotLens(pos));
+        return AdapterLogic.pollSequential(this.bridge$getFabric(), this.getSlotLens(pos));
     }
 
     @Override
     public Optional<ItemStack> poll(SlotPos pos, int limit) {
-        return AdapterLogic.pollSequential(this.inventory, this.getSlotLens(pos), limit);
+        return AdapterLogic.pollSequential(this.bridge$getFabric(), this.getSlotLens(pos), limit);
     }
 
     @Override
     public Optional<ItemStack> peek(SlotPos pos) {
-        return AdapterLogic.peekSequential(this.inventory, this.getSlotLens(pos));
+        return AdapterLogic.peekSequential(this.bridge$getFabric(), this.getSlotLens(pos));
     }
 
     @Override
     public Optional<ItemStack> peek(SlotPos pos, int limit) {
-        return AdapterLogic.peekSequential(this.inventory, this.getSlotLens(pos), limit);
+        return AdapterLogic.peekSequential(this.bridge$getFabric(), this.getSlotLens(pos), limit);
     }
 
     @Override
     public InventoryTransactionResult set(SlotPos pos, ItemStack stack) {
-        return AdapterLogic.insertSequential(this.inventory, this.getSlotLens(pos), stack);
+        return AdapterLogic.insertSequential(this.bridge$getFabric(), this.getSlotLens(pos), stack);
     }
 
 }
