@@ -43,8 +43,4 @@ public abstract class ConceptualLens extends AbstractLens {
         super(base, size, adapterType, slots);
     }
 
-    public ConceptualLens(int base, int size, InventoryAdapter adapter, SlotProvider slots) {
-        super(base, size, adapter, slots);
-    }
-
 }

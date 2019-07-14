@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.item.inventory.lens.impl.minecraft.container;
 
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.equipment.EquipmentTypes;
 import org.spongepowered.api.item.inventory.property.EquipmentSlotType;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
@@ -39,8 +40,8 @@ public class ContainerPlayerInventoryLens extends ContainerLens {
     private static final int CRAFTING_OUTPUT = 1;
     private static final int CRAFTING_GRID = 2;
 
-    public ContainerPlayerInventoryLens(InventoryAdapter adapter, SlotProvider slots) {
-        super(adapter, slots);
+    public ContainerPlayerInventoryLens(int size, Class<? extends Inventory> adapter, SlotProvider slots) {
+        super(size, adapter, slots);
         this.init(slots);
     }
 

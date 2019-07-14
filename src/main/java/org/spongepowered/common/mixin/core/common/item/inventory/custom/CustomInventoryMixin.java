@@ -57,14 +57,17 @@ public abstract class CustomInventoryMixin implements InventoryAdapter, Inventor
     @Shadow(remap = false) private InventoryBasic inv;
     @Shadow(remap = false) private Map<String, InventoryProperty<?, ?>> properties;
 
+    @Shadow public abstract int getSizeInventory();
+
     @Override
     public SlotProvider bridge$generateSlotProvider() {
         return new SlotCollection.Builder().add(this.inv.getSizeInventory()).build();
     }
 
+    @SuppressWarnings("Unchecked")
     @Override
     public Lens bridge$generateLens() {
-        return  new CustomLens(this, this.bridge$getSlotProvider(), this.archetype, this.properties);
+        return  new CustomLens(this.getSizeInventory(), (Class<? extends Inventory>) this.getClass(), this.bridge$getSlotProvider(), this.archetype, this.properties);
     }
 
 }

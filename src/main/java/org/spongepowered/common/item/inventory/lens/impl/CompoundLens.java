@@ -27,7 +27,8 @@ package org.spongepowered.common.item.inventory.lens.impl;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
-import org.spongepowered.common.item.inventory.adapter.impl.VanillaAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.AbstractInventoryAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.VanillaContainerAdapter;
 import org.spongepowered.common.item.inventory.lens.CompoundSlotProvider;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
@@ -64,7 +65,7 @@ public class CompoundLens extends ConceptualLens {
 
     @Override
     public InventoryAdapter getAdapter(Fabric inv, Inventory parent) {
-        return new VanillaAdapter(inv, this, parent);
+        return new AbstractInventoryAdapter(inv, this, parent);
     }
 
     public static Builder builder() {
@@ -83,7 +84,7 @@ public class CompoundLens extends ConceptualLens {
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         public CompoundLens build(CompoundSlotProvider provider) {
-            return new CompoundLens(provider.size(), VanillaAdapter.class, provider, this.lenses);
+            return new CompoundLens(provider.size(), AbstractInventoryAdapter.class, provider, this.lenses);
         }
     }
 }

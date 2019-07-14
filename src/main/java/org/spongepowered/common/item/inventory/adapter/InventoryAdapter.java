@@ -26,7 +26,7 @@ package org.spongepowered.common.item.inventory.adapter;
 
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.Slot;
-import org.spongepowered.common.item.inventory.adapter.impl.VanillaAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.AbstractInventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
@@ -62,6 +62,6 @@ public interface InventoryAdapter {
 
     default Optional<Slot> bridge$getSlot(final int ordinal) {
         final SlotLens slotLens = this.bridge$getRootLens().getSlotLens(ordinal);
-        return VanillaAdapter.forSlot(this.bridge$getFabric(), slotLens, (Inventory) this);
+        return AbstractInventoryAdapter.forSlot(this.bridge$getFabric(), slotLens, (Inventory) this);
     }
 }

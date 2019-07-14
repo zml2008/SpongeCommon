@@ -82,7 +82,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
             this.lens = new DefaultEmptyLens(this);
         } else {
             final ReusableLens<T> lens = ReusableLens.getLens(lensType, this, () -> this.initSlots(inventory, this.parent),
-                    (slots) -> (T) new DefaultIndexedLens(0, inventory.fabric$getSize(), this, slots));
+                    (slots) -> (T) new DefaultIndexedLens(0, inventory.fabric$getSize(), this.getClass(), slots));
             this.slots = lens.getSlots();
             this.lens = lens.getLens();
         }
@@ -115,7 +115,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
         if (size == 0) {
             return new DefaultEmptyLens(this);
         }
-        return new DefaultIndexedLens(0, size, this, this.slots);
+        return new DefaultIndexedLens(0, size, this.getClass(), this.slots);
     }
 
     @Override

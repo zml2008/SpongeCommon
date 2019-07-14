@@ -57,6 +57,7 @@ import net.minecraft.world.WorldServer;
 import org.spongepowered.api.item.inventory.BlockCarrier;
 import org.spongepowered.api.item.inventory.Carrier;
 import org.spongepowered.api.item.inventory.Container;
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.slot.InputSlot;
@@ -70,7 +71,7 @@ import org.spongepowered.common.event.tracking.IPhaseState;
 import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
-import org.spongepowered.common.item.inventory.adapter.impl.VanillaAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.VanillaContainerAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.slots.CraftingOutputAdapter;
 import org.spongepowered.common.item.inventory.custom.CustomContainer;
 import org.spongepowered.common.item.inventory.lens.Fabric;
@@ -223,7 +224,7 @@ public final class ContainerUtil {
             // Check if sub-inventory is LensProviderBridge
             if (lens == null && subInventory instanceof LensProviderBridge) {
                 final Fabric keyFabric = ((Fabric) subInventory);
-                lens = ((LensProviderBridge) subInventory).bridge$rootLens(keyFabric, new VanillaAdapter(keyFabric, container));
+                lens = ((LensProviderBridge) subInventory).bridge$rootLens(keyFabric, new VanillaContainerAdapter(keyFabric, container));
             }
             // Unknown Inventory or Inventory size <> Lens size
             if (lens == null || lens.slotCount() != slotCount) {
@@ -270,8 +271,9 @@ public final class ContainerUtil {
             SpongeImpl.getLogger().error("Error while creating CraftingInventoryLensImpl or GridInventoryLensImpl for " + container.getClass().getName(), e);
         }
 
+
         // Lens containing/delegating to other lenses
-        return new ContainerLens((InventoryAdapter) container, slots, lenses, additional);
+        return new ContainerLens(container.inventorySlots.size(), (Class<? extends Inventory>) container.getClass(), slots, lenses, additional);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

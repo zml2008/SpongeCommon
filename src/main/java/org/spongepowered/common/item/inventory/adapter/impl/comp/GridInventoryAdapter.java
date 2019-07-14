@@ -32,7 +32,7 @@ import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResu
 import org.spongepowered.api.item.inventory.type.GridInventory;
 import org.spongepowered.api.item.inventory.type.InventoryColumn;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
-import org.spongepowered.common.item.inventory.adapter.impl.VanillaAdapter;
+import org.spongepowered.common.item.inventory.adapter.impl.AbstractInventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.impl.AdapterLogic;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.comp.GridInventoryLens;
@@ -76,7 +76,7 @@ public class GridInventoryAdapter extends Inventory2DAdapter implements GridInve
 
     @Override
     public Optional<Slot> getSlot(int x, int y) {
-        return VanillaAdapter.forSlot(this.bridge$getFabric(), this.getSlotLens(x, y), this);
+        return AbstractInventoryAdapter.forSlot(this.bridge$getFabric(), this.getSlotLens(x, y), this);
     }
 
     @Override

@@ -88,7 +88,7 @@ public abstract class SpongeUserInventoryMixin implements InventoryAdapter, User
 
     @Override
     public Lens bridge$generateLens() {
-        return new PlayerInventoryLens(this, this.bridge$getSlotProvider());
+        return new PlayerInventoryLens(this.getSizeInventory(), this.getClass(), this.bridge$getSlotProvider());
     }
 
     @Override

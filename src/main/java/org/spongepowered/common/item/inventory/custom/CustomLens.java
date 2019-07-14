@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.item.inventory.custom;
 
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryArchetype;
 import org.spongepowered.api.item.inventory.InventoryProperty;
 import org.spongepowered.api.item.inventory.property.InventoryCapacity;
@@ -45,9 +46,9 @@ public class CustomLens extends RealLens {
     private InventoryArchetype archetype;
     private Map<String, InventoryProperty<?, ?>> properties;
 
-    public CustomLens(InventoryAdapter adapter, SlotProvider slots, InventoryArchetype archetype,
+    public CustomLens(int size, Class<? extends Inventory> adapter, SlotProvider slots, InventoryArchetype archetype,
             Map<String, InventoryProperty<?, ?>> properties) {
-        super(0, adapter.bridge$getFabric().fabric$getSize(), adapter, slots);
+        super(0, size, adapter, slots);
         this.archetype = archetype;
         this.properties = properties;
         this.init(slots);

@@ -36,9 +36,7 @@ import net.minecraft.item.ItemStack;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryProperty;
 import org.spongepowered.api.text.translation.Translation;
-import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
-import org.spongepowered.common.item.inventory.lens.InvalidLensDefinitionException;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.MutableLensCollection;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
@@ -70,11 +68,6 @@ public abstract class AbstractLens implements Lens {
     protected int size;
     
     private int maxOrdinal = 0;
-    
-    @SuppressWarnings("unchecked")
-    public AbstractLens(final int base, final int size, final InventoryAdapter adapter, final SlotProvider slots) {
-        this(base, size, (Class<? extends Inventory>) adapter.getClass(), slots);
-    }
 
     public AbstractLens(final int base, final int size, final Class<? extends Inventory> adapterType, final SlotProvider slots) {
         checkArgument(base >= 0, "Invalid offset: %s", base);
@@ -91,23 +84,6 @@ public abstract class AbstractLens implements Lens {
     protected void prepare() {
         this.children = new MutableLensCollectionImpl(0, false);
         this.spanningChildren = new ArrayList<>();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void init(final InventoryAdapter adapter, final SlotProvider slots) {
-        try {
-            if (slots != null) {
-                this.init(slots);
-            } else if (adapter instanceof SlotProvider) {
-                this.init((SlotProvider) adapter);
-            } else {
-                this.init(index -> {
-                    throw new NoSuchElementException("Attempted to fetch slot at index " + index + " but no provider was available instancing " + AbstractLens.this);
-                });
-            }
-        } catch (NoSuchElementException ex) {
-            throw new InvalidLensDefinitionException("Invalid lens definition, the lens referenced slots which do not exist.", ex);
-        }
     }
 
     /**

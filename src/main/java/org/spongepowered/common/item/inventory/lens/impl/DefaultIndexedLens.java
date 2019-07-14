@@ -38,11 +38,6 @@ public class DefaultIndexedLens extends AbstractLens {
         this.init(slots);
     }
 
-    public DefaultIndexedLens(int offset, int size, InventoryAdapter adapter, SlotProvider slots) {
-        super(offset, size, adapter, slots);
-        this.init(slots);
-    }
-
     @Override
     protected void init(SlotProvider slots) {
         for (int slot = 0; slot < this.size; slot++) {
