@@ -44,10 +44,6 @@ public class OrderedInventoryAdapter extends VanillaAdapter implements OrderedIn
 
     protected final OrderedInventoryLens orderedLens;
 
-    public OrderedInventoryAdapter(Fabric inventory, OrderedInventoryLens root) {
-        this(inventory, root, null);
-    }
-
     public OrderedInventoryAdapter(Fabric inventory, OrderedInventoryLens root, Inventory parent) {
         super(inventory, checkNotNull(root), parent);
         this.orderedLens = root;
