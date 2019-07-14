@@ -277,7 +277,8 @@ public interface DefaultImplementedAdapterInventory extends Inventory {
     @SuppressWarnings("unchecked")
     @Override
     default <T extends Inventory> Iterable<T> slots() {
-        return (Iterable<T>) ((InventoryBridge) this).bridge$getAdapter().bridge$getSlotIterator();
+        // TODO caching
+        return (Iterable<T>) SlotCollectionIterator.of(this, ((InventoryBridge) this).bridge$getAdapter());
     }
 
 }

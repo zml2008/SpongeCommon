@@ -108,28 +108,6 @@ public class SlotAdapter extends AbstractInventoryAdapter implements Slot {
 
     @Override
     public InventoryTransactionResult offer(final ItemStack stack) {
-//        // TODO Correct the transaction based on how offer goes
-//        final net.minecraft.item.ItemStack old = this.inventory.getStack(this.ordinal);
-//        if (!ItemStackUtil.compare(old, stack)) {
-//            return InventoryTransactionResult.failNoTransactions();
-//        }
-//        boolean canIncrease = getMaxStackSize() != old.stackSize;
-//        if (!canIncrease) {
-//            return InventoryTransactionResult.failNoTransactions();
-//        }
-//        int remaining = getMaxStackSize() - old.stackSize;
-//        int toBeOffered = stack.getQuantity();
-//        if (toBeOffered > remaining) {
-//            old.stackSize += toBeOffered - remaining;
-//            stack.setQuantity(toBeOffered - remaining);
-//        } else {
-//            old.stackSize += remaining;
-//            // TODO Quantity being set 0 could be a problem...
-//            stack.setQuantity(0);
-//        }
-//        this.inventory.markDirty();
-//        return InventoryTransactionResult.successNoTransactions();
-
         final InventoryTransactionResult.Builder result = InventoryTransactionResult.builder().type(InventoryTransactionResult.Type.SUCCESS);
         final net.minecraft.item.ItemStack nativeStack = ItemStackUtil.toNative(stack);
 
@@ -146,6 +124,7 @@ public class SlotAdapter extends AbstractInventoryAdapter implements Slot {
             old.setCount(old.getCount() + push);
             remaining -= push;
         }
+        // TODO transaction failure
 
         if (remaining == stack.getQuantity()) {
             // No items were consumed

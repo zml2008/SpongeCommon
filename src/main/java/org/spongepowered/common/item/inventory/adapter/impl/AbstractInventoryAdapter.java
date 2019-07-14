@@ -56,7 +56,7 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     public static final Translation DEFAULT_NAME = new SpongeTranslation("inventory.default.title");
 
     protected final Fabric inventory;
-    protected final SlotCollection slots;
+    protected final SlotProvider slots;
     protected final Lens lens;
     protected final List<Inventory> children = new ArrayList<>();
 
@@ -82,8 +82,8 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
             this.lens = new DefaultEmptyLens(this);
         } else {
             final ReusableLens<T> lens = ReusableLens.getLens(lensType, this, () -> this.initSlots(inventory, this.parent),
-                    (slots) -> (T) new DefaultIndexedLens(0, inventory.fabric$getSize(), this, ((SlotCollection) slots)));
-            this.slots = ((SlotCollection) lens.getSlots());
+                    (slots) -> (T) new DefaultIndexedLens(0, inventory.fabric$getSize(), this, slots));
+            this.slots = lens.getSlots();
             this.lens = lens.getLens();
         }
     }
@@ -95,12 +95,9 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
         this.lens = root != null ? root : checkNotNull(this.initRootLens(), "root lens");
     }
 
-    private SlotCollection initSlots(final Fabric inventory, @Nullable final Inventory parent) {
+    private SlotProvider initSlots(final Fabric inventory, @Nullable final Inventory parent) {
         if (parent instanceof DefaultImplementedInventoryAdapter) {
-            final SlotProvider sp = ((DefaultImplementedInventoryAdapter) parent).bridge$getSlotProvider();
-            if (sp instanceof SlotCollection) {
-                return ((SlotCollection) sp);
-            }
+            return ((DefaultImplementedInventoryAdapter) parent).bridge$getSlotProvider();
         }
         return new SlotCollection(inventory.fabric$getSize());
     }
@@ -140,15 +137,9 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     @Override
     public <T extends Inventory> Iterable<T> slots() {
         if (this.slotIterator == null) {
-            this.slotIterator = this.slots.getIterator(this);
+            this.slotIterator = SlotCollectionIterator.of(this, this);
         }
         return (Iterable<T>) this.slotIterator;
-    }
-
-    @Override
-    public void clear() {
-        // TODO clear without generating SlotAdapters
-        this.bridge$getAdapter().bridge$getSlotIterator().forEach(Inventory::clear);
     }
 
     public static Optional<Slot> forSlot(final Fabric inv, final SlotLens slotLens, final Inventory parent) {

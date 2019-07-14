@@ -24,7 +24,7 @@
  */
 package org.spongepowered.common.item.inventory.adapter.impl;
 
-import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 
@@ -36,6 +36,6 @@ public interface DefaultImplementedInventoryAdapter extends InventoryAdapter, De
     @Override
     default void clear() {
         // TODO clear without generating SlotAdapters
-        this.bridge$getAdapter().bridge$getSlotIterator().forEach(Slot::clear);
+        this.slots().forEach(Inventory::clear);
     }
 }
