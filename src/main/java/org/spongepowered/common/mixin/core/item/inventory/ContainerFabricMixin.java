@@ -35,6 +35,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.SpongeImpl;
 import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
+import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 
 import java.util.Collection;
@@ -51,15 +52,15 @@ public abstract class ContainerFabricMixin implements Fabric, InventoryBridge {
     @Shadow public abstract void detectAndSendChanges();
 
     @Nullable private Translation displayName;
-    @Nullable private Set<IInventory> all;
+    @Nullable private Set<InventoryBridge> all;
 
     @Override
-    public Collection<IInventory> fabric$allInventories() {
+    public Collection<InventoryBridge> fabric$allInventories() {
         if (this.all == null) {
-            ImmutableSet.Builder<IInventory> builder = ImmutableSet.builder();
+            ImmutableSet.Builder<InventoryBridge> builder = ImmutableSet.builder();
             for (Slot slot : inventorySlots) {
                 if (slot.inventory != null) {
-                    builder.add(slot.inventory);
+                    builder.add((InventoryBridge) slot.inventory);
                 }
             }
             this.all = builder.build();
@@ -68,11 +69,11 @@ public abstract class ContainerFabricMixin implements Fabric, InventoryBridge {
     }
 
     @Override
-    public IInventory fabric$get(int index) {
+    public InventoryBridge fabric$get(int index) {
         if (this.inventorySlots.isEmpty()) {
             return null; // Somehow we got an empty container
         }
-        return this.getSlot(index).inventory;
+        return (InventoryBridge) this.getSlot(index).inventory;
     }
 
     @Override
@@ -87,7 +88,8 @@ public abstract class ContainerFabricMixin implements Fabric, InventoryBridge {
 
     @Override
     public int fabric$getMaxStackSize() {
-        return this.fabric$allInventories().stream().mapToInt(IInventory::getInventoryStackLimit).max().orElse(0);
+        return this.fabric$allInventories().stream().map(b -> b.bridge$getAdapter().bridge$getFabric())
+                .mapToInt(Fabric::fabric$getMaxStackSize).max().orElse(0);
     }
 
     @Override
@@ -105,7 +107,9 @@ public abstract class ContainerFabricMixin implements Fabric, InventoryBridge {
 
     @Override
     public void fabric$clear() {
-        this.fabric$allInventories().forEach(IInventory::clear);
+        for (Slot slot : this.inventorySlots) {
+            slot.putStack(ItemStack.EMPTY);
+        }
     }
 
     @Override

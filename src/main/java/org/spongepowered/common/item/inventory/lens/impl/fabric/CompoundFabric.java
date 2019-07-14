@@ -24,9 +24,9 @@
  */
 package org.spongepowered.common.item.inventory.lens.impl.fabric;
 
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 
 import java.util.Collection;
@@ -47,15 +47,15 @@ public class CompoundFabric implements Fabric {
     }
 
     @Override
-    public Collection<?> fabric$allInventories() {
-        Set<Object> inv = new HashSet<>();
+    public Collection<InventoryBridge> fabric$allInventories() {
+        Set<InventoryBridge> inv = new HashSet<>();
         inv.addAll(this.fabric1.fabric$allInventories());
         inv.addAll(this.fabric2.fabric$allInventories());
         return inv;
     }
 
     @Override
-    public IInventory fabric$get(int index) {
+    public InventoryBridge fabric$get(int index) {
 
         if (index < this.fabric1.fabric$getSize()) {
             return this.fabric1.fabric$get(index);

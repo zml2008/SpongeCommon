@@ -39,13 +39,13 @@ import java.util.Collection;
 public interface IInventoryFabricMixin extends Fabric, IInventory, InventoryBridge {
 
     @Override
-    default Collection<?> fabric$allInventories() {
+    default Collection<InventoryBridge> fabric$allInventories() {
         return ImmutableSet.of(this);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    default IInventory fabric$get(int index) {
+    default InventoryBridge fabric$get(int index) {
         return this;
     }
 

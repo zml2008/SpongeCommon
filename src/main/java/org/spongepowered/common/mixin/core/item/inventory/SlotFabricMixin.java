@@ -47,14 +47,14 @@ public abstract class SlotFabricMixin implements Fabric, InventoryBridge {
     @Shadow public abstract void onSlotChanged();
 
     @Override
-    public Collection<?> fabric$allInventories() {
+    public Collection<InventoryBridge> fabric$allInventories() {
         return Collections.emptyList();
     }
 
     @Override
-    public IInventory fabric$get(final int index) {
+    public InventoryBridge fabric$get(final int index) {
         if (this.inventory != null) {
-            return this.inventory;
+            return (InventoryBridge) this.inventory;
         }
 
         throw new UnsupportedOperationException("Unable to access slot at " + index + " for delegating fabric of " + this.getClass());

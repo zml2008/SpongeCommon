@@ -147,7 +147,8 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
 
     @Override
     public void clear() {
-        this.slots().forEach(Inventory::clear);
+        // TODO clear without generating SlotAdapters
+        this.bridge$getAdapter().bridge$getSlotIterator().forEach(Inventory::clear);
     }
 
     public static Optional<Slot> forSlot(final Fabric inv, final SlotLens slotLens, final Inventory parent) {

@@ -30,6 +30,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.Translation;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.impl.slots.SlotLensImpl;
@@ -39,6 +40,10 @@ import java.util.Collections;
 
 @Mixin(EntityLiving.class)
 public abstract class EntityLivingEquipmentFabricMixin implements Fabric, InventoryBridge {
+
+    @Shadow public abstract ItemStack getItemStackFromSlot(EntityEquipmentSlot slotIn);
+
+    @Shadow public abstract void setItemStackToSlot(EntityEquipmentSlot slotIn, ItemStack stack);
 
     private static final EntityEquipmentSlot[] SLOTS;
     private static final int MAX_STACK_SIZE = 64;
@@ -52,23 +57,23 @@ public abstract class EntityLivingEquipmentFabricMixin implements Fabric, Invent
     }
 
     @Override
-    public Collection<EntityLiving> fabric$allInventories() {
-        return Collections.singleton((EntityLiving) (Object) this);
+    public Collection<InventoryBridge> fabric$allInventories() {
+        return Collections.singleton(this);
     }
 
     @Override
-    public EntityLiving fabric$get(int index) {
-        return (EntityLiving) (Object) this;
+    public InventoryBridge fabric$get(int index) {
+        return this;
     }
 
     @Override
     public ItemStack fabric$getStack(int index) {
-        return ((EntityLivingBase) (Object) this).getItemStackFromSlot(SLOTS[index]);
+        return this.getItemStackFromSlot(SLOTS[index]);
     }
 
     @Override
     public void fabric$setStack(int index, ItemStack stack) {
-        ((EntityLivingBase) (Object) this).setItemStackToSlot(SLOTS[index], stack);
+        this.setItemStackToSlot(SLOTS[index], stack);
     }
 
     @Override
@@ -88,9 +93,8 @@ public abstract class EntityLivingEquipmentFabricMixin implements Fabric, Invent
 
     @Override
     public void fabric$clear() {
-        EntityLivingBase entity = (EntityLivingBase) (Object) this;
         for (EntityEquipmentSlot slot : SLOTS) {
-            entity.setItemStackToSlot(slot, ItemStack.EMPTY);
+            this.setItemStackToSlot(slot, ItemStack.EMPTY);
         }
     }
 

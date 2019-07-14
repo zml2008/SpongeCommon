@@ -26,6 +26,7 @@ package org.spongepowered.common.item.inventory.lens;
 
 import net.minecraft.item.ItemStack;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
 
 import java.util.Collection;
 
@@ -40,16 +41,12 @@ public interface Fabric {
      * Return all inventories which compose this fabric, order is not guaranteed
      * or enforced.
      */
-    Collection<?> fabric$allInventories();
+    Collection<InventoryBridge> fabric$allInventories();
 
     /**
      * Return the inventory at the specified index in the fabric.
-     *
-     * @param index
-     * @return
      */
-    @Deprecated // TODO get rid of this replace with fabric$allInventories if possible
-    <TInventory> TInventory fabric$get(int index);
+    InventoryBridge fabric$get(int index);
 
     ItemStack fabric$getStack(int index);
 

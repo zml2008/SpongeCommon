@@ -35,7 +35,7 @@ public interface DefaultImplementedInventoryAdapter extends InventoryAdapter, De
 
     @Override
     default void clear() {
-        // TODO?
+        // TODO clear without generating SlotAdapters
         this.bridge$getAdapter().bridge$getSlotIterator().forEach(Slot::clear);
     }
 }
