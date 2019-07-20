@@ -27,7 +27,6 @@ package org.spongepowered.common.mixin.core.entity.player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.item.inventory.entity.MainPlayerInventory;
 import org.spongepowered.api.item.inventory.entity.UserInventory;
@@ -87,8 +86,8 @@ public abstract class SpongeUserInventoryMixin implements InventoryAdapter, User
     }
 
     @Override
-    public Lens bridge$generateLens() {
-        return new PlayerInventoryLens(this.getSizeInventory(), this.getClass(), this.bridge$getSlotProvider());
+    public Lens bridge$generateLens(SlotProvider slots) {
+        return new PlayerInventoryLens(this.getSizeInventory(), this.getClass(), slots);
     }
 
     @Override

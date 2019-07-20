@@ -135,13 +135,12 @@ public abstract class ContainerMixin implements ContainerBridge, InventoryAdapte
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public Lens bridge$generateLens() {
+    public Lens bridge$generateLens(SlotProvider slots) {
         if (this.impl$isLensInitialized) {
             return null; // Means that we've tried to generate a lens before, but it was null. And because the lens is null,
             // the generate will try again. So, we stop trying to generate it.
         }
         this.impl$isLensInitialized = true;
-        final SlotProvider slots = bridge$getSlotProvider();
         final Fabric fabric = bridge$getFabric();
         final Lens lens;
         if (this.impl$spectatorChest) {

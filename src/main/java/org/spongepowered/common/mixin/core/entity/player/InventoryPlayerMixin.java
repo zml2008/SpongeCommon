@@ -40,7 +40,6 @@ import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -123,11 +122,11 @@ public abstract class InventoryPlayerMixin implements InventoryPlayerBridge, Inv
 
     @SuppressWarnings({"RedundantCast", "Unchecked"})
     @Override
-    public Lens bridge$generateLens() {
+    public Lens bridge$generateLens(SlotProvider slots) {
         if ((Class<?>) this.getClass() == InventoryPlayer.class) { // Build Player Lens
-            return new PlayerInventoryLens(this.getSizeInventory(), (Class<? extends Inventory>) this.getClass(), this.bridge$getSlotProvider());
+            return new PlayerInventoryLens(this.getSizeInventory(), (Class<? extends Inventory>) this.getClass(), slots);
         }
-        return new OrderedInventoryLensImpl(0, this.getSizeInventory(), 1, this.bridge$getSlotProvider());
+        return new OrderedInventoryLensImpl(0, this.getSizeInventory(), 1, slots);
     }
 
     @Override

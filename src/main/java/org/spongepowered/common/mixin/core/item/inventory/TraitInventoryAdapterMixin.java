@@ -89,7 +89,6 @@ public abstract class TraitInventoryAdapterMixin implements InventoryAdapter, In
     public SlotProvider bridge$getSlotProvider() {
         if (this.impl$provider == null) {
             this.impl$provider = this.bridge$generateSlotProvider();
-            return this.impl$provider;
         }
         return this.impl$provider;
     }
@@ -102,7 +101,7 @@ public abstract class TraitInventoryAdapterMixin implements InventoryAdapter, In
     @Override
     public Lens bridge$getRootLens() {
         if (this.impl$lens == null) {
-            this.impl$lens = this.bridge$generateLens();
+            this.impl$lens = this.bridge$generateLens(this.bridge$getSlotProvider());
         }
         return this.impl$lens;
     }

@@ -46,11 +46,6 @@ import java.util.List;
 public abstract class ContainerWorkbenchMixin extends ContainerMixin implements LensProviderBridge {
 
     @Override
-    public Lens bridge$generateLens() {
-        return super.bridge$generateLens();
-    }
-
-    @Override
     public Lens bridge$rootLens(final Fabric fabric, final InventoryAdapter adapter) {
         final List<Lens> lenses = new ArrayList<>();
         lenses.add(new CraftingInventoryLensImpl(0, 1, 3, 3, bridge$getSlotProvider()));

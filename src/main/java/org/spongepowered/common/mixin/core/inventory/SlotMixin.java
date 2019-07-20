@@ -49,7 +49,7 @@ public abstract class SlotMixin implements InventoryAdapter, InventoryAdapterBri
     }
 
     @Override
-    public Lens bridge$generateLens() {
+    public Lens bridge$generateLens(SlotProvider slotProvider) {
         try {
             final Lens rootLens = ((InventoryAdapter) this.inventory).bridge$getRootLens();
             SlotLens lens = rootLens.getSlotLens(this.slotIndex);
