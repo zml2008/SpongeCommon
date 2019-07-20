@@ -31,6 +31,8 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.Slot;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
+import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.bridge.inventory.LensProviderBridge;
@@ -51,7 +53,7 @@ import javax.annotation.Nullable;
 /**
  * Base Adapter implementation for {@link ItemStack} based Inventories.
  */
-public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdapter, Inventory {
+public class AbstractInventoryAdapter implements InventoryAdapter, DefaultImplementedAdapterInventory, InventoryBridge, Inventory {
 
     public static final Translation DEFAULT_NAME = new SpongeTranslation("inventory.default.title");
 
@@ -96,8 +98,8 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
     }
 
     private SlotProvider initSlots(final Fabric inventory, @Nullable final Inventory parent) {
-        if (parent instanceof DefaultImplementedInventoryAdapter) {
-            return ((DefaultImplementedInventoryAdapter) parent).bridge$getSlotProvider();
+        if (parent instanceof InventoryAdapter) {
+            return ((InventoryAdapter) parent).bridge$getSlotProvider();
         }
         return new SlotCollection(inventory.fabric$getSize());
     }
@@ -144,6 +146,12 @@ public class AbstractInventoryAdapter implements DefaultImplementedInventoryAdap
 
     public static Optional<Slot> forSlot(final Fabric inv, final SlotLens slotLens, final Inventory parent) {
         return slotLens == null ? Optional.empty() : Optional.ofNullable((Slot) slotLens.getAdapter(inv, parent));
+    }
+
+    @Override
+    public void clear() {
+        // TODO clear without generating SlotAdapters
+        this.slots().forEach(Inventory::clear);
     }
 
     @Override

@@ -53,7 +53,7 @@ import java.util.Iterator;
 import java.util.Optional;
 
 /**
- * Implements almost all of {@link Inventory} assuming that this is a {@link InventoryBridge}.
+ * Implements almost all of {@link Inventory} assuming that this is a {@link InventoryBridge} providing the {@link InventoryAdapter}.
  */
 public interface DefaultImplementedAdapterInventory extends Inventory {
 

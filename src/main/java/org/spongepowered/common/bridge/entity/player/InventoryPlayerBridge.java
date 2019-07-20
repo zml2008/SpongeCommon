@@ -26,11 +26,6 @@ package org.spongepowered.common.bridge.entity.player;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
-import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
-import org.spongepowered.common.bridge.inventory.TrackedInventoryBridge;
-import org.spongepowered.common.item.inventory.adapter.impl.DefaultImplementedInventoryAdapter;
-
-import java.util.List;
 
 public interface InventoryPlayerBridge {
 
