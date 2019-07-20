@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.spongepowered.common.bridge.inventory.LensProviderBridge;
 import org.spongepowered.common.item.inventory.adapter.InventoryAdapter;
 import org.spongepowered.common.item.inventory.adapter.ReusableLensInventoryAdapaterBridge;
+import org.spongepowered.common.item.inventory.lens.Fabric;
 import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.ReusableLensProvider;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
@@ -72,32 +73,43 @@ public class ReusableLens<T extends Lens> {
         });
     }
 
-    public static ReusableLens getLens(ReusableLensInventoryAdapaterBridge bridge)
+    public static ReusableLens getLens(ReusableLensInventoryAdapaterBridge adapter)
     {
-        // TODO this is not actually creating lenses that will be reused
-        if (bridge instanceof ReusableLensProvider) {
-            return ((ReusableLensProvider) bridge).bridge$generateReusableLens(bridge.bridge$getFabric(), bridge);
+        if (adapter instanceof ReusableLensProvider) {
+            // TODO is this interface needed? Instead use LensProviderBridge?
+            return ((ReusableLensProvider) adapter).bridge$generateReusableLens(adapter.bridge$getFabric(), adapter);
         }
-        if (bridge instanceof LensProviderBridge) {
-
-            SlotProvider slotProvider = ((LensProviderBridge) bridge).bridge$slotProvider(bridge.bridge$getFabric(), bridge);
-            bridge.bridge$setSlotProvider(slotProvider);
-            final Lens lens = ((LensProviderBridge) bridge).bridge$rootLens(bridge.bridge$getFabric(), bridge);
-            bridge.bridge$setLens(lens);
+        if (adapter instanceof LensProviderBridge) {
+            // TODO this is not actually creating lenses that will be reused
+            SlotProvider slotProvider = ((LensProviderBridge) adapter).bridge$slotProvider(adapter.bridge$getFabric(), adapter);
+            adapter.bridge$setSlotProvider(slotProvider);
+            final Lens lens = ((LensProviderBridge) adapter).bridge$rootLens(adapter.bridge$getFabric(), adapter);
+            adapter.bridge$setLens(lens);
             return new ReusableLens<>(slotProvider, lens);
         }
 
-        final SlotCollection slots = new SlotCollection.Builder().add(bridge.bridge$getFabric().fabric$getSize()).build();
-        final Lens lens;
-        if (bridge.bridge$getFabric().fabric$getSize() == 0) {
-            lens = new DefaultEmptyLens(bridge);
-        } else {
-            lens = new OrderedInventoryLensImpl(0, bridge.bridge$getFabric().fabric$getSize(), 1, slots);
-        }
+        return getLens(Lens.class, adapter,
+                () -> defaultSlots(adapter),
+                (slots) -> defaultLens(adapter, slots));
+    }
 
-        bridge.bridge$setSlotProvider(slots);
-        bridge.bridge$setLens(lens);
-        return new ReusableLens<>(slots, lens);
+    private static SlotProvider defaultSlots(InventoryAdapter adapter) {
+        return new SlotCollection.Builder().add(adapter.bridge$getFabric().fabric$getSize()).build();
+    }
+
+    private static Lens defaultLens(InventoryAdapter adapter, SlotProvider slots) {
+        int slotCount = adapter.bridge$getFabric().fabric$getSize();
+        if (slotCount == 0) {
+            return new DefaultEmptyLens(adapter);
+        } else {
+            return new OrderedInventoryLensImpl(0, slotCount, 1, slots);
+        }
+    }
+
+    public static ReusableLens<Lens> defaultReusableLens(InventoryAdapter adapter) {
+        return getLens(Lens.class, adapter,
+                () -> defaultSlots(adapter),
+                (slots) -> defaultLens(adapter, slots));
     }
 
     public SlotProvider getSlots() {
