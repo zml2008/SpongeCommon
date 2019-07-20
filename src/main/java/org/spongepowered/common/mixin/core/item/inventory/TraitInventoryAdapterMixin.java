@@ -74,20 +74,15 @@ import javax.annotation.Nullable;
         InventoryCraftResult.class,
         EntityMinecartContainer.class
 }, priority = 999)
-@Implements(@Interface(iface = Inventory.class, prefix = "inventory$"))
 public abstract class TraitInventoryAdapterMixin implements InventoryAdapter, InventoryAdapterBridge, InventoryBridge {
 
     @Nullable private SlotProvider impl$provider;
     @Nullable private Lens impl$lens;
-    @Nullable private Fabric impl$fabric;
     @Nullable private PluginContainer impl$PluginParent;
 
     @Override
     public Fabric bridge$getFabric() {
-        if (this.impl$fabric == null) {
-            this.impl$fabric = bridge$generateFabric();
-        }
-        return this.impl$fabric;
+        return (Fabric) this;
     }
 
     @Override
@@ -115,11 +110,6 @@ public abstract class TraitInventoryAdapterMixin implements InventoryAdapter, In
     @Override
     public void bridge$setLens(final Lens lens) {
         this.impl$lens = lens;
-    }
-
-    @Override
-    public void bridge$setFabric(final Fabric fabric) {
-        this.impl$fabric = fabric;
     }
 
     @Override

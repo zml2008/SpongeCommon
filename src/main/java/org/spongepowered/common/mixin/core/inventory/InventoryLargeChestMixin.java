@@ -39,8 +39,6 @@ import org.spongepowered.common.item.inventory.lens.impl.minecraft.LargeChestInv
 @Mixin(InventoryLargeChest.class)
 public abstract class InventoryLargeChestMixin implements InventoryAdapter, ReusableLensProvider {
 
-    // TODO maybe fabric override?
-
     @Override
     public ReusableLens<?> bridge$generateReusableLens(final Fabric fabric, final InventoryAdapter adapter) {
         return ReusableLens.getLens(LargeChestInventoryLens.class, this, this::impl$generateSlotProvider, this::impl$generateInventoryLens);

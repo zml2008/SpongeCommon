@@ -39,15 +39,6 @@ public interface InventoryAdapterBridge {
 
     void bridge$setLens(Lens lens);
 
-    default Fabric bridge$generateFabric() {
-        if (this instanceof Fabric) {
-            return (Fabric) this;
-        }
-        throw new IllegalStateException("Inventory is not a Fabric! " + this.getClass().getName());
-    }
-
-    void bridge$setFabric(Fabric fabric);
-
     PluginContainer bridge$getPlugin();
 
     void bridge$setPlugin(PluginContainer container);

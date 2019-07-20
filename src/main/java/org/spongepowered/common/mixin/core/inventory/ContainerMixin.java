@@ -306,7 +306,6 @@ public abstract class ContainerMixin implements ContainerBridge, InventoryAdapte
         // Reset the lense and slot provider
         bridge$setSlotProvider(null);
         bridge$setLens(null);
-        bridge$setFabric(null);
         this.impl$adapters = null;
     }
 
