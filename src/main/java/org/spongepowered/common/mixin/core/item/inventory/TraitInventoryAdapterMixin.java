@@ -35,10 +35,7 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.tileentity.TileEntityLockable;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.plugin.PluginContainer;
-import org.spongepowered.asm.mixin.Implements;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.common.bridge.item.inventory.InventoryAdapterBridge;
 import org.spongepowered.common.bridge.item.inventory.InventoryBridge;
@@ -50,15 +47,10 @@ import org.spongepowered.common.item.inventory.lens.Lens;
 import org.spongepowered.common.item.inventory.lens.SlotProvider;
 import org.spongepowered.common.item.inventory.util.InventoryUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.annotation.Nullable;
 
 /**
  * Mixin into all known vanilla {@link IInventory} and {@link Container}
- *
- * <p>To work {@link InventoryAdapter#bridge$getSlotProvider()} and {@link InventoryAdapter#bridge$getRootLens()} need to be implemented</p>
  */
 @Mixin(value = {
         Slot.class,
